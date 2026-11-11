@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SYNQRA – Intelligence, Connected by Evidence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --n9: #0B1F44;
+  --n8: #13315C;
+  --n7: #1E4B6B;
+  --c5: #00B8D9;
+  --c6: #008DA8;
+  --c3: #7FDFFF;
+  --bg-outer: #E4E9F0;
+  --bg-shell: #F3F6F9;
+  --panel: #FFFFFF;
+  --card: #F8FAFC;
+  --pill-bg: #EEF2F6;
+  --tx: #0B1F44;
+  --tx2: #334E68;
+  --bd: #DCE4EC;
+  --chip: #E0F7FA;
+  --peach: #FFF3E0;
+  --ptx: #7C2D12;
+  --ok: #10B981;
+  --dug: #F59E0B;
+  --buk: #F97316;
+  --ars: #64748B;
+  --sh-sm: 0 2px 10px rgba(11, 31, 68, 0.05);
+  --sh-md: 0 8px 28px rgba(11, 31, 68, 0.06);
+  --sh-lg: 0 16px 44px rgba(11, 31, 68, 0.10);
+  box-sizing: border-box;
+}
+:root[data-theme="dark"] {
+  --bg-outer: #061229;
+  --bg-shell: #0B1B3B;
+  --panel: #11264D;
+  --card: #173261;
+  --pill-bg: #0D1F40;
+  --tx: #F8FAFC;
+  --tx2: #CBD5E1;
+  --bd: #254475;
+  --chip: #164E63;
+  --peach: #451A03;
+  --ptx: #FDE68A;
+  --sh-sm: 0 2px 10px rgba(0, 0, 0, 0.25);
+  --sh-md: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-outer);
+  color: var(--tx);
+  font: 15px/1.55 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'tnum';
+  padding: clamp(10px, 2vw, 24px);
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease; }
+button:active:not(:disabled) { transform: scale(0.98); }
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--n9);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--c3);
+}
+
+/* Animasi Masuk & Interaksi */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes barGrow {
+  from { transform: scaleY(0.15); opacity: 0.3; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+@keyframes pu {
+  0% { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+@keyframes pu2 {
+  0% { box-shadow: 0 0 0 0 rgba(0, 184, 217, 0.55); }
+  100% { box-shadow: 0 0 0 22px rgba(0, 184, 217, 0); }
+}
+@keyframes wv { to { height: 40px; } }
+.anim { animation: fadeUp .38s cubic-bezier(.2, .8, .2, 1) both; }
+.d1 { animation-delay: .04s; }
+.d2 { animation-delay: .08s; }
+.d3 { animation-delay: .12s; }
+.d4 { animation-delay: .16s; }
+
+/* Shell Utama ala Quixotic */
+#shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  background: var(--bg-shell);
+  border-radius: 36px;
+  padding: clamp(16px, 2.4vw, 30px);
+  box-shadow: var(--sh-lg);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+:root[data-theme="dark"] #shell { border-color: var(--bd); }
+
+/* Top Floating Pill Navbar */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 10px 18px 10px 22px;
+  box-shadow: var(--sh-sm);
+  margin-bottom: 26px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: none;
+  padding: 4px 6px;
+  border-radius: 99px;
+}
+.brand svg { width: 38px; height: 38px; flex: none; }
+.brand-tx {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+}
+.nav-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--pill-bg);
+  padding: 5px;
+  border-radius: 999px;
+  flex-wrap: wrap;
+}
+.np {
+  border: 0;
+  background: transparent;
+  color: var(--tx2);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 999px;
+  min-height: 40px;
+}
+.np:hover { color: var(--tx); }
+.np.on {
+  background: var(--panel);
+  color: var(--tx);
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(11, 31, 68, 0.08);
+}
+.top-act {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ib {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--pill-bg);
+  border: 0;
+  color: var(--tx);
+}
+.ib:hover { background: var(--bd); }
+.ib .dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--buk);
+  border: 2px solid var(--panel);
+}
+.usr {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pill-bg);
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 14px 5px 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.av {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--n7), var(--n9));
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Baris Sapaan & Aksi Cepat (Subbar) */
+#subbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+#subbar h1 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  color: var(--tx);
+}
+#subbar h1 span {
+  font-weight: 400;
+  color: var(--tx2);
+}
+.sub-pills {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--tx);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 46px;
+  box-shadow: var(--sh-sm);
+}
+.pill:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--sh-md); }
+.pill.pr {
+  background: var(--n9);
+  border-color: var(--n9);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+:root[data-theme="dark"] .pill.pr {
+  background: var(--c5);
+  border-color: var(--c5);
+  color: #0B1F44;
+}
+.pill.cy {
+  background: var(--c5);
+  border-color: var(--c5);
+  color: #0B1F44;
+  font-weight: 700;
+}
+.pill:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Workspace: Left Floating Dock + Main Area */
+#work {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+#dock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 20px;
+}
+.dk-cap {
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--sh-sm);
+}
+.dk-b {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--tx2);
+  position: relative;
+}
+.dk-b:hover { background: var(--pill-bg); color: var(--tx); }
+.dk-b.on {
+  background: var(--n9);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(11, 31, 68, 0.25);
+}
+:root[data-theme="dark"] .dk-b.on {
+  background: var(--c5);
+  color: #0B1F44;
+}
+svg.i {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+/* Bento Grid & Kartu Putih ala Quixotic */
+.bento-top {
+  display: grid;
+  grid-template-columns: 1.05fr 1.35fr 1fr;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+.bento-bot {
+  display: grid;
+  grid-template-columns: 1.75fr 1fr;
+  gap: 22px;
+}
+.col-st {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.wcard, .cd, .bx {
+  background: var(--panel);
+  border-radius: 26px;
+  padding: 24px 26px;
+  box-shadow: var(--sh-md);
+  border: 1px solid rgba(220, 228, 236, 0.55);
+}
+:root[data-theme="dark"] .wcard, :root[data-theme="dark"] .cd, :root[data-theme="dark"] .bx {
+  border-color: var(--bd);
+}
+.chd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.chd-l {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.c-ic {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--pill-bg);
+  color: var(--tx);
+  flex: none;
+}
+.chd h2, h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: -0.01em;
+}
+.csub {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--tx2);
+  margin-top: 2px;
+}
+.go {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--pill-bg);
+  border: 0;
+  color: var(--tx);
+  flex: none;
+}
+.go:hover { background: var(--n9); color: #FFFFFF; }
+
+/* Kartu Aset Gradien (Gaya Kartu VISA di Referensi) */
+.asset-card {
+  position: relative;
+  border-radius: 22px;
+  padding: 22px;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #1E4B6B 0%, #0B1F44 75%);
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(11, 31, 68, 0.22);
+}
+.ac-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ac-tag {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sim {
+  display: inline-block;
+  background: var(--c3);
+  color: #0B1F44;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.ac-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: 10px;
+}
+.ac-lbl {
+  font-size: 13.5px;
+  color: #E0F2FE;
+  font-weight: 500;
+}
+.ac-val {
+  font-size: clamp(38px, 4vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 4px 0 10px;
+  color: #FFFFFF;
+}
+.ac-val small {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--c3);
+  margin-left: 4px;
+}
+#t3 {
+  width: 100%;
+  height: 165px;
+  touch-action: none;
+  cursor: grab;
+}
+.ac-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 13.5px;
+  color: #E0F2FE;
+  flex-wrap: wrap;
+}
+.co-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  color: #0B1F44;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.co-pill i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c5);
+}
+.rp-btn {
+  background: var(--c3);
+  color: #0B1F44;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Mini KPI Card (Gaya Weekly Revenue di Referensi) */
+.kpi-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kpi-num {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+  line-height: 1.15;
+}
+.bdg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #D1FAE5;
+  color: #065F46;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 13px;
+  border-radius: 999px;
+}
+.bdg-pill.warn {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+/* Grafik Batang Pil Bergaris (Gaya Engagement Rate di Referensi) */
+.pchart-wrap {
+  position: relative;
+  padding-top: 26px;
+}
+.pchart-grid {
+  position: relative;
+  height: 230px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 0 10px 32px 38px;
+  background-image: linear-gradient(to bottom, var(--bd) 1px, transparent 1px);
+  background-size: 100% 48px;
+}
+.pchart-y {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx2);
+}
+.pbar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  justify-content: flex-end;
+  flex: 1;
+}
+.pbar {
+  width: clamp(34px, 4.2vw, 52px);
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(30, 75, 107, 0.25) 0px,
+    rgba(30, 75, 107, 0.25) 6px,
+    rgba(0, 184, 217, 0.22) 6px,
+    rgba(0, 184, 217, 0.22) 12px
+  );
+  border: 1.5px solid rgba(30, 75, 107, 0.28);
+  display: flex;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  transform-origin: bottom;
+  animation: barGrow .55s cubic-bezier(.2, .8, .2, 1) both;
+  transition: transform .2s ease;
+}
+.pbar:hover { transform: scaleY(1.04); }
+.pbar u {
+  display: block;
+  width: 100%;
+  background: linear-gradient(180deg, var(--c5), var(--n7));
+  border-radius: 999px;
+}
+.pbar.hi {
+  background: repeating-linear-gradient(
+    -45deg,
+    #1E4B6B 0px,
+    #1E4B6B 6px,
+    #0B1F44 6px,
+    #0B1F44 12px
+  );
+  border-color: var(--n9);
+  box-shadow: 0 8px 20px rgba(11, 31, 68, 0.22);
+}
+.pbar-top-callout {
+  position: absolute;
+  top: -38px;
+  background: var(--n9);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(11, 31, 68, 0.2);
+}
+.pbar-top-callout::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c5);
+  border: 2px solid #FFFFFF;
+}
+.pbar-lbl {
+  position: absolute;
+  bottom: -28px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx2);
+}
+.lgd {
+  display: flex;
+  gap: 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tx2);
+  margin-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.lgd i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 5px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+/* Kartu Kanan Atas: Balance/Perhatian + Area Wave Chart */
+.bal-center {
+  text-align: center;
+  margin: 6px 0 12px;
+}
+.bal-lbl {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tx2);
+}
+.bal-num {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--tx);
+  line-height: 1.1;
+  margin: 4px 0;
+}
+.bal-num small {
+  font-size: 18px;
+  font-weight
+  : 600;
+  color: var(--tx2);
+}
+.wave-svg {
+  width: 100%;
+  height: 92px;
+  display: block;
+  margin: 8px 0 14px;
+}
+.dual-btn {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--pill-bg);
+  border-radius: 999px;
+  padding: 5px;
+  gap: 6px;
+}
+.dual-btn button {
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--tx);
+}
+.dual-btn button.pr {
+  background: var(--n9);
+  color: #FFFFFF;
+  box-shadow: var(--sh-sm);
+}
+:root[data-theme="dark"] .dual-btn button.pr {
+  background: var(--c5);
+  color: #0B1F44;
+}
+
+/* Avatar Stack & Kasus Serupa */
+.av-stack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.av-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--pill-bg);
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  padding: 6px 14px 6px 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.av-item i {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--n9);
+  color: #FFFFFF;
+  font-style: normal;
+  font-size: 12.5px;
+}
+
+/* Tabel Antrean & Kasus (Gaya Payment History di Referensi) */
+.tbl-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  font-size: 14.5px;
+}
+th {
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tx2);
+  padding: 6px 14px;
+}
+td {
+  padding: 14px;
+  background: var(--card);
+  color: var(--tx);
+  font-weight: 500;
+  transition: background-color .15s ease;
+}
+tbody tr:hover td { background: var(--pill-bg); }
+td:first-child { border-radius: 16px 0 0 16px; }
+td:last-child { border-radius: 0 16px 16px 0; text-align: right; }
+.cs {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.cs i {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--n9);
+  font-style: normal;
+  font-weight: 800;
+  font-size: 15px;
+  flex: none;
+}
+:root[data-theme="dark"] .cs i { color: #E0F7FA; }
+.cs small {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c6);
+  margin-top: 2px;
+}
+:root[data-theme="dark"] .cs small { color: var(--c3); }
+
+/* Komponen Umum Semua Halaman (Detail, Validasi, Graf, Cari, Analitik, Laporan, Konfig) */
+.dg {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
+  align-items: start;
+}
+.row3 {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  margin-bottom: 22px;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.top h1 {
+  margin: 0;
+  flex: 1;
+  min-width: 220px;
+  font-size: clamp(24px, 2.8vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+}
+.top h1 span { font-weight: 400; color: var(--tx2); }
+.bk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--tx);
+  border-radius: 999px;
+  padding: 0 18px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--sh-sm);
+}
+.bd {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 13px 5px 9px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.bd svg.i { width: 15px; height: 15px; }
+.bd.dug { background: #FEF3C7; color: #92400E; }
+.bd.ver { background: #D1FAE5; color: #065F46; }
+.bd.bukti { background: #FFEDD5; color: #9A3412; }
+.bd.ars { background: #E2E8F0; color: #334155; }
+.sd {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 7px;
+}
+.sd.dug { background: repeating-linear-gradient(135deg, var(--dug) 0 2px, #FDE3B4 2px 4px); }
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: var(--pill-bg);
+  padding: 6px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+  width: fit-content;
+  max-width: 100%;
+}
+.tabs button {
+  border: 0;
+  background: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tx2);
+}
+.tabs button:hover { color: var(--tx); }
+.tabs .on {
+  background: var(--n9);
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: var(--sh-sm);
+}
+:root[data-theme="dark"] .tabs .on {
+  background: var(--c5);
+  color: #0B1F44;
+}
+
+.it {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 8px;
+  border-bottom: 1px solid var(--bd);
+  width: 100%;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  text-align: left;
+  border-radius: 12px;
+}
+.it:hover { background: var(--card); }
+.it:last-child { border-bottom: 0; }
+.it > i {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--n9);
+  font-style: normal;
+  font-weight: 800;
+  font-size: 15px;
+  flex: none;
+}
+:root[data-theme="dark"] .it > i { color: #E0F7FA; }
+.it span {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.it span small {
+  display: block;
+  font-weight: 500;
+  color: var(--tx2);
+  font-size: 13.5px;
+  margin-top: 3px;
+}
+.ch {
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-weight: 700;
+  font-size: 13.5px;
+  background: var(--chip);
+  color: var(--n9);
+}
+:root[data-theme="dark"] .ch { color: #E0F7FA; }
+.ch.w { background: var(--peach); color: var(--ptx); }
+
+/* Peta Keberulangan & Grafik SVG (Teks Jelas & Kontras) */
+.map svg { width: 100%; height: auto; display: block; }
+.map text { fill: var(--tx); font-size: 11px; font-weight: 700; }
+.tip {
+  display: inline-block;
+  background: var(--pill-bg);
+  color: var(--tx);
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.pu {
+  animation: pu 2s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Linimasa 7 Entitas & Detail Kasus */
+.tl { list-style: none; margin: 0; padding: 0; }
+.tl li {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 16px;
+  padding-bottom: 22px;
+  position: relative;
+}
+.tl li:before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 42px;
+  bottom: 2px;
+  width: 2.5px;
+  background: var(--c5);
+}
+.tl li.h:before {
+  background: repeating-linear-gradient(180deg, var(--dug) 0 5px, transparent 5px 10px);
+}
+.tl li:last-child:before { display: none; }
+.tl li:last-child { padding: 0; }
+.tl .n {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--n9);
+  font-size: 14px;
+  font-weight: 800;
+}
+:root[data-theme="dark"] .tl .n { color: #E0F7FA; }
+.tl small, .dl small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tx2);
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.tl span, .dl span {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--tx);
+}
+.mu { color: var(--tx2) !important; font-weight: 500 !important; }
+.nt {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7C2D12;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+}
+.warm {
+  border-radius: 26px;
+  background: var(--peach);
+  color: var(--ptx);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.warm .t { font-weight: 800; font-size: 16px; }
+.warm p { margin: 0; font-size: 14px; font-weight: 500; }
+.cta {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel);
+  color: var(--tx);
+  border-radius: 18px;
+  padding: 10px 12px 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 0;
+  text-align: left;
+  width: 100%;
+  box-shadow: var(--sh-sm);
+}
+.cta i {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dug);
+  color: #FFFFFF;
+  flex: none;
+}
+
+/* Replay, Validasi, Knowledge Graph, Cari, Analitik, Laporan, Konfig */
+.rs { width: 100%; height: auto; display: block; }
+.rs text { fill: var(--tx); font-size: 11px; font-weight: 700; }
+.ln { stroke: var(--n7); }
+:root[data-theme="dark"] .ln { stroke: var(--c3); }
+input[type=range] { width: 100%; accent-color: var(--n9); min-height: 36px; }
+.rv { font-size: 40px; font-weight: 800; line-height: 1.1; margin: 8px 0; color: var(--tx); }
+.rv small { font-size: 15px; font-weight: 600; color: var(--tx2); }
+.rv span+span { font-size: 15px; font-weight: 700; margin-left: 12px; }
+.dl > div { padding: 14px 0; border-bottom: 1px solid var(--bd); }
+.dl > div:last-child { border: 0; }
+.ck { display: flex; gap: 12px; align-items: center; min-height: 44px; font-size: 14.5px; font-weight: 600; }
+.ck input { width: 20px; height: 20px; accent-color: var(--n9); }
+textarea {
+  width: 100%;
+  border: 1.5px solid var(--bd);
+  background: var(--card);
+  color: var(--tx);
+  border-radius: 16px;
+  padding: 14px 16px;
+  min-height: 92px;
+  resize: vertical;
+  font-size: 14.5px;
+}
+.qi {
+  flex: 1;
+  min-width: 220px;
+  border: 1.5px solid var(--bd);
+  background: var(--card);
+  color: var(--tx);
+  border-radius: 999px;
+  padding: 0 20px;
+  min-height: 48px;
+  font-size: 14.5px;
+}
+.gw { overflow-x: auto; padding-bottom: 6px; }
+.gw svg { min-width: 660px; width: 100%; height: auto; display: block; }
+.gw text { fill: var(--tx); font-size: 10.5px; font-weight: 700; }
+.gw .lb2 { font-size: 9.5px; font-weight: 600; fill: var(--tx2); }
+.gn { cursor: pointer; }
+.ar {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr 52px;
+  gap: 12px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 0;
+}
+.ar b { text-align: right; font-weight: 800; }
+.fn {
+  border: 0;
+  background: var(--chip);
+  color: var(--n9);
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-left: 6px;
+  min-height: 30px;
+}
+.ragi {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bd);
+  font-size: 14.5px;
+}
+.mic {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--c5);
+  color: #0B1F44;
+  margin: 0 auto;
+  box-shadow: var(--sh-md);
+}
+.mic svg.i { width: 38px; height: 38px; }
+.mic.on { background: var(--n9); color: #FFFFFF; animation: pu2 1.6s ease-out infinite; }
+.wv { display: flex; gap: 4px; align-items: center; justify-content: center; height: 46px; margin: 16px 0; }
+.wv i { width: 4px; height: 9px; border-radius: 2px; background: var(--c5); }
+.rec .wv i { animation: wv .7s ease-in-out infinite alternate; }
+.tr {
+  font-size: 15.5px;
+  line-height: 1.9;
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 18px;
+  padding: 18px;
+  min-height: 96px;
+  margin: 14px 0;
+}
+.lw {
+  border: 0;
+  background: #FFF3E0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #9A3412;
+  font-weight: 700;
+  text-decoration: underline wavy var(--buk);
+  text-underline-offset: 4px;
+}
+.lw.ok { text-decoration: none; background: #D1FAE5; color: #065F46; }
+.ec {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 22px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--sh-sm);
+}
+.hh {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.ec textarea { min-height: 62px; }
+.ec .pill { margin-top: 10px; }
+
+/* Konfigurasi Aset (S-13) */
+.trb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 10px 14px;
+  border-radius: 14px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tx);
+}
+.trb:hover { background: var(--pill-bg); }
+.trb.on { background: var(--n9); color: #FFFFFF; font-weight: 700; }
+:root[data-theme="dark"] .trb.on { background: var(--c5); color: #0B1F44; }
+.trb.on small, .trb.on .mu { color: var(--c3) !important; }
+:root[data-theme="dark"] .trb.on small, :root[data-theme="dark"] .trb.on .mu { color: #0B1F44 !important; }
+.trc {
+  margin-left: 20px;
+  padding-left: 14px;
+  border-left: 2px dashed var(--bd);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.tg small { font-weight: 600; color: var(--tx2); }
+.fgr { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.in2 {
+  border: 1.5px solid var(--bd);
+  background: var(--card);
+  color: var(--tx);
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 14px;
+  min-height: 42px;
+  flex: 1;
+  min-width: 150px;
+}
+
+#ts {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 26px;
+  background: var(--n9);
+  color: #FFFFFF;
+  border: 1.5px solid var(--c3);
+  padding: 12px 20px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+  z-index: 50;
+  max-width: 92vw;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--sh-lg);
+}
+#ts.on { opacity: 1; }
+
+@media (max-width: 1120px) {
+  .bento-top { grid-template-columns: 1fr 1fr; }
+  .bento-top > :last-child { grid-column: 1 / -1; }
+  .bento-bot, .dg { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  body { padding: 8px; }
+  #shell { border-radius: 26px; padding: 14px; padding-bottom: 92px; }
+  #topbar { border-radius: 24px; padding: 12px 14px; }
+  .nav-pills { display: none; }
+  #work { grid-template-columns: 1fr; }
+  #dock {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    flex-direction: row;
+    justify-content: center;
+    z-index: 40;
+  }
+  .dk-cap {
+    flex-direction: row;
+    padding: 6px 10px;
+    box-shadow: var(--sh-lg);
+    border: 1px solid var(--bd);
+  }
+  .dk-cap:not(:first-child) { display: none; }
+  .bento-top { grid-template-columns: 1fr; }
+  .ac-body { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pu, .mic.on, .rec .wv i, .anim, .pbar { animation: none !important; }
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <!-- TOP FLOATING PILL NAVBAR (Persis Referensi Quixotic) -->
+  <header id="topbar">
+    <button class="brand" data-go="beranda" aria-label="SYNQRA Beranda">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="var(--n9)"/>
+        <path d="M13 25C13 27.2 14.8 29 17 29H23C25.2 29 27 27.2 27 25C27 22.8 25.2 21 23 21H17C14.8 21 13 19.2 13 17C13 14.8 14.8 13 17 13H23C25.2 13 27 14.8 27 17" fill="none" stroke="var(--c3)" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="17" cy="13" r="3" fill="var(--c5)"/>
+        <circle cx="23" cy="29" r="3" fill="var(--c5)"/>
+        <path d="M24 26L30 32" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-tx">SYNQRA</span>
+    </button>
+
+    <nav class="nav-pills" id="top-nav" aria-label="Menu utama"></nav>
+
+    <div class="top-act">
+      <button class="ib" aria-label="Cari kasus" data-go="cari" title="Cari Kasus Serupa (S-08)">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+      </button>
+      <button class="ib" aria-label="Antrean Validasi" data-go="validasi" title="Periksa Antrean Validasi">
+        <svg class="i" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15zM10 21h4"/></svg>
+        <span class="dot" id="ndot"></span>
+      </button>
+      <button class="usr" data-go="konfig" title="Rina – Pakar Validator & Konfigurasi Aset">
+        <span class="av">RN</span>
+        <span>Rina</span>
+        <span style="color:var(--tx2);font-size:12px">▾</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- BARIS SAPAAN & AKSI CEPAT -->
+  <section id="subbar">
+    <h1>Selamat pagi, <span>Rina</span></h1>
+    <div class="sub-pills">
+      <button class="pill" data-go="konfig" title="Filter Departemen & Spesifikasi Peralatan">
+        <svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+        <span id="dpb">Jun – Nov 2026 · HSE (Semua)</span> ▾
+      </button>
+      <button class="pill pr" data-go="laporan">+ Laporan baru</button>
+    </div>
+  </section>
+
+  <!-- WORKSPACE: LEFT FLOATING DOCK + MAIN -->
+  <div id="work">
+    <aside id="dock" aria-label="Navigasi samping"></aside>
+
+    <!-- BERANDA (BENTO GRID QUIXOTIC) -->
+    <main id="mh">
+      <div class="bento-top">
+        <!-- Kolom 1: Kartu Aset 3D + KPI Keberulangan -->
+        <div class="col-st anim d1">
+          <section class="wcard" aria-label="Kondisi Aset Utama">
+            <div class="chd">
+              <div>
+                <h2>Kondisi Aset Utama</h2>
+                <span class="csub">Pemantauan skenario & model 3D interaktif</span>
+              </div>
+              <button class="go" data-go="kasus-k-033" aria-label="Buka kasus K-033" title="Buka Detail K-033">
+                <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </button>
+            </div>
+
+            <div class="asset-card">
+              <div class="ac-top">
+                <span class="ac-tag">P-101A · POMPA SENTRIFUGAL</span>
+                <span class="sim">Data simulasi</span>
+              </div>
+              <div class="ac-body">
+                <div>
+                  <span class="ac-lbl">Getaran saat ini</span>
+                  <div class="ac-val"><span id="hv">7,8</span><small>mm/s</small></div>
+                  <div class="co-pill" role="status"><i id="cd"></i><span id="ct">Seal: alarm aktif</span></div>
+                </div>
+                <div id="t3" aria-label="Model 3D pompa P-101A, geser untuk memutar"></div>
+              </div>
+              <div class="ac-foot">
+                <span>Suhu bearing: <b id="ht" style="color:#fff">72 °C</b></span>
+                <button class="rp-btn" id="rp">Putar replay ›</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="wcard">
+            <div class="kpi-row">
+              <div>
+                <span class="csub">Kejadian Serupa (P-101A)</span>
+                <div class="kpi-num">3 Kasus <span style="font-size:16px;font-weight:600;color:var(--tx2)">terkait</span></div>
+              </div>
+              <span class="bdg-pill">+92% kecocokan</span>
+            </div>
+          </section>
+        </div>
+
+        <!-- Kolom 2: Status Bukti per Bulan (Pill Bar Chart ala Engagement Rate) -->
+        <section class="wcard anim d2">
+          <div class="chd">
+            <div class="chd-l">
+              <span class="c-ic"><svg class="i" viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span>
+              <div>
+                <h2>Status Bukti per Bulan</h2>
+                <span class="csub">Perbandingan kasus terverifikasi vs dugaan</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="pill" style="min-height:36px;padding:6px 14px;font-size:13px;background:var(--n9);color:#fff;border:0">Jun – Nov</span>
+              <button class="go" data-go="analitik" aria-label="Buka Analitik" title="Lihat Analitik Lengkap">
+                <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="pchart-wrap">
+            <div class="pchart-grid" id="cap" role="img" aria-label="Grafik pengetahuan terverifikasi dan dugaan per bulan"></div>
+          </div>
+
+          <div class="lgd">
+            <span><i style="background:linear-gradient(180deg,var(--c5),var(--n7))"></i>Terverifikasi pakar</span>
+            <span><i style="background:repeating-linear-gradient(-45deg,#1E4B6B 0 4px,#7FDFFF 4px 8px)"></i>Total kasus (termasuk dugaan)</span>
+            <span class="sim" style="margin-left:auto">Data simulasi</span>
+          </div>
+        </section>
+
+        <!-- Kolom 3: Perlu Perhatian (Area Wave Chart + Dual Action Pill) -->
+        <section class="wcard anim d3" style="display:flex;flex-direction:column;justify-content:space-between">
+          <div class="chd" style="margin-bottom:6px">
+            <div>
+              <h2>Perlu Perhatian Pakar</h2>
+              <span class="csub">Antrean klaim yang menunggu pemeriksaan bukti</span>
+            </div>
+            <button class="go" data-go="validasi" aria-label="Periksa antrean validasi">
+              <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </button>
+          </div>
+
+          <div class="bal-center">
+            <span class="bal-lbl">Menunggu Validasi</span>
+            <div class="bal-num" id="wn">3 <small>Kasus</small></div>
+            <span class="bdg-pill warn" id="gz-txt">50% Terverifikasi</span>
+          </div>
+
+          <div id="gz"></div>
+          <p id="wp" style="margin:0 0 14px;font-size:13.5px;color:var(--tx2);text-align:center;font-weight:500"></p>
+
+          <div class="dual-btn">
+            <button class="pr" data-go="validasi">Periksa Bukti ↑</button>
+            <button data-go="laporan">+ Lapor Baru ↓</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- BARIS BAWAH: TABEL ANTREAN VALIDASI + KOLOM KANAN (PETA & KASUS SERUPA) -->
+      <div class="bento-bot anim d4">
+        <section class="wcard">
+          <div class="chd">
+            <div>
+              <h2>Antrean Validasi & Kasus Terbaru</h2>
+              <span class="csub">Klaim penyebab dari laporan teknisi yang wajib dikroscek bukti</span>
+            </div>
+            <button class="go" data-go="kasus" aria-label="Lihat semua kasus" title="Semua Kasus">
+              <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>Kasus & Gejala</th><th>Tanggal</th><th>Aset</th><th>Bukti</th><th>Status</th><th>Aksi</th></tr>
+              </thead>
+              <tbody id="tb"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="col-st">
+          <section class="wcard map">
+            <div class="chd" style="margin-bottom:10px">
+              <div class="chd-l">
+                <span class="c-ic"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+                <div>
+                  <h2>Peta Keberulangan</h2>
+                  <span class="csub">Jeda kejadian berulang selama 30 bulan</span>
+                </div>
+              </div>
+              <button class="go" data-go="analitik" aria-label="Analitik keberulangan">
+                <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </button>
+            </div>
+            <svg viewBox="0 0 320 126" id="mp" role="img" aria-label="Kejadian per aset selama 30 bulan"></svg>
+            <span class="tip" id="tp"></span>
+          </section>
+
+          <section class="wcard">
+            <div class="chd" style="margin-bottom:10px">
+              <div>
+                <h2>Kasus Serupa P-101A</h2>
+                <span class="csub">Kandidat pembanding dari basis pengetahuan</span>
+              </div>
+              <button class="go" data-go="cari" aria-label="Pencarian kasus serupa">
+                <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </button>
+            </div>
+            <div id="sim"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- CONTAINER LAYAR DINAMIS (KASUS, DETAIL, VALIDASI, GRAF, CARI, ANALITIK, LAPORAN, KONFIG) -->
+    <main id="mv" class="anim" hidden></main>
+  </div>
+</div>
+
+<div id="ts" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),tst=m=>{const e=$('#ts');e.textContent=m;e.className='on';clearTimeout(tst.t);tst.t=setTimeout(()=>e.className='',3000)};
+
+const IC={
+  home:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  kasus:'<path d="M5 4h14v16H5zM9 9h6M9 13h6"/>',
+  graf:'<circle cx="6" cy="7" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.7 8.4l3.2 7.8M16.7 7.7l-3.6 8.5M8 7h8"/>',
+  cari:'<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>',
+  valid:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+  anl:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
+  konf:'<path d="M4 6h6l2 2h8v11H4zM12 11v5M9.5 13.5h5"/>',
+  lapor:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
+  theme:'<path d="M12 3a9 9 0 109 9c0-.5 0-1-.1-1.5A7 7 0 0113.5 3.1C13 3 12.5 3 12 3z"/>'
+};
+
+const NAV=[
+  ['home','Beranda','beranda'],
+  ['kasus','Kasus','kasus'],
+  ['graf','Knowledge Graph','graf'],
+  ['cari','Cari & RAG','cari'],
+  ['valid','Validasi','validasi'],
+  ['anl','Analitik','analitik'],
+  ['konf','Konfigurasi Aset','konfig']
+];
+
+$('#top-nav').innerHTML=NAV.map(([k,l,g],i)=>`<button class="np${i?'':' on'}" data-go="${g}">${l}</button>`).join('');
+
+$('#dock').innerHTML=`
+  <div class="dk-cap">
+    ${NAV.slice(0,4).map(([k,l,g],i)=>`<button class="dk-b${i?'':' on'}" data-go="${g}" title="${l}" aria-label="${l}"><svg class="i" viewBox="0 0 24 24">${IC[k]}</svg></button>`).join('')}
+  </div>
+  <div class="dk-cap">
+    ${NAV.slice(4).map(([k,l,g])=>`<button class="dk-b" data-go="${g}" title="${l}" aria-label="${l}"><svg class="i" viewBox="0 0 24 24">${IC[k]}</svg></button>`).join('')}
+    <button class="dk-b" data-go="laporan" title="Laporan Baru" aria-label="Laporan Baru"><svg class="i" viewBox="0 0 24 24">${IC.lapor}</svg></button>
+  </div>
+  <div class="dk-cap">
+    <button class="dk-b" id="thm-btn" title="Ganti Mode Terang / Gelap" aria-label="Ganti Tema"><svg class="i" viewBox="0 0 24 24">${IC.theme}</svg></button>
+  </div>`;
+
+$('#thm-btn').onclick=()=>{
+  const d=document.documentElement,cur=d.getAttribute('data-theme')=='dark'?'light':'dark';
+  d.setAttribute('data-theme',cur);
+  tst('Tema diubah ke mode '+(cur=='dark'?'Gelap':'Terang')+'.');
+};
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');
+  if(g){
+    let t=g.dataset.go;
+    if(t=='validasi'){
+      const q=Q();
+      if(!q)return tst('Tidak ada kasus yang menunggu validasi.');
+      t='validasi-'+q.id.toLowerCase();
+    }
+    location.hash=t;
+    return;
+  }
+  const b=e.target.closest('[data-n]');
+  if(b&&b.dataset.n)tst(b.dataset.n);
+});
+
+const DB=[
+  {id:'K-009',a:'E',tag:'E-201',g:'Rembesan sambungan channel',st:'ars',ev:2,d:'2024-09',m:3},
+  {id:'K-014',a:'P',tag:'P-101A',g:'Seal bocor, getaran naik',st:'ver',ev:3,d:'2025-03',m:9},
+  {id:'K-021',a:'P',tag:'P-101A',g:'Getaran dan bunyi kerikil',st:'dug',ev:1,d:'2025-11',m:17},
+  {id:'K-027',a:'E',tag:'E-201',g:'ΔP naik, suhu keluar turun',st:'ver',ev:4,d:'2025-06',m:12},
+  {id:'K-031',a:'F',tag:'FCV-301',g:'Respons valve lambat',st:'bukti',ev:1,d:'2026-02',m:20},
+  {id:'K-033',a:'P',tag:'P-101A',g:'Getaran naik, rembesan seal',st:'dug',ev:2,d:'2026-08',m:26}
+];
+const SC={dug:'#F59E0B',ver:'#10B981',bukti:'#F97316',ars:'#64748B'},
+      SL={dug:'Dugaan',ver:'Terverifikasi',bukti:'Perlu bukti tambahan',ars:'Arsip'},
+      BL=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const sdot=s=>`<i class="sd ${s}" style="background:${s=='dug'?'':SC[s]}"></i>`;
+
+function rh(){
+  const wt=DB.filter(x=>x.st=='dug'||x.st=='bukti').length,
+        vr=DB.filter(x=>x.st=='ver').length,
+        pct=Math.round(100*vr/DB.length);
+  $('#wn').innerHTML=wt+' <small>Kasus</small>';
+  $('#gz-txt').textContent=pct+'% Terverifikasi ('+vr+'/'+DB.length+')';
+  $('#wp').textContent='Dugaan tidak pernah dipakai sebagai kesimpulan sebelum bukti diperiksa pakar.';
+  $('#ndot').style.display=wt?'block':'none';
+
+  $('#gz').innerHTML=`
+    <svg class="wave-svg" viewBox="0 0 280 86" aria-hidden="true">
+      <defs>
+        <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--c5)" stop-opacity="0.38"/>
+          <stop offset="100%" stop-color="var(--c5)" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,62 C28,58 44,24 72,26 C100,28 114,56 142,42 C170,28 190,14 218,32 C244,48 260,20 280,16 L280,84 L0,84 Z" fill="url(#wg)"/>
+      <path d="M0,62 C28,58 44,24 72,26 C100,28 114,56 142,42 C170,28 190,14 218,32 C244,48 260,20 280,16" fill="none" stroke="var(--n7)" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="218" cy="32" r="4.5" fill="var(--c5)" stroke="#fff" stroke-width="2"/>
+    </svg>`;
+
+  const CP=[[1,2],[2,4],[1,3],[3,5],[2,4],[2,5]];
+  $('#cap').innerHTML=`
+    <div class="pchart-y"><span>6</span><span>4</span><span>2</span><span>0</span></div>`+
+    CP.map(([v,tot],i)=>{
+      const hi=i==3;
+      return `<div class="pbar-col">
+        <div class="pbar${hi?' hi':''}" style="height:${Math.round(tot/6*175)}px;animation-delay:${i*60}ms">
+          ${hi?`<span class="pbar-top-callout">${pct}% Valid</span>`:''}
+          <u style="height:${Math.round(v/tot*100)}%" title="${v} terverifikasi dari ${tot} kasus"></u>
+        </div>
+        <span class="pbar-lbl">${BL[5+i].toUpperCase()}</span>
+      </div>`;
+    }).join('');
+
+  $('#sim').innerHTML=[['K-014',92],['K-033',88],['K-021',64]].map(([id,p])=>{
+    const k=DB.find(x=>x.id==id);
+    return `<button class="it" data-go="kasus-${id.toLowerCase()}">
+      <i>${k.a}</i>
+      <span>${id} · ${k.g}<small>${sdot(k.st)}${SL[k.st]} · ${k.ev} bukti tertaut</small></span>
+      <b class="ch${p<85?' w':''}">${p}%</b>
+    </button>`;
+  }).join('');
+
+  const X=m=>56+m*8.6,rows=[['P','P-101A'],['E','E-201'],['F','FCV-301']];
+  let mp='';
+  rows.forEach(([a,t],r)=>{
+    const y=26+r*34;
+    mp+=`<text x="2" y="${y+4}">${t}</text>`;
+    for(let m=0;m<30;m++)mp+=`<circle cx="${X(m)}" cy="${y}" r="2" fill="var(--bd)"/>`;
+    DB.filter(k=>k.a==a).forEach(k=>{
+      if(k.id=='K-033')mp+=`<circle class="pu" cx="${X(k.m)}" cy="${y}" r="5" fill="${SC[k.st]}"/>`;
+      mp+=`<circle cx="${X(k.m)}" cy="${y}" r="6" fill="${SC[k.st]}" stroke="var(--panel)" stroke-width="2"><title>${k.id}: ${k.g} (${SL[k.st]}, ${k.d})</title></circle>`;
+    });
+  });
+  $('#mp').innerHTML=mp+`<text x="${X(0)}" y="118">Jun 2024</text><text x="${X(19)}" y="118">Nov 2026</text>`;
+  const pk=DB.filter(k=>k.a=='P').map(k=>k.m);
+  $('#tp').textContent='P-101A: '+pk.length+' kejadian · Jeda keberulangan '+pk.slice(1).map((m,i)=>m-pk[i]).join(' dan ')+' bulan';
+
+  const L=DB.filter(k=>k.st=='dug'||k.st=='bukti');
+  $('#tb').innerHTML=L.map(k=>`
+    <tr>
+      <td><div class="cs"><i>${k.a}</i><span>${k.id} · ${k.g}<small>Diusulkan teknisi · Menunggu tinjauan</small></span></div></td>
+      <td>${BL[+k.d.slice(5)-1]} ${k.d.slice(0,4)}</td>
+      <td><b>${k.tag}</b></td>
+      <td>${k.ev} berkas</td>
+      <td>${BG(k.st)}</td>
+      <td><button class="go" aria-label="Periksa ${k.id}" data-go="validasi-${k.id.toLowerCase()}" title="Periksa Bukti ${k.id}"><svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></button></td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center">Antrean kosong. Semua kasus sudah diperiksa pakar.</td></tr>';
+}
+
+/* Replay + 3D Pompa */
+const val=(b,k,t)=>{const p=t<=30?0:t<=80?t-30:50*Math.exp(-(t-80)/10);return b+p*k+Math.sin(t/5)*b*.03},
+      f1=v=>v.toFixed(1).replace('.',',');
+let T=80,tm=0,P3=null;
+function show(t){
+  T=t;
+  $('#hv').textContent=f1(Math.max(0,val(1.8,.12,t)));
+  $('#ht').textContent=Math.round(val(55,.45,t))+' °C';
+  const c=t<30?['Seal normal','#00B8D9']:t<55?['Seal: gejala awal','#F59E0B']:t<=80?['Seal: alarm aktif','#EF4444']:['Shutdown & pemulihan','#10B981'];
+  $('#ct').textContent=c[0];
+  $('#cd').style.background=c[1];
+  if(P3)P3.set(t);
+}
+$('#rp').onclick=()=>{
+  if(tm){clearInterval(tm);tm=0;$('#rp').textContent='Putar replay ›';return}
+  let t=0;show(0);$('#rp').textContent='Jeda ❚❚';
+  tm=setInterval(()=>{t++;show(t);if(t>=120){clearInterval(tm);tm=0;$('#rp').textContent='Putar ulang ›'}},110);
+};
+function pump(el){
+  if(!window.THREE||!el)return;
+  try{
+    const w=el.clientWidth||220,h=el.clientHeight||165,r=new THREE.WebGLRenderer({antialias:true,alpha:true}),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(w,h);el.appendChild(r.domElement);
+    const s=new THREE.Scene(),c=new THREE.PerspectiveCamera(32,w/h,.1,100),g=new THREE.Group(),M=(col)=>new THREE.MeshStandardMaterial({color:col,roughness:.75,metalness:.1}),H=Math.PI/2,Y=-.15,W=M(0xEAF3F8),N=M(0x7FDFFF),B=M(0x00B8D9),o={};
+    c.position.set(0,2.3,9.5);c.lookAt(0,0,0);s.add(new THREE.HemisphereLight(0xffffff,0x1E4B6B,1.05));
+    const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(3,6,4);s.add(dl,g);
+    const add=(G,m,x,y,z,rx,ry,rz)=>{const k=new THREE.Mesh(G,m);k.position.set(x,y,z);k.rotation.set(rx||0,ry||0,rz||0);g.add(k);return k},cy=(a,b,l)=>new THREE.CylinderGeometry(a,b,l,36),tr=(a,b)=>new THREE.TorusGeometry(a,b,14,36);
+    add(cy(1,1,.2),W,0,-1,0).scale.set(2.7,1,1);
+    add(cy(.6,.6,1.7),N,1.7,Y,0,0,0,H);[1.2,1.7,2.2].forEach(x=>add(tr(.62,.045),B,x,Y,0,0,H));add(new THREE.SphereGeometry(.6,28,16),N,2.55,Y,0).scale.set(.35,1,1);
+    add(new THREE.SphereGeometry(.85,36,24),W,-.4,Y,0).scale.set(.75,1,1);
+    add(cy(.26,.26,1.1),W,-.4,.95,0);add(tr(.34,.08),B,-.4,1.5,0,H);add(cy(.32,.32,1.1),W,-1.6,Y,0,0,0,H);add(tr(.38,.08),B,-2.15,Y,0,0,H);
+    add(cy(.4,.4,.5),B,.55,Y,0,0,0,H);o.seal=add(tr(.5,.11),M(0x00B8D9),.15,Y,0,0,H);
+    o.set=t=>{const k=t<30?0x00B8D9:t<55?0xF59E0B:t<=80?0xEF4444:0x10B981;o.seal.material.color.setHex(k);o.seal.material.emissive.setHex(t<30?0:k);o.seal.material.emissiveIntensity=.5};g.position.x=-.25;
+    let dx=0,dn=0,px;const d=r.domElement;
+    d.onpointerdown=e=>{dn=1;px=e.clientX;d.setPointerCapture(e.pointerId)};
+    d.onpointermove=e=>{if(dn){dx+=(e.clientX-px)*.01;px=e.clientX}};
+    d.onpointerup=d.onpointercancel=()=>dn=0;
+    addEventListener('resize',()=>{if(el.isConnected&&el.clientWidth){r.setSize(el.clientWidth,el.clientHeight);c.aspect=el.clientWidth/el.clientHeight;c.updateProjectionMatrix()}});
+    (function a(ts){if(!el.isConnected){r.dispose();return}g.rotation.y=-.55+dx+(rm?0:Math.sin(ts/2200)*.25);r.render(s,c);requestAnimationFrame(a)})(0);
+    return o;
+  }catch(e){}
+}
+
+/* Data Detail Kasus, Validasi, Graf, Cari, Analitik, Laporan, Konfigurasi */
+const TY={P:'Pompa sentrifugal',E:'Heat exchanger',F:'Control valve',V:'Pressure vessel',R:'Catalytic reactor',H:'Fired heater'},
+      BI={dug:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>',ver:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',bukti:'<path d="M12 4l9 16H3zM12 10v4M12 17h.01"/>',ars:'<path d="M4 5h16v4H4zM6 9v10h12V9M10 13h4"/>'},
+      BG=s=>`<span class="bd ${s}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${BI[s]}</svg>${SL[s]}</span>`;
+
+const CD={
+  'K-014':{g:'Seal bocor, getaran naik',kd:'Getaran 7,8 mm/s, bearing 72 °C, aliran 92% dari desain',iv:'Rembesan terlihat di sisi seal; getaran naik tiga minggu sebelum alarm',cs:'Face mechanical seal aus karena pompa sering beroperasi dekat batas bawah aliran',ac:'Ganti mechanical seal dan luruskan ulang poros',vf:'Getaran turun ke 1,9 mm/s setelah 7 hari',rp:1,bk:[['Foto','Foto seal terlepas','penyebab'],['Log','Log getaran 30 hari','gejala'],['Dokumen','Laporan inspeksi IS-0325','penyebab']]},
+  'K-021':{g:'Getaran dan bunyi kerikil',kd:'Aliran 70% dari desain, suhu hisap tinggi',iv:'Belum ada pembongkaran; hanya catatan operator shift malam',cs:'Kavitasi di sisi hisap',ac:'',vf:'',bk:[['Catatan','Catatan operator shift malam','gejala']]},
+  'K-033':{g:'Getaran naik, rembesan seal',kd:'Getaran 6,9 mm/s, aliran 88% dari desain',iv:'Foto rembesan dan tren getaran 14 hari',cs:'Kemungkinan seal aus berulang seperti K-014',ac:'Inspeksi seal dijadwalkan (usulan teknisi)',vf:'',rp:1,bk:[['Foto','Foto rembesan seal','gejala'],['Log','Log getaran 14 hari','gejala']]},
+  'K-031':{g:'Respons valve lambat',kd:'Perintah 60%, posisi aktual tertinggal sekitar 8 detik',iv:'Uji stroke belum dilakukan',cs:'Gesekan packing tinggi',ac:'',vf:'',rq:'Hasil uji stroke',bk:[['Log','Log perintah vs posisi','gejala']]},
+  'K-009':{g:'Rembesan sambungan channel',kd:'Suhu keluar stabil, tekanan shell normal',iv:'Gasket channel diperiksa saat shutdown terjadwal',cs:'Gasket channel mengeras',ac:'Ganti gasket channel',vf:'Tidak ada rembesan setelah 30 hari',bk:[['Foto','Foto gasket channel','penyebab'],['Dokumen','Laporan shutdown SD-0924','penyebab']]},
+  'K-027':{g:'ΔP naik, suhu keluar turun',kd:'ΔP shell naik 40% dari awal, suhu keluar turun 12 °C',iv:'Inspeksi bundel tabung menemukan deposit',cs:'Fouling pada sisi tabung',ac:'Pembersihan kimia bundel tabung',vf:'ΔP kembali ke nilai awal',bk:[['Log','Log ΔP 60 hari','gejala'],['Foto','Foto deposit tabung','penyebab'],['Dokumen','Laporan pembersihan CL-0625','penyebab'],['Log','Log suhu setelah pembersihan','penyebab']]}
+};
+
+const SP={'K-014|K-033':90,'K-021|K-033':64,'K-014|K-021':58},LOG=[],
+      Q=()=>DB.filter(x=>x.st=='dug'||x.st=='bukti').sort((a,b)=>a.d<b.d?-1:1)[0],
+      EV=[[30,'Gejala awal'],[55,'Alarm'],[80,'Shutdown']],RX=t=>34+t*3,RY=v=>165-v*14,RV=t=>Math.max(0,val(1.8,.12,t));
+const hd=(k,b)=>`<header class="top"><button class="bk" data-go="${b[0]}">‹ ${b[1]}</button><h1><span style="color:inherit;font-weight:800">${k.id}</span> <span>${CD[k.id].g}</span></h1>${BG(k.st)}<span class="sim">Data simulasi</span></header>`;
+const ent=k=>{const c=CD[k.id];return[['Identitas aset',k.tag+', '+(TY[k.a]||'Unit proses')],['Gejala kegagalan',c.g],['Kondisi operasi',c.kd],['Hasil investigasi',c.iv],[k.st=='dug'||k.st=='bukti'?'Kandidat penyebab':'Penyebab terkonfirmasi',c.cs],['Tindakan korektif',c.ac],['Verifikasi pascaperbaikan',c.vf]]};
+const evl=c=>c.bk.map(([t,n,s])=>`<div class="it"><i>${t[0]}</i><span>${n}<small>${t} · mendukung ${s}</small></span></div>`).join('')||'<p class="mu">Belum ada bukti tertaut.</p>';
+let TB='r',TK='';
+
+function dk(k){
+  if(TK!=k.id){TK=k.id;TB='r'}
+  const c=CD[k.id],ver=k.st=='ver'||k.st=='ars',pend=k.st=='dug'||k.st=='bukti';
+  const sm=DB.filter(x=>k.a==x.a&&x.id!=k.id&&CD[x.id]).map(x=>[x.id,SP[[k.id,x.id].sort().join('|')]||72]).sort((a,b)=>b[1]-a[1]);
+  const B={
+    r:()=>`<ol class="tl">${ent(k).map(([l,v],i)=>`<li class="${i>3&&!ver?'h':''}"><b class="n">${i+1}</b><div><small>${l} ${i==4?BG(k.st):''}</small>${v?`<span>${v}</span>`:'<span class="mu">Belum ada data</span>'}</div></li>`).join('')}</ol>${ver?'':'<p class="nt">Kandidat penyebab belum diperiksa pakar. Jangan dipakai sebagai kesimpulan. Garis putus-putus berarti belum didukung bukti.</p>'}`,
+    p:()=>c.rp?`<svg class="rs" viewBox="0 0 420 195" role="img" aria-label="Grafik getaran pompa selama 120 hari simulasi"><rect x="34" y="20" width="366" height="47" fill="#F97316" opacity=".16"/><rect x="34" y="67" width="366" height="35" fill="#F59E0B" opacity=".16"/><text x="40" y="34">Kritis ≥ 7,0 mm/s</text><text x="40" y="82">Peringatan ≥ 4,5</text><text x="40" y="157">Normal</text><path class="ln" fill="none" stroke-width="2.8" stroke-linejoin="round" d="${Array.from({length:61},(_,i)=>(i?'L':'M')+RX(i*2)+' '+RY(RV(i*2)).toFixed(1)).join('')}"/>${EV.map(([t,l])=>`<circle cx="${RX(t)}" cy="${RY(RV(t))}" r="4.5" fill="var(--panel)" stroke="var(--tx)" stroke-width="2.2"/><text x="${RX(t)}" y="${RY(RV(t))-10}" text-anchor="middle">${l}</text>`).join('')}<line id="sl" y1="20" y2="165" stroke="var(--tx)" stroke-dasharray="4 3"/><circle id="sc" r="6" fill="var(--c5)" stroke="var(--tx)" stroke-width="2.2"/><text x="34" y="184">Hari 0</text><text x="200" y="184">Hari 60</text><text x="360" y="184">120 hari</text></svg><div class="rv"><span id="rv"></span><small> mm/s · hari ke-<b id="rt"></b></small><span id="rz"></span></div><input type="range" id="rg" min="0" max="120" value="80" aria-label="Waktu simulasi dalam hari"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">${EV.map(([t,l])=>`<button class="pill" data-t="${t}">${l}</button>`).join('')}</div><p class="mu" style="font-size:13.5px;margin-top:12px">Replay skenario seal bocor, bukan pembacaan sensor langsung.</p>`:'<p class="mu">Belum ada deret waktu simulasi untuk kasus ini.</p>',
+    g:()=>{const nb=Math.max(1,c.bk.length),h=Math.max(150,nb*52+44),ym=h/2;return`<div class="gw"><svg viewBox="0 0 580 ${h}" role="img" aria-label="Sub-graf kasus ${k.id}"><line x1="60" y1="${ym}" x2="165" y2="${ym}" stroke="var(--tx2)" stroke-width="2"/><line x1="165" y1="${ym}" x2="280" y2="${ym}" stroke="var(--tx2)" stroke-width="2"/><line x1="280" y1="${ym}" x2="405" y2="${ym}" stroke="var(--tx2)" stroke-width="2" ${ver?'':'stroke-dasharray="6 4"'}/><rect x="24" y="${ym-15}" width="72" height="30" rx="10" fill="var(--n7)"/><text x="60" y="${ym+4}" text-anchor="middle" style="fill:#fff;font-size:11px">${k.tag}</text><circle cx="165" cy="${ym}" r="20" fill="var(--chip)" stroke="var(--n7)" stroke-width="2"/><text x="165" y="${ym+4}" text-anchor="middle" style="fill:var(--n9);font-size:11px">${k.id}</text><polygon points="280,${ym-16} 296,${ym} 280,${ym+16} 264,${ym}" fill="var(--c3)" stroke="var(--n7)" stroke-width="2"/><text x="280" y="${ym+30}" text-anchor="middle">${c.g.slice(0,22)}</text><circle cx="405" cy="${ym}" r="16" ${k.st=='dug'?'stroke-dasharray="4 2.5"':''} fill="var(--panel)" stroke="${SC[k.st]}" stroke-width="4"/><text x="405" y="${ym+4}" text-anchor="middle" style="font-size:12px">${{ver:'✓',dug:'?',bukti:'!',ars:'–'}[k.st]}</text><text x="405" y="${ym+30}" text-anchor="middle">${(c.cs||'Belum ada').slice(0,22)}…</text>${c.bk.map((b,i)=>{const by=34+i*50,fx=b[2]=='penyebab'?405:280;return`<line x1="${fx}" y1="${ym}" x2="515" y2="${by}" stroke="var(--tx2)" stroke-width="1.8"/><rect x="505" y="${by-10}" width="20" height="20" rx="4" fill="var(--panel)" stroke="var(--tx2)" stroke-width="2"/><text x="515" y="${by+24}" text-anchor="middle">${b[1].slice(0,18)}</text>`}).join('')}</svg></div><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px"><span class="mu" style="font-size:13.5px">Garis ${ver?'solid: penyebab didukung bukti':'putus-putus: penyebab masih berstatus dugaan'}.</span><button class="pill" data-go="graf">Buka di Knowledge Graph Explorer ›</button></div>`},
+    b:()=>evl(c),
+    h:()=>{const w=BL[+k.d.slice(5)-1]+' '+k.d.slice(0,4),hs=[[w,'Laporan diterima. Kandidat penyebab berstatus Dugaan.']];if(ver)hs.push(['Sebelum sesi ini','Diverifikasi pakar dengan '+c.bk.length+' bukti tertaut.']);LOG.filter(l=>l[0]==k.id).forEach(l=>hs.push([l[1],l[2]]));return hs.map(([w,t])=>`<div class="it"><span>${t}<small>${w}</small></span></div>`).join('')+'<p class="mu" style="font-size:13.5px;margin-top:12px">Riwayat audit tidak dapat dihapus.</p>'}
+  }[TB]();
+
+  $('#mv').innerHTML=hd(k,['beranda','Beranda'])+`
+    <div class="dg">
+      <section class="cd">
+        <div class="tabs" role="tablist">
+          ${[['r','Ringkasan'],['p','Replay'],['g','Graf'],['b','Bukti'],['h','Riwayat']].map(([t,l])=>`<button role="tab" data-tb="${t}" class="${TB==t?'on':''}" aria-selected="${TB==t}">${l}</button>`).join('')}
+        </div>
+        ${B}
+      </section>
+      <aside class="col-st">
+        <section class="warm" ${pend?'':'style="display:none"'}>
+          <span class="t">Menunggu validasi pakar</span>
+          <p>${c.rq?'Pakar meminta bukti tambahan: '+c.rq+'.':'Penyebab masih berstatus dugaan sampai bukti diperiksa oleh personel berwenang.'}</p>
+          <button class="cta" data-go="validasi-${k.id.toLowerCase()}">Periksa bukti sekarang<i><svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></i></button>
+        </section>
+        <section class="cd">
+          <h2 style="margin-bottom:12px">Kasus serupa</h2>
+          ${sm.map(([id,p])=>{const x=DB.find(y=>y.id==id);return`<button class="it" data-go="kasus-${id.toLowerCase()}"><i>${x.a}</i><span>${id} · ${x.g}<small>${BG(x.st)}</small></span><b class="ch${p<85?' w':''}">${p}%</b></button>`}).join('')||'<p class="mu" style="margin:0">Belum ada kasus serupa pada aset ini.</p>'}
+        </section>
+      </aside>
+    </div>`;
+  if(TB=='p'&&c.rp)bindRp();
+}
+
+function bindRp(){
+  const g=$('#rg'),u=t=>{
+    t=+t;const v=RV(t);
+    $('#sl').setAttribute('x1',RX(t));$('#sl').setAttribute('x2',RX(t));
+    $('#sc').setAttribute('cx',RX(t));$('#sc').setAttribute('cy',RY(v));
+    $('#rv').textContent=f1(v);$('#rt').textContent=t;
+    $('#rz').textContent=v>=7?'■ Zona Kritis':v>=4.5?'▲ Peringatan':'● Normal';
+    g.value=t;
+  };
+  g.oninput=()=>u(g.value);
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>u(b.dataset.t));
+  u(80);
+}
+
+function dv(k){
+  const c=CD[k.id],en=ent(k),dir=c.bk.some(b=>b[2]=='penyebab');
+  $('#mv').innerHTML=hd(k,['kasus-'+k.id.toLowerCase(),'Detail Kasus'])+`
+    <div class="dg">
+      <section class="cd">
+        <h2 style="margin-bottom:14px">Klaim Laporan & Investigasi</h2>
+        <div class="dl">${en.slice(1).map(([l,v],i)=>`<div><small>${l} ${i==3?BG(k.st):''}</small>${v?`<span>${v}</span>`:'<span class="mu">Belum ada data</span>'}</div>`).join('')}</div>
+      </section>
+      <section class="cd">
+        <h2 style="margin-bottom:14px">Bukti Tertaut (${c.bk.length})</h2>
+        ${evl(c)}
+        <p class="nt">${dir?'Ada bukti yang langsung mendukung penyebab. Periksa kesesuaian teknis sebelum memutuskan.':'Belum ada bukti yang langsung mendukung penyebab yang diklaim.'}${c.rq?' Bukti yang diminta sebelumnya: '+c.rq+'.':''}</p>
+      </section>
+    </div>
+    <section class="cd" style="margin-top:22px">
+      <h2 style="margin-bottom:12px">Keputusan Validasi Pakar</h2>
+      ${['Apakah bukti langsung mendukung penyebab yang diklaim?','Apakah ada penjelasan alternatif yang belum diperiksa?','Apakah tindakan korektif konsisten dengan penyebab?','Apakah ada rencana atau hasil verifikasi pascaperbaikan?'].map(q=>`<label class="ck"><input type="checkbox">${q}</label>`).join('')}
+      <label for="cn" style="display:block;font-size:14px;font-weight:700;color:var(--tx);margin:16px 0 8px">Catatan alasan pakar (wajib diisi)</label>
+      <textarea id="cn" aria-describedby="hn" placeholder="Tuliskan alasan teknis verifikasi atau sebutkan bukti tambahan yang perlu dilengkapi…"></textarea>
+      <p id="hn" class="mu" style="font-size:13.5px;margin:10px 0 16px">Tombol <b>Terverifikasi</b> aktif jika minimal ada 1 bukti tertaut dan catatan alasan terisi (Aturan R2).</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="pill pr" id="bv">✓ Tetapkan Terverifikasi</button>
+        <button class="pill" id="bp">! Minta Bukti Tambahan</button>
+      </div>
+    </section>`;
+  const cn=$('#cn'),bv=$('#bv'),bp=$('#bp'),
+        sy=()=>{const f=cn.value.trim();bv.disabled=!(c.bk.length&&f);bp.disabled=!f},
+        dc=s=>{const f=cn.value.trim();k.st=s;c.rq=s=='bukti'?f:'';LOG.push([k.id,new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}),'Rina menetapkan '+SL[s]+': '+f]);tst(k.id+' ditetapkan sebagai '+SL[s]+'. Tercatat di riwayat.');location.hash='beranda'};
+  cn.oninput=sy;sy();bv.onclick=()=>dc('ver');bp.onclick=()=>dc('bukti');
+}
+
+$('#mv').addEventListener('click',e=>{const b=e.target.closest('[data-tb]');if(b){TB=b.dataset.tb;route()}});
+
+const hv=(t,s)=>`<header class="top"><h1><span style="color:inherit;font-weight:800">${t}</span> <span>· ${s}</span></h1><span class="sim">Data simulasi</span></header>`,
+      GO='<svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>',
+      dt=k=>BL[+k.d.slice(5)-1]+' '+k.d.slice(0,4),
+      TN={a:'Aset',k:'Kejadian',g:'Gejala',c:'Penyebab',b:'Bukti'};
+let KF='all',GS='cK-033',QS='Seal bocor, getaran naik pada pompa',QA='';
+
+function kl(){
+  const L=DB.filter(k=>KF=='all'||k.st==KF).sort((a,b)=>a.d<b.d?1:-1);
+  $('#mv').innerHTML=hv('Daftar Kasus','semua kejadian kegagalan')+`
+    <div class="wcard">
+      <div class="tabs">
+        ${[['all','Semua'],['ver','Terverifikasi'],['dug','Dugaan'],['bukti','Perlu bukti'],['ars','Arsip']].map(([f,l])=>`<button data-kf="${f}" class="${KF==f?'on':''}">${l} (${f=='all'?DB.length:DB.filter(k=>k.st==f).length})</button>`).join('')}
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Kasus & Gejala</th><th>Tanggal</th><th>Aset</th><th>Bukti</th><th>Status</th><th>Detail</th></tr></thead>
+          <tbody>
+            ${L.map(k=>`<tr><td><div class="cs"><i>${k.a}</i><span>${k.id} · ${k.g}<small>${TY[k.a]||'Unit proses'}</small></span></div></td><td>${dt(k)}</td><td><b>${k.tag}</b></td><td>${CD[k.id].bk.length} berkas</td><td>${BG(k.st)}</td><td><button class="go" aria-label="Buka ${k.id}" data-go="kasus-${k.id.toLowerCase()}">${GO}</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center">Tidak ada kasus dengan status ini.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function gr(){
+  const O=[...DB].sort((a,b)=>(a.tag+a.id)<(b.tag+b.id)?-1:1),XC=[55,165,290,425,565],N={},E=[],A={};let y=42;
+  O.forEach(k=>{
+    const c=CD[k.id],n=Math.max(1,c.bk.length),ym=y+(n-1)*24,ev=k.st=='ver'||k.st=='ars';
+    (A[k.tag]=A[k.tag]||{a:k.a,y:[]}).y.push(ym);
+    N[k.id]={t:'k',x:XC[1],y:ym,l:k.id,d:k.g,k};
+    N['g'+k.id]={t:'g',x:XC[2],y:ym,l:c.g,d:c.g,k};
+    N['c'+k.id]={t:'c',x:XC[3],y:ym,l:c.cs,d:c.cs,k};
+    E.push(['a'+k.tag,k.id,0],[k.id,'g'+k.id,0],['g'+k.id,'c'+k.id,ev?0:1]);
+    c.bk.forEach((b,i)=>{
+      N['b'+k.id+i]={t:'b',x:XC[4],y:y+i*48,l:b[1],d:b[1]+' ('+b[0]+')',k};
+      E.push([(b[2]=='penyebab'?'c':'g')+k.id,'b'+k.id+i,0]);
+    });
+    y+=n*48+12;
+  });
+  Object.entries(A).forEach(([t,v])=>N['a'+t]={t:'a',x:XC[0],y:v.y.reduce((p,q)=>p+q)/v.y.length,l:t,d:(TY[v.a]||'Aset')+' '+t,k:DB.find(k=>k.tag==t)});
+  if(!N[GS])GS='cK-033';
+  const tx=(x,y,s,st)=>`<text x="${x}" y="${y}" text-anchor="middle" style="${st}">${s}</text>`,
+        sh=n=>{
+          const{x,y,t,k}=n;
+          return t=='a'?`<rect x="${x-30}" y="${y-14}" width="60" height="28" rx="9" style="fill:var(--n7)"/>`+tx(x,y+4,n.l,'fill:#fff;font-size:10px;font-weight:800'):
+                 t=='k'?`<circle cx="${x}" cy="${y}" r="18" style="fill:var(--chip);stroke:var(--n7);stroke-width:2"/>`+tx(x,y+4,n.l,'fill:var(--n9);font-size:10px;font-weight:800'):
+                 t=='g'?`<polygon points="${x},${y-15} ${x+15},${y} ${x},${y+15} ${x-15},${y}" style="fill:var(--c3);stroke:var(--n7);stroke-width:2"/>`:
+                 t=='c'?`<circle cx="${x}" cy="${y}" r="15" ${k.st=='dug'?'stroke-dasharray="4 2.5"':''} style="fill:var(--panel);stroke:${SC[k.st]};stroke-width:4"/>`+tx(x,y+4,{ver:'✓',dug:'?',bukti:'!',ars:'–'}[k.st],'fill:var(--tx);font-size:12px;font-weight:800'):
+                 `<rect x="${x-9}" y="${y-9}" width="18" height="18" rx="4" style="fill:var(--panel);stroke:var(--tx2);stroke-width:2"/>`;
+        };
+  const s=N[GS],c=CD[s.k.id],
+        svg=`<svg viewBox="0 0 650 ${y+10}" role="group" aria-label="Knowledge graph 2D, ${O.length} kasus">
+          ${['Aset','Kejadian','Gejala','Penyebab','Bukti'].map((l,i)=>`<text x="${XC[i]}" y="18" text-anchor="middle">${l}</text>`).join('')}
+          ${E.map(([a,b,d])=>`<line x1="${N[a].x}" y1="${N[a].y}" x2="${N[b].x}" y2="${N[b].y}" style="stroke:var(--tx2);stroke-width:1.8" ${d?'stroke-dasharray="6 4"':''}/>`).join('')}
+          ${Object.entries(N).map(([id,n])=>`<g class="gn" tabindex="0" role="button" data-g="${id}" aria-label="${TN[n.t]}: ${n.d}">${GS==id?`<circle cx="${n.x}" cy="${n.y}" r="24" style="fill:none;stroke:var(--c5);stroke-width:3"/>`:''}${sh(n)}${n.t=='k'||n.t=='a'?'':`<text class="lb2" x="${n.x}" y="${n.y+(n.t=='b'?23:28)}" text-anchor="middle">${n.l.length>20?n.l.slice(0,19)+'…':n.l}</text>`}</g>`).join('')}
+        </svg>`;
+  $('#mv').innerHTML=hv('Knowledge Graph','keterkaitan kausal & bukti pendukung')+`
+    <div class="dg">
+      <section class="cd">
+        <div class="gw">${svg}</div>
+        <div class="lgd">
+          <span><b>Garis solid:</b> didukung bukti</span>
+          <span><b>Putus-putus:</b> masih dugaan</span>
+          <span><b>◆</b> Gejala</span>
+          <span><b>●</b> Kejadian</span>
+          <span><b>Cincin penyebab:</b> ✓ terverifikasi, ? dugaan, ! perlu bukti, – arsip</span>
+        </div>
+      </section>
+      <aside class="cd">
+        <span class="bd ver" style="margin-bottom:10px">${TN[s.t]} Terpilih</span>
+        <h2 style="margin:4px 0 12px;font-size:20px">${s.d}</h2>
+        ${s.t=='c'?BG(s.k.st):''}
+        <p style="font-size:14.5px;margin:12px 0">Terkait dengan kasus <b>${s.k.id}</b> pada aset <b>${s.k.tag}</b> (${c.bk.length} bukti tertaut).</p>
+        ${s.t=='c'&&(s.k.st=='dug'||s.k.st=='bukti')?'<p class="nt">Garis putus-putus menuju penyebab ini menunjukkan klaim belum didukung bukti terverifikasi.</p>':''}
+        <button class="pill pr" data-go="kasus-${s.k.id.toLowerCase()}" style="margin-top:16px;width:100%;justify-content:center">Buka Detail Kasus ${s.k.id} ›</button>
+      </aside>
+    </div>`;
+}
+
+function cr(){
+  $('#mv').innerHTML=hv('Pencarian Hibrida','kasus serupa & sintesis RAG')+`
+    <div class="dg">
+      <section class="cd">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <input class="qi" id="qi" aria-label="Masukkan gejala dan konteks operasi">
+          <button class="pill pr" id="qb">Cari Kasus</button>
+        </div>
+        <div class="tabs">
+          ${[['','Semua aset'],['P','Pompa'],['E','Heat exchanger'],['F','Control valve']].map(([a,l])=>`<button data-qa="${a}" class="${QA==a?'on':''}">${l}</button>`).join('')}
+        </div>
+        <div id="qr"></div>
+      </section>
+      <aside class="cd">
+        <h2 style="margin-bottom:12px">Rekomendasi Berbasis Bukti (RAG)</h2>
+        <div id="rg2"></div>
+      </aside>
+    </div>`;
+  const run=()=>{
+    QS=$('#qi').value;
+    const tk=QS.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>3&&!['pada','yang','dengan','dari'].includes(w)),
+          R=DB.filter(k=>CD[k.id]&&(!QA||k.a==QA)).map(k=>{
+            const c=CD[k.id],t=(c.g+' '+c.kd+' '+c.iv+' '+c.cs+' '+k.tag).toLowerCase(),hit=tk.filter(w=>t.includes(w.slice(0,5)));
+            return{k,c,hit,s:Math.round(100*(.75*(tk.length?hit.length/tk.length:0)+.25*(QA?1:.5)))};
+          }).filter(r=>r.hit.length).sort((a,b)=>b.s-a.s||b.c.bk.length-a.c.bk.length).slice(0,5),
+          pd=k=>k.st=='dug'||k.st=='bukti';
+    $('#qr').innerHTML=(R.length?R.map((r,i)=>`<button class="it" data-go="kasus-${r.k.id.toLowerCase()}"><i>${i+1}</i><span>${r.k.id} · ${r.k.g}<small>${BG(r.k.st)} · ${r.c.bk.length} bukti · Kata cocok: <b>${r.hit.join(', ')}</b>${QA?'; aset sesuai':''}</small>${pd(r.k)?'<small style="color:var(--buk);font-weight:700">Peringatan: Belum terverifikasi pakar, bukan kesimpulan final.</small>':''}</span><b class="ch${r.s<50?' w':''}">${r.s}%</b></button>`).join(''):'<p class="mu">Tidak ada kasus cocok. Coba kata gejala lain atau lepas filter aset.</p>')+(R.length&&R.every(r=>pd(r.k))?'<p class="nt">Semua hasil masih berstatus dugaan. Perlakukan sebagai kandidat awal, bukan kesimpulan.</p>':'')+'<p class="mu" style="font-size:13px;margin-top:14px">Skor prototipe dihitung dari kecocokan kata kunci + konteks teknis aset.</p>';
+    const S=R.filter(r=>r.c.bk.length).sort((a,b)=>(b.k.st=='ver')-(a.k.st=='ver')||b.c.bk.length-a.c.bk.length);
+    $('#rg2').innerHTML=S.length?S.map((r,i)=>{const ok=!pd(r.k);return`<div class="ragi"><span><b>${ok?'Penyebab terverifikasi':'Kandidat penyebab'}:</b> ${r.c.cs}.${ok&&r.c.ac?' <br><b>Tindakan terdahulu:</b> '+r.c.ac+'.':' <br><span class="mu">Belum ada tindakan terverifikasi.</span>'}<button class="fn" data-go="kasus-${r.k.id.toLowerCase()}" aria-label="Sumber ${r.k.id}">[${i+1}: ${r.k.id}]</button></span>${BG(r.k.st)}</div>`}).join('')+'<p class="mu" style="font-size:13px;margin-top:14px">Disusun dari kasus sumber tertaut. Wajib dikroscek engineer di lapangan.</p>':'<p class="nt">Bukti belum cukup untuk merekomendasikan tindakan. Tambahkan bukti atau minta tinjauan pakar.</p>';
+  };
+  $('#qi').value=QS;$('#qb').onclick=run;$('#qi').onkeydown=e=>{if(e.key=='Enter')run()};run();
+}
+
+function an(){
+  const ST=['ver','dug','bukti','ars'],cn=s=>DB.filter(k=>k.st==s).length,mx=Math.max(1,...ST.map(cn)),
+        BF={ver:'linear-gradient(90deg,var(--c5),var(--n7))',dug:'repeating-linear-gradient(135deg,var(--dug) 0 4px,#FDE3B4 4px 8px)',bukti:'var(--buk)',ars:'var(--ars)'},
+        ar=(l,w,b,v)=>`<div class="ar"><span>${l}</span><div style="height:14px;border-radius:7px;background:var(--pill-bg);overflow:hidden"><div style="height:100%;width:${w}%;border-radius:7px;background:${b}"></div></div><b>${v}</b></div>`,
+        pk=DB.filter(k=>k.a=='P').map(k=>k.m),
+        P=DB.filter(k=>k.st=='dug'||k.st=='bukti').map(k=>[k,(2026-+k.d.slice(0,4))*12+11-+k.d.slice(5)]).sort((a,b)=>b[1]-a[1]);
+  $('#mv').innerHTML=hv('Analitik Pengetahuan','keberulangan & metrik validasi')+`
+    <div class="row3">
+      <section class="cd"><h2>Funnel Status Bukti</h2><div style="margin-top:12px">${ST.map(s=>ar(BG(s),100*cn(s)/mx,BF[s],cn(s))).join('')}</div></section>
+      <section class="cd"><h2>Kelengkapan 7 Entitas</h2><div style="margin-top:12px">${DB.map(k=>{const n=ent(k).filter(e=>e[1]).length;return ar('<b>'+k.id+'</b> ('+k.tag+')',100*n/7,BF[k.st=='ver'?'ver':'dug'],n+'/7')}).join('')}</div><p class="mu" style="font-size:13px;margin-top:10px">Jumlah entitas terstruktur yang terisi pada setiap kasus.</p></section>
+      <section class="cd"><h2>Umur Antrean Validasi</h2><div style="margin-top:12px">${P.map(([k,a])=>ar('<b>'+k.id+'</b>',Math.min(100,100*a/12),BF[k.st],a+' bln')).join('')||'<p class="mu">Antrean kosong.</p>'}</div><p class="mu" style="font-size:13px;margin-top:10px">Dihitung per November 2026.</p></section>
+    </div>
+    <div class="row3">
+      <section class="cd"><h2>Keberulangan Aset P-101A</h2><div class="rv">${pk.length} <small>kejadian tercatat</small></div><p style="font-size:14.5px;margin:8px 0 0">Jeda antar kejadian: <b>${pk.slice(1).map((m,i)=>m-pk[i]).join(' bulan dan ')} bulan</b>.</p></section>
+      <section class="cd"><h2>Kasus Perlu Bukti Tambahan</h2><div class="rv">${cn('bukti')} <small>kasus</small></div><p style="font-size:14.5px;margin:8px 0 0">Kasus yang dikembalikan validator pakar untuk dilengkapi bukti lapangan.</p></section>
+    </div>`;
+}
+
+$('#mv').addEventListener('click',e=>{
+  const f=e.target.closest('[data-kf]'),g=e.target.closest('[data-g]'),q=e.target.closest('[data-qa]');
+  if(f){KF=f.dataset.kf;kl()}else if(g){GS=g.dataset.g;gr()}else if(q){QS=$('#qi').value;QA=q.dataset.qa;cr()}
+});
+$('#mv').addEventListener('keydown',e=>{
+  const g=e.target.closest('[data-g]');
+  if(g&&(e.key=='Enter'||e.key==' ')){e.preventDefault();GS=g.dataset.g;gr();$('[data-g="'+GS+'"]').focus()}
+});
+
+/* Laporan Baru & Review Ekstraksi (S-03 + S-04) */
+const SM={
+  'P-101A':'Pompa P-101A getarannya naik sejak tiga hari lalu, sekarang sekitar 7,8 mm/s. Rembesan terlihat di sisi {sil|seal}. Suhu {bering|bearing} 72 °C dan aliran sekitar 90% dari desain. Saya duga {sil|seal} aus, belum dibongkar. Rencana ganti {sil|seal} minggu depan.',
+  'E-201':'Heat exchanger E-201, ΔP naik dan suhu keluar turun 12 °C. Dugaan ada fouling di sisi tabung. Belum {diperiks|diperiksa} karena unit masih jalan.',
+  'FCV-301':'Control valve FCV-301 responsnya lambat. Perintah 60% tapi posisi aktual tertinggal sekitar 8 detik. Dugaan gesekan {paking|packing} tinggi. Uji stroke belum dilakukan.'
+},AS={'P-101A':'P','E-201':'E','FCV-301':'F'},
+LS={step:1,mode:'v',asset:'P-101A',rec:0,sec:0,words:[],shown:0,text:'',fix:{},ex:[],t:0,t2:0};
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
+      fmt=s=>String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0'),
+      wd=a=>SM[a].split(' ').map((w,i)=>{const m=w.match(/^\{([^|]+)\|([^}]+)\}(.*)$/);return m?{id:i,lo:1,w:m[1],r:m[2],t:m[3]}:{id:i,w}}),
+      wtx=x=>x.lo?(LS.fix[x.id]?x.r:x.w)+x.t:x.w,
+      ftxt=()=>LS.mode=='t'?LS.text:LS.words.slice(0,LS.shown).map(wtx).join(' '),
+      canNext=()=>LS.mode=='t'?LS.text.trim().length>15:!!LS.words.length&&LS.shown>=LS.words.length&&!LS.rec;
+const trH=()=>LS.words.slice(0,LS.shown).map(x=>x.lo?`<button class="lw${LS.fix[x.id]?' ok':''}" data-lw="${x.id}" aria-label="Perbaiki kata ${x.w}">${wtx(x)}</button>`:x.w).join(' ')||'<span class="mu">Transkrip suara akan muncul di sini secara bertahap…</span>';
+
+function ex(){
+  const ss=ftxt().split(/(?<=[.!?])\s+/).filter(Boolean),a=LS.asset,
+        wr=LS.mode=='v'?LS.words.slice(0,LS.shown).filter(x=>x.lo&&!LS.fix[x.id]).map(x=>x.w):[],
+        lo=s=>wr.some(w=>new RegExp('\\b'+w+'\\b','i').test(s)),
+        cz=/duga|kemungkinan|penyebab|aus\b|fouling|kavitasi|gesekan|coking|korosi|flooding/i,
+        R=[['Identitas aset'],['Gejala kegagalan',/getar|rembes|bocor|lambat|bunyi|kerikil|naik|turun|panas|stabil/i,1],['Kondisi operasi',/\d.*(mm|°|%|bar|detik|derajat)/i],['Hasil investigasi',/periks|bongkar|inspeksi|uji|terlihat|ditemukan/i],['Kandidat penyebab',cz],['Tindakan korektif',/ganti|bersih|jadwal|kalibrasi|perbaiki/i],['Verifikasi pascaperbaikan',/setelah (perbaikan|diganti)|kembali normal|turun ke/i]];
+  return R.map(([l,re,ng])=>{
+    if(!re)return{l,v:a+', '+(TY[AS[a]]||'Unit proses'),c:'tinggi',s:'',ok:0};
+    const m=ss.filter(s=>re.test(s)&&!(ng&&cz.test(s))),v=m.join(' ');
+    return{l,v,s:m[0]||'',c:!m.length?'':m.some(lo)?'rendah':(/\d/.test(v)||m.length>1?'tinggi':'sedang'),ok:0};
+  });
+}
+const fs=(q,a)=>{
+  const tk=q.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>3&&!['pada','yang','dengan','dari','sudah','belum'].includes(w));
+  return DB.filter(k=>CD[k.id]).map(k=>{
+    const c=CD[k.id],t=(c.g+' '+c.kd+' '+c.iv+' '+c.cs).toLowerCase(),h=tk.filter(w=>t.includes(w.slice(0,5)));
+    return{k,s:Math.round(100*(.75*(tk.length?h.length/tk.length:0)+.25*(k.a==AS[a]?1:0)))};
+  }).filter(r=>r.s>=30).sort((x,y)=>y.s-x.s).slice(0,3);
+};
+const cb=c=>({rendah:'<span class="bd bukti">▲ Keyakinan rendah</span>',sedang:'<span class="bd dug">◆ Keyakinan sedang</span>',tinggi:'<span class="bd ver">● Keyakinan tinggi</span>'}[c]);
+function sb(){
+  const n=LS.ex.filter(e=>e.c=='rendah'&&!e.ok).length;
+  $('#sd').disabled=!!n;
+  $('#sn').textContent=n?n+' entitas berkeyakinan rendah wajib dikonfirmasi sebelum laporan dikirim (Aturan R5).':'Kandidat penyebab otomatis berstatus Dugaan sampai diperiksa pakar.';
+}
+function lp(){
+  const bk='<div style="margin-bottom:16px"><button class="bk" data-go="beranda">‹ Kembali ke Beranda</button></div>';
+  if(LS.step==2){
+    const E=LS.ex,S=fs(E[1].v+' '+E[4].v,LS.asset);
+    $('#mv').innerHTML=bk+hv('Review Ekstraksi 7 Entitas',LS.asset)+`
+      <div class="dg">
+        <section>
+          <p style="margin:0 0 14px;font-size:15px"><b id="cnt">${E.filter(e=>e.v.trim()).length}</b> dari 7 entitas berhasil diekstraksi. Periksa dan sunting bila perlu:</p>
+          ${E.map((e,i)=>`<div class="ec"><div class="hh"><span>${i+1}. ${e.l} ${i==4?BG('dug'):''}</span>${e.c?cb(e.c):'<span class="mu">Belum terisi</span>'}</div><textarea data-ei="${i}" aria-label="${e.l}">${esc(e.v)}</textarea>${e.s?`<small class="mu" style="display:block;font-size:13px;margin-top:8px">Kutipan transkrip: "${esc(e.s.slice(0,85))}${e.s.length>85?'…':''}"</small>`:''}${e.c=='rendah'?`<button class="pill" data-a="ok" data-i="${i}" aria-pressed="false">✓ Konfirmasi nilai ini</button>`:''}</div>`).join('')}
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+            <button class="pill" data-a="back">‹ Kembali ke transkrip</button>
+            <button class="pill" data-a="draft">Simpan draf</button>
+            <button class="pill pr" id="sd" data-a="send">Kirim laporan ke antrean ›</button>
+          </div>
+          <p id="sn" class="mu" style="font-size:14px;margin-top:12px"></p>
+        </section>
+        <aside class="cd">
+          <h2 style="margin-bottom:12px">Kasus Serupa Terdeteksi</h2>
+          ${S.map(r=>`<button class="it" data-go="kasus-${r.k.id.toLowerCase()}"><i>${r.k.a}</i><span>${r.k.id} · ${r.k.g}<small>${BG(r.k.st)}</small></span><b class="ch${r.s<50?' w':''}">${r.s}%</b></button>`).join('')||'<p class="mu">Belum ada kasus serupa.</p>'}
+        </aside>
+      </div>`;
+    sb();return;
+  }
+  const v=LS.mode=='v';
+  $('#mv').innerHTML=bk+hv('Laporan Kejadian Baru','input suara atau teks (S-03)')+`
+    <div class="dg">
+      <section class="cd">
+        <h2 style="margin-bottom:12px">1. Pilih Unit Aset</h2>
+        <div class="tabs">
+          ${Object.keys(SM).map(a=>`<button data-as="${a}" class="${LS.asset==a?'on':''}">${a}</button>`).join('')}
+          <button data-go="konfig" title="Tambah unit aset di Konfigurasi Aset">+ Konfigurasi unit</button>
+        </div>
+        <h2 style="margin-bottom:12px">2. Metode Akuisisi Laporan</h2>
+        <div class="tabs">
+          <button data-lm="v" class="${v?'on':''}">🎙️ Rekaman Suara (Speech-to-Text)</button>
+          <button data-lm="t" class="${v?'':'on'}">⌨️ Ketik Teks Manual</button>
+        </div>
+        ${v?`
+          <div id="vb" class="${LS.rec?'rec':''}" style="text-align:center;padding:10px 0">
+            <button class="mic${LS.rec?' on':''}" data-a="mic" aria-pressed="${!!LS.rec}" aria-label="${LS.rec?'Berhenti merekam':'Mulai merekam'}">
+              <svg class="i" viewBox="0 0 24 24">${LS.rec?'<rect x="7" y="7" width="10" height="10" rx="2"/>':IC.lapor}</svg>
+            </button>
+            <div class="wv" aria-hidden="true">${Array.from({length:28},(_,i)=>`<i style="animation-delay:${i*53%420}ms"></i>`).join('')}</div>
+            <div id="tm" style="font-weight:700;font-size:15px" aria-live="polite">${LS.rec?'Merekam '+fmt(LS.sec)+' (ketuk lagi setelah ≥ 2 detik untuk selesai)':'Ketuk mikrofon untuk mulai merekam'}</div>
+          </div>
+          <p class="mu" id="lm" style="text-align:center;font-size:14px"></p>
+          <div class="tr" id="tr">${trH()}</div>
+          <p class="mu" style="font-size:13.5px">Kata bergaris bawah oranye memiliki keyakinan transkripsi rendah. <b>Ketuk kata tersebut</b> untuk memperbaiki istilah teknis.</p>
+        `:`
+          <textarea id="tx" aria-label="Isi laporan" placeholder="Tuliskan gejala kegagalan, kondisi operasi saat kejadian, hasil pemeriksaan awal, dan dugaan penyebab…"></textarea>
+          <button class="pill" data-a="sample" style="margin-top:12px">Isi dengan teks contoh (${LS.asset})</button>
+        `}
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px">
+          <button class="pill pr" id="nx" data-a="next" ${canNext()?'':'disabled'}>Lanjut: Ekstraksi 7 Entitas ›</button>
+          ${v&&canNext()?'<button class="pill" data-a="edit">Sunting sebagai teks</button>':''}
+        </div>
+      </section>
+      <aside class="cd">
+        <h2 style="margin-bottom:10px">Panduan Pelaporan</h2>
+        <p style="font-size:14.5px;margin:0 0 14px">Sebutkan secara singkat: <b>(1) tag aset</b>, <b>(2) gejala yang tampak</b>, <b>(3) angka parameter operasi</b>, <b>(4) temuan pemeriksaan</b>, serta <b>(5) dugaan awal penyebab</b>.</p>
+        <p class="nt">Catatan: Semua penyebab dari laporan baru otomatis diberi status <b>Dugaan</b> hingga diperiksa oleh Pakar Validator.</p>
+      </aside>
+    </div>`;
+  if(!v)$('#tx').value=LS.text;
+}
+function mic(){
+  if(LS.rec){
+    clearInterval(LS.t);LS.rec=0;
+    if(LS.sec<2){lp();$('#lm').textContent='Rekaman terlalu singkat. Rekam minimal 2 detik atau gunakan mode Teks.';return}
+    LS.words=wd(LS.asset);LS.shown=0;LS.fix={};clearInterval(LS.t2);
+    LS.t2=setInterval(()=>{if(!$('#tr')){clearInterval(LS.t2);return}LS.shown++;if(LS.shown>=LS.words.length){clearInterval(LS.t2);lp()}else $('#tr').innerHTML=trH()},85);
+    lp();return;
+  }
+  LS.rec=1;LS.sec=0;LS.words=[];LS.shown=0;lp();
+  LS.t=setInterval(()=>{if(!$('#tm')){clearInterval(LS.t);LS.rec=0;return}LS.sec++;$('#tm').textContent='Merekam '+fmt(LS.sec)+' (ketuk untuk berhenti)'},1000);
+}
+function sd(){
+  const E=LS.ex,a=LS.asset,id='K-0'+(DB.length+28),g=esc((E[1].v||'Laporan baru').slice(0,48));
+  DB.push({id,a:AS[a]||'P',tag:a,g,st:'dug',ev:0,d:'2026-11',m:29});
+  CD[id]={g,kd:esc(E[2].v),iv:esc(E[3].v),cs:esc(E[4].v),ac:esc(E[5].v),vf:esc(E[6].v),bk:[]};
+  Object.assign(LS,{step:1,words:[],shown:0,text:'',fix:{},ex:[],rec:0,sec:0});
+  tst(id+' berhasil dikirim sebagai Dugaan dan masuk Antrean Validasi.');
+  location.hash='beranda';
+}
+$('#mv').addEventListener('click',e=>{
+  const b=e.target.closest('[data-a],[data-as],[data-lm],[data-lw]');if(!b)return;const d=b.dataset;
+  if(d.as){if(!LS.rec){LS.asset=d.as;LS.words=[];LS.shown=0;LS.fix={};lp()}}
+  else if(d.lm){if(!LS.rec){LS.mode=d.lm;lp()}}
+  else if(d.lw!==undefined){LS.fix[d.lw]=!LS.fix[d.lw];$('#tr').innerHTML=trH()}
+  else if(d.a=='mic')mic();
+  else if(d.a=='sample'){LS.text=SM[LS.asset].replace(/\{[^|]+\|([^}]+)\}/g,'$1');lp()}
+  else if(d.a=='next'){LS.ex=ex();LS.step=2;lp();scrollTo(0,0)}
+  else if(d.a=='back'){LS.step=1;lp()}
+  else if(d.a=='edit'){LS.text=ftxt();LS.mode='t';lp()}
+  else if(d.a=='draft')tst('Draf disimpan di perangkat lokal.');
+  else if(d.a=='ok'){const x=LS.ex[d.i];x.ok=!x.ok;b.textContent=x.ok?'✓ Sudah dikonfirmasi':'✓ Konfirmasi nilai ini';b.setAttribute('aria-pressed',x.ok);sb()}
+  else if(d.a=='send')sd();
+});
+$('#mv').addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id=='tx'){LS.text=t.value;$('#nx').disabled=!canNext()}
+  else if(t.dataset.ei!==undefined){const x=LS.ex[t.dataset.ei];x.v=t.value;if(!x.c&&t.value.trim())x.c='tinggi';$('#cnt').textContent=LS.ex.filter(y=>y.v.trim()).length}
+});
+
+/* Konfigurasi Aset (S-13): Pohon Equipment Specifications + Pemilih Departemen */
+const DP={
+  ALL:{n:'HSE · Semua Departemen',d:'Akses penuh lintas departemen ke seluruh pohon spesifikasi peralatan.'},
+  PIP:{n:'Piping Engineering',d:'Ruang lingkup perpipaan, control valve, fitting, dan sambungan proses.'},
+  ROT:{n:'Rotating & Mechanical',d:'Ruang lingkup pompa sentrifugal, kompresor, dan peralatan berputar.'},
+  PRC:{n:'Process & Thermal',d:'Ruang lingkup perpindahan panas/massa, bejana tekan, reaktor, dan pemanas.'}
+};
+const EQ=[
+  {id:'mht',n:'Mass & Heat Transfer Equipment',sc:'paper',dp:['PRC','PIP'],cd:'E',
+   op:[['ΔP sisi shell/tabung','bar','0,2 – 0,8'],['Suhu keluar fluida','°C','65 – 95'],['Laju alir proses','% desain','85 – 110']],
+   sy:['ΔP naik','Suhu keluar turun','Rembesan sambungan channel','Fouling sisi tabung'],
+   ty:[
+     {id:'he',n:'Heat Exchanger (Shell & Tube)',un:[
+       {tag:'E-201',cm:['Bundel tabung','Gasket channel','Shell','Baffle','Tube sheet'],fm:['Fouling deposit tabung','Gasket channel mengeras','Korosi bawah deposit','Vibrasi tabung']},
+       {tag:'E-202',cm:['Bundel tabung','Gasket channel','Baffle'],fm:['Fouling sisi shell','Rembesan flange']}
+     ]},
+     {id:'col',n:'Distillation & Absorption Column',un:[
+       {tag:'T-101',cm:['Sieve tray','Downcomer','Reboiler','Demister pad'],fm:['Flooding kolom','Tray fouling','Weeping pada laju alir rendah']}
+     ]}
+   ]},
+  {id:'rot',n:'Rotating & Fluid-Moving Equipment',sc:'paper',dp:['ROT'],cd:'P',
+   op:[['Getaran keseluruhan','mm/s','0,8 – 4,5'],['Suhu bearing','°C','45 – 70'],['Laju alir pompa','% desain','80 – 110'],['Tekanan discharge','bar','8 – 14']],
+   sy:['Getaran naik','Rembesan mechanical seal','Suhu bearing tinggi','Bunyi kerikil (kavitasi)'],
+   ty:[
+     {id:'pmp',n:'Pompa Sentrifugal',un:[
+       {tag:'P-101A',cm:['Mechanical seal','Bearing housing','Impeller','Poros (shaft)','Casing volute','Motor penggerak'],fm:['Face seal aus','Kavitasi sisi hisap','Misalignment poros','Keausan bearing']},
+       {tag:'P-101B',cm:['Mechanical seal','Bearing housing','Impeller','Poros (shaft)'],fm:['Face seal aus','Vibrasi unbalance']}
+     ]},
+     {id:'cmp',n:'Kompresor Sentrifugal',un:[
+       {tag:'K-101',cm:['Dry gas seal','Journal bearing','Rotor rakitan','Sistem lube oil'],fm:['Surge kompresor','Kebocoran seal gas','Vibrasi sub-sinkron']}
+     ]}
+   ]},
+  {id:'pvi',n:'Piping, Valve & Instrumentation',sc:'paper',dp:['PIP'],cd:'F',
+   op:[['Perintah bukaan','%','0 – 100'],['Posisi aktual stem','%','±1% perintah'],['Waktu respons stroke','detik','< 3,0'],['ΔP melintasi valve','bar','1,5 – 5,0']],
+   sy:['Respons valve lambat','Hunting / osilasi bukaan','Rembesan stem packing','Passing saat tertutup'],
+   ty:[
+     {id:'cv',n:'Control Valve',un:[
+       {tag:'FCV-301',cm:['Stem & packing box','Plug & seat ring','Aktuator diafragma','Smart positioner','Body valve'],fm:['Gesekan packing tinggi','Kebocoran udara aktuator','Drift kalibrasi positioner','Erosi kavitasi seat']}
+     ]},
+     {id:'pip',n:'Process Piping & Manifold',un:[
+       {tag:'LN-401',cm:['Flange & spiral gasket','Elbow 90°','Sambungan las','Pipe shoe & hanger'],fm:['Erosion-corrosion elbow','Rembesan gasket flange','Fatigue akibat vibrasi']}
+     ]}
+   ]},
+  {id:'ves',n:'Storage & Process Vessels',sc:'mod',dp:['PRC','PIP'],cd:'V',
+   op:[['Tekanan operasi','bar','4,0 – 12,0'],['Level cairan','%','30 – 75'],['Laju korosi dinding','mm/thn','< 0,15']],
+   sy:['Level cairan tidak stabil','Carry-over cairan ke gas','Rembesan nozzle manhole','Tekanan berlebih'],
+   ty:[
+     {id:'sep',n:'Three-Phase Separator / KO Drum',un:[
+       {tag:'V-101',cm:['Mist extractor','Weir plate','Vortex breaker','Nozzle inlet/outlet','Relief valve (PSV)'],fm:['Penyumbatan demister','Korosi bawah endapan','Emulsi antarmuka']}
+     ]},
+     {id:'tnk',n:'Atmospheric Storage Tank',un:[
+       {tag:'TK-501',cm:['Floating roof','Rim seal','Bottom plate','Breather valve'],fm:['Rim seal macet','Pitting korosi pelat dasar']}
+     ]}
+   ]},
+  {id:'rea',n:'Reactors & Chemical Conversion',sc:'mod',dp:['PRC'],cd:'R',
+   op:[['Suhu puncak bed','°C','320 – 385'],['ΔP bed katalis','bar','0,4 – 1,2'],['Konversi reaktan','%','> 92']],
+   sy:['Hotspot lokal pada bed','ΔP reaktor naik','Suhu keluaran turun'],
+   ty:[
+     {id:'fbr',n:'Fixed-Bed Catalytic Reactor',un:[
+       {tag:'R-101',cm:['Bed katalis','Distributor inlet','Thermowell multi-titik','Support grid','Lining refraktori'],fm:['Sintering / deaktivasi katalis','Channeling aliran','Kerusakan refraktori']}
+     ]}
+   ]},
+  {id:'fir',n:'Fired & Thermal Heating Equipment',sc:'mod',dp:['PRC','ROT'],cd:'H',
+   op:[['Suhu skin tube','°C','< 540'],['Suhu flue gas stack','°C','180 – 240'],['Draft ruang bakar','mmH₂O','-2,5 – -5,0']],
+   sy:['Suhu skin tube tinggi','Nyala burner tidak stabil','Coking bagian dalam tube'],
+   ty:[
+     {id:'fht',n:'Process Fired Heater',un:[
+       {tag:'F-101',cm:['Radiant tube coil','Low-NOx burner','Stack damper','Dinding refraktori'],fm:['Internal coking tube','Flame impingement','Penyumbatan tip burner']}
+     ]}
+   ]}
+];
+const CLOG=[['v1.0','10 Nov 2026','Struktur awal 6 kategori Equipment Specifications (3 cakupan paper + 3 ekstensi modular).']];
+let KDP='ALL',KSEL={c:'mht',t:'he',u:'E-201'},KOPEN={mht:1,rot:1,pvi:1,ves:0,rea:0,fir:0},KQ='',KVER=0;
+
+function bumpVer(msg){
+  KVER++;
+  const v='v1.'+KVER,tm=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  CLOG.unshift([v,'Hari ini, '+tm,msg]);
+  tst('Konfigurasi disimpan ('+v+'): '+msg);
+}
+function syncUnit(cat,typ,unit){
+  if(!AS[unit.tag])AS[unit.tag]=cat.cd||'P';
+  if(!TY[cat.cd])TY[cat.cd]=typ.n;
+  if(!SM[unit.tag]){
+    const g=cat.sy[0]||'gejala abnormal',op=cat.op[0]?cat.op[0][0]+' melewati batas ('+cat.op[0][2]+' '+cat.op[0][1]+')':'kondisi operasi berubah',cm=unit.cm[0]||'komponen utama',fm=unit.fm[0]||'keausan komponen';
+    SM[unit.tag]=`${typ.n} ${unit.tag} mengalami ${g.toLowerCase()} sejak shift pagi. Pembacaan ${op}. Pada pemeriksaan awal terlihat indikasi di bagian {komp|${cm.toLowerCase()}}. Saya duga penyebabnya ${fm.toLowerCase()}, belum dibongkar. Rencana jadwal inspeksi minggu depan.`;
+  }
+}
+EQ.forEach(c=>c.ty.forEach(t=>t.un.forEach(u=>syncUnit(c,t,u))));
+
+function kf(){
+  const cats=EQ.filter(c=>(KDP=='ALL'||c.dp.includes(KDP))&&(!KQ||JSON.stringify(c).toLowerCase().includes(KQ.toLowerCase())));
+  let cat=EQ.find(c=>c.id==KSEL.c)||cats[0]||EQ[0];
+  if(cats.length&&!cats.includes(cat)){cat=cats[0];KSEL.c=cat.id;KSEL.t=cat.ty[0]?.id||'';KSEL.u=cat.ty[0]?.un[0]?.tag||''}
+  const typ=cat.ty.find(t=>t.id==KSEL.t)||cat.ty[0]||{id:'',n:'Belum ada jenis',un:[]};
+  const unit=typ.un.find(u=>u.tag==KSEL.u)||typ.un[0]||{tag:'-',cm:[],fm:[]};
+  const rel=DB.filter(k=>k.tag==unit.tag);
+
+  const treeH=cats.map(c=>{
+    const op=KOPEN[c.id]||KQ,cnt=c.ty.reduce((s,t)=>s+t.un.length,0);
+    return`<div>
+      <button class="trb ${KSEL.c==c.id&&!KSEL.u?'on':''}" data-kc="${c.id}">
+        <span>${op?'▾':'▸'} 📁</span>
+        <span style="flex:1"><b>${esc(c.n)}</b><small style="display:block;font-size:12.5px;margin-top:2px" class="mu">${c.sc=='paper'?'✓ Cakupan paper':'◆ Arsitektur modular'} · ${cnt} unit</small></span>
+      </button>
+      ${op?`<div class="trc">${c.ty.map(t=>`
+        <div>
+          <button class="trb" data-kt="${c.id}|${t.id}" style="font-weight:700;padding:8px 12px">
+            <span>📂</span><span style="flex:1">${esc(t.n)}</span><small class="mu">${t.un.length}</small>
+          </button>
+          <div class="trc">${t.un.map(u=>{
+            const on=KSEL.c==c.id&&KSEL.t==t.id&&KSEL.u==u.tag,kc=DB.filter(k=>k.tag==u.tag).length;
+            return`<button class="trb ${on?'on':''}" data-ku="${c.id}|${t.id}|${u.tag}" style="padding:8px 12px">
+              <span>🔧</span><span style="flex:1">${esc(u.tag)} <small class="mu">(${u.cm.length} komp)</small></span>
+              ${kc?`<span class="ch" style="font-size:12px;padding:3px 9px">${kc} kasus</span>`:''}
+            </button>`}).join('')}
+          </div>
+        </div>`).join('')}
+      </div>`:''}
+    </div>`}).join('')||'<p class="mu">Tidak ada peralatan yang cocok dengan filter ini.</p>';
+
+  $('#mv').innerHTML=hv('Konfigurasi Aset','equipment specifications (S-13)')+`
+  <div class="cd" style="margin-bottom:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div><b style="font-size:16px">Ruang Lingkup Departemen & Peran</b><div class="mu" style="font-size:13.5px">${DP[KDP].d}</div></div>
+      <span class="bd ver">Versi Taksonomi ${CLOG[0][0]}</span>
+    </div>
+    <div class="tabs" style="margin-bottom:0">${Object.entries(DP).map(([k,v])=>`<button data-kdp="${k}" class="${KDP==k?'on':''}">${v.n}</button>`).join('')}</div>
+  </div>
+  <div class="dg">
+    <section class="cd">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <h2>Pohon Spesifikasi Peralatan</h2>
+        <span class="mu" style="font-size:13px">4 tingkat: Kategori › Jenis › Unit › Komponen</span>
+      </div>
+      <input class="in2" id="kq" value="${esc(KQ)}" placeholder="Cari kategori, jenis, tag unit (mis. E-201), atau komponen…" aria-label="Cari di pohon peralatan" style="width:100%;margin-bottom:14px">
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:560px;overflow-y:auto;padding-right:4px">${treeH}</div>
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--bd)">
+        <small class="mu" style="display:block;font-size:13px;margin-bottom:8px">Tambah kategori peralatan baru (Equipment Specifications)</small>
+        <div class="fgr">
+          <input class="in2" id="ncat" placeholder="Nama kategori baru…">
+          <button class="pill" data-ka="add-cat">+ Kategori</button>
+        </div>
+      </div>
+    </section>
+    <section class="col-st">
+      <div class="cd">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div>
+            <small class="mu" style="font-size:13.5px">${esc(cat.n)} › ${esc(typ.n)}</small>
+            <h2 style="margin:4px 0 8px;font-size:24px">${esc(unit.tag)} <span class="mu" style="font-size:16px">(${esc(typ.n)})</span></h2>
+          </div>
+          <span class="bd ${cat.sc=='paper'?'ver':'dug'}">${cat.sc=='paper'?'✓ Cakupan Uji Paper':'◆ Ekstensi Modular'}</span>
+        </div>
+        <p style="font-size:14px;margin:6px 0 16px" class="mu">Departemen pengampu: <b>${cat.dp.map(d=>DP[d].n).join(', ')}</b>. Perubahan di sini otomatis memperbarui opsi di layar <b>Laporan Baru</b> tanpa mengubah riwayat kasus lama.</p>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+          <button class="pill pr" data-ka="lapor-unit" data-u="${esc(unit.tag)}">+ Buat laporan untuk ${esc(unit.tag)}</button>
+          ${rel.length?`<button class="pill" data-go="kasus-${rel[0].id.toLowerCase()}">Lihat ${rel.length} kasus terkait (${rel.map(x=>x.id).join(', ')}) ›</button>`:'<span class="pill mu">Belum ada kasus tercatat pada unit ini</span>'}
+        </div>
+
+        <div class="dl">
+          <div>
+            <small>1. Komponen pada ${esc(unit.tag)} (${unit.cm.length})</small>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              ${unit.cm.map((c,i)=>`<span class="tg">⚙️ ${esc(c)} <button data-ka="del-cm" data-i="${i}" style="border:0;background:none;color:var(--tx2);padding:0 4px;font-weight:800" title="Hapus">×</button></span>`).join('')||'<span class="mu">Belum ada komponen.</span>'}
+            </div>
+            <div class="fgr">
+              <input class="in2" id="ncm" placeholder="Tambah komponen baru pada ${esc(unit.tag)}…">
+              <button class="pill" data-ka="add-cm">+ Komponen</button>
+            </div>
+          </div>
+
+          <div>
+            <small>2. Mode kegagalan & taksonomi gejala (${unit.fm.length} mode, ${cat.sy.length} gejala kategori)</small>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              ${unit.fm.map((f,i)=>`<span class="tg" style="border-color:var(--dug)">⚠️ ${esc(f)} <button data-ka="del-fm" data-i="${i}" style="border:0;background:none;color:var(--tx2);padding:0 4px;font-weight:800" title="Hapus">×</button></span>`).join('')}
+              ${cat.sy.map(s=>`<span class="tg"><small>Gejala:</small> ${esc(s)}</span>`).join('')}
+            </div>
+            <div class="fgr">
+              <input class="in2" id="nfm" placeholder="Tambah mode kegagalan / gejala baru…">
+              <button class="pill" data-ka="add-fm">+ Mode / Gejala</button>
+            </div>
+          </div>
+
+          <div>
+            <small>3. Field kondisi operasi (diwariskan dari kategori ${esc(cat.n)})</small>
+            <div style="display:grid;gap:8px;margin-top:10px">
+              ${cat.op.map(([p,u,r])=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;background:var(--card);padding:10px 14px;border-radius:12px;border:1px solid var(--bd)"><span><b>${esc(p)}</b> <small class="mu">(${esc(u)})</small></span><span class="ch">Normal: ${esc(r)} ${esc(u)}</span></div>`).join('')}
+            </div>
+            <div class="fgr">
+              <input class="in2" id="nop-n" placeholder="Parameter (mis. Suhu hisap)">
+              <input class="in2" id="nop-u" placeholder="Satuan (mis. °C)" style="max-width:120px">
+              <input class="in2" id="nop-r" placeholder="Rentang (mis. 30–60)" style="max-width:150px">
+              <button class="pill" data-ka="add-op">+ Field</button>
+            </div>
+          </div>
+
+          <div>
+            <small>4. Tambah unit / jenis baru di kategori ${esc(cat.n)}</small>
+            <div class="fgr">
+              <input class="in2" id="nun-t" placeholder="Jenis peralatan (mis. ${esc(typ.n)})" value="${esc(typ.n)}">
+              <input class="in2" id="nun-u" placeholder="Tag unit baru (mis. P-102A)" style="max-width:190px">
+              <button class="pill pr" data-ka="add-unit">+ Tambah Unit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cd">
+        <h2 style="margin-bottom:12px">Riwayat Versi Konfigurasi (Audit Log)</h2>
+        ${CLOG.slice(0,5).map(([v,w,m])=>`<div class="it"><i>${v}</i><span>${esc(m)}<small>${w} · Kasus lama tetap memakai skema saat dilaporkan</small></span></div>`).join('')}
+      </div>
+    </section>
+  </div>`;
+  const qi=$('#kq');if(qi){qi.oninput=()=>{KQ=qi.value;kf();const el=$('#kq');el.focus();el.setSelectionRange(KQ.length,KQ.length)}}
+}
+
+$('#mv').addEventListener('click',e=>{
+  const dp=e.target.closest('[data-kdp]'),kc=e.target.closest('[data-kc]'),kt=e.target.closest('[data-kt]'),ku=e.target.closest('[data-ku]'),ka=e.target.closest('[data-ka]');
+  if(dp){KDP=dp.dataset.kdp;$('#dpb').textContent='Jun – Nov 2026 · '+DP[KDP].n;kf();return}
+  if(kc){const id=kc.dataset.kc;KOPEN[id]=!KOPEN[id];KSEL.c=id;const c=EQ.find(x=>x.id==id);if(c&&c.ty[0]){KSEL.t=c.ty[0].id;KSEL.u=c.ty[0].un[0]?.tag||''}kf();return}
+  if(kt){const[c,t]=kt.dataset.kt.split('|');KSEL.c=c;KSEL.t=t;const ty=EQ.find(x=>x.id==c)?.ty.find(y=>y.id==t);KSEL.u=ty?.un[0]?.tag||'';kf();return}
+  if(ku){const[c,t,u]=ku.dataset.ku.split('|');KSEL={c,t,u};kf();return}
+  if(!ka)return;
+  const act=ka.dataset.ka,cat=EQ.find(c=>c.id==KSEL.c)||EQ[0],typ=cat.ty.find(t=>t.id==KSEL.t)||cat.ty[0],unit=typ?.un.find(u=>u.tag==KSEL.u)||typ?.un[0];
+  if(act=='lapor-unit'){LS.asset=ka.dataset.u;LS.step=1;LS.words=[];LS.shown=0;location.hash='laporan';return}
+  if(act=='add-cm'&&unit){const v=$('#ncm').value.trim();if(!v)return tst('Isi nama komponen terlebih dahulu.');unit.cm.push(v);syncUnit(cat,typ,unit);bumpVer('Komponen "'+v+'" ditambahkan ke '+unit.tag);kf()}
+  else if(act=='del-cm'&&unit){const rm=unit.cm.splice(+ka.dataset.i,1)[0];bumpVer('Komponen "'+rm+'" dihapus dari '+unit.tag);kf()}
+  else if(act=='add-fm'&&unit){const v=$('#nfm').value.trim();if(!v)return tst('Isi mode kegagalan atau gejala terlebih dahulu.');unit.fm.push(v);cat.sy.push(v);bumpVer('Mode kegagalan/gejala "'+v+'" ditambahkan ke '+unit.tag);kf()}
+  else if(act=='del-fm'&&unit){const rm=unit.fm.splice(+ka.dataset.i,1)[0];bumpVer('Mode kegagalan "'+rm+'" dihapus dari '+unit.tag);kf()}
+  else if(act=='add-op'){const n=$('#nop-n').value.trim(),u=$('#nop-u').value.trim()||'satuan',r=$('#nop-r').value.trim()||'normal';if(!n)return tst('Isi nama parameter kondisi operasi.');cat.op.push([n,u,r]);bumpVer('Field operasi "'+n+' ('+u+')" ditambahkan ke '+cat.n);kf()}
+  else if(act=='add-unit'){const tn=$('#nun-t').value.trim()||typ.n,tg=$('#nun-u').value.trim().toUpperCase();if(!tg)return tst('Isi tag unit baru (mis. P-102A).');let t=cat.ty.find(x=>x.n.toLowerCase()==tn.toLowerCase());if(!t){t={id:'ty'+Date.now(),n:tn,un:[]};cat.ty.push(t)}const nu={tag:tg,cm:[...(unit?.cm.slice(0,3)||['Komponen utama'])],fm:[...(unit?.fm.slice(0,2)||['Keausan komponen'])]};t.un.push(nu);syncUnit(cat,t,nu);KSEL={c:cat.id,t:t.id,u:tg};bumpVer('Unit '+tg+' ('+tn+') ditambahkan ke '+cat.n);kf()}
+  else if(act=='add-cat'){const v=$('#ncat').value.trim();if(!v)return tst('Isi nama kategori peralatan baru.');const id='c'+Date.now(),nc={id,n:v,sc:'mod',dp:[KDP=='ALL'?'PRC':KDP],cd:v[0].toUpperCase(),op:[['Tekanan operasi','bar','1 – 10'],['Suhu operasi','°C','30 – 120']],sy:['Gejala operasi menyimpang'],ty:[{id:'t'+id,n:v.split(' ')[0]+' Unit',un:[{tag:v.slice(0,2).toUpperCase()+'-101',cm:['Body utama','Seal / gasket','Sensor lokal'],fm:['Degradasi komponen','Kebocoran sambungan']}]}]};EQ.push(nc);syncUnit(nc,nc.ty[0],nc.ty[0].un[0]);KOPEN[id]=1;KSEL={c:id,t:nc.ty[0].id,u:nc.ty[0].un[0].tag};bumpVer('Kategori baru "'+v+'" dibuat');kf()}
+});
+
+/* Router Utama untuk Semua Layar */
+function syncNav(activeKey){
+  document.querySelectorAll('.np').forEach(b=>{
+    const on=b.dataset.go==activeKey;
+    b.classList.toggle('on',on);
+    on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current');
+  });
+  document.querySelectorAll('.dk-b[data-go]').forEach(b=>{
+    const on=b.dataset.go==activeKey;
+    b.classList.toggle('on',on);
+  });
+}
+
+function route(){
+  const raw=location.hash.slice(1)||'beranda',
+        V={
+          kasus:kl,
+          graf:gr,
+          cari:cr,
+          analitik:an,
+          konfig:kf,
+          laporan:()=>{clearInterval(LS.t);clearInterval(LS.t2);LS.rec=0;if(LS.words.length&&LS.shown<LS.words.length)LS.shown=LS.words.length;lp()}
+        };
+  if(V[raw]){
+    $('#mh').hidden=true;$('#mv').hidden=false;
+    syncNav(raw);
+    V[raw]();
+    scrollTo(0,0);
+    return;
+  }
+  const h=raw.split('-'),v=h[0],k=DB.find(x=>x.id==h.slice(1).join('-').toUpperCase()),
+        ok=k&&CD[k.id]&&(v=='kasus'||v=='validasi'),
+        vd=ok&&v=='validasi'&&(k.st=='dug'||k.st=='bukti');
+  $('#mh').hidden=!!ok;$('#mv').hidden=!ok;
+  syncNav(ok?(vd?'validasi':'kasus'):'beranda');
+  if(ok){
+    vd?dv(k):dk(k);
+  }else{
+    rh();
+    if(!P3)P3=pump($('#t3'));
+    show(T);
+    dispatchEvent(new Event('resize'));
+  }
+  scrollTo(0,0);
+}
+addEventListener('hashchange',route);
+route();
+</script>
+</body>
+</html>
