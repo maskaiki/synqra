@@ -2197,21 +2197,105 @@ const SP={'K-014|K-033':90,'K-021|K-033':64,'K-014|K-021':58},LOG=[],
       Q=()=>DB.filter(x=>x.st=='dug'||x.st=='bukti').sort((a,b)=>a.d<b.d?-1:1)[0],
       EV=[[30,'Gejala awal'],[55,'Alarm'],[80,'Shutdown']],RX=t=>34+t*3,RY=v=>165-v*14,RV=t=>Math.max(0,val(1.8,.12,t));
 const hd=(k,b)=>`<header class="top"><button class="bk" data-go="${b[0]}">‹ ${b[1]}</button><h1><span style="color:inherit;font-weight:800">${k.id}</span> <span>${CD[k.id].g}</span></h1>${BG(k.st)}<span class="sim">Data simulasi</span></header>`;
+const ASSET_DEPT = {
+  P: { code: 'ROT', name: 'Rotating & Mechanical', scope: 'Peralatan Berputar & Mekanikal' },
+  E: { code: 'PRC', name: 'Process & Thermal', scope: 'Perpindahan Panas & Proses Termal' },
+  F: { code: 'PIP', name: 'Piping & Instrumentation', scope: 'Perpipaan, Valve & Instrumentasi' }
+};
+let CASE_VIEW_ROLE = 'HSE'; // 'HSE' or 'DEPT'
+
 const ent=k=>{const c=CD[k.id];return[['Identitas aset',k.tag+', '+(TY[k.a]||'Unit proses')],['Gejala kegagalan',c.g],['Kondisi operasi',c.kd],['Hasil investigasi',c.iv],[k.st=='dug'||k.st=='bukti'?'Kandidat penyebab':'Penyebab terkonfirmasi',c.cs],['Tindakan korektif',c.ac],['Verifikasi pascaperbaikan',c.vf]]};
 const evl=c=>c.bk.map(([t,n,s])=>`<div class="it"><i>${t[0]}</i><span>${n}<small>${t} · mendukung ${s}</small></span></div>`).join('')||'<p class="mu">Belum ada bukti tertaut.</p>';
 let TB='r',TK='';
 
 function dk(k){
-  if(TK!=k.id){TK=k.id;TB='r'}
+  if(TK!=k.id){
+    TK=k.id;
+    TB='r';
+    CASE_VIEW_ROLE = (typeof KDP !== 'undefined' && KDP != 'ALL') ? 'DEPT' : 'HSE';
+  }
   const c=CD[k.id],ver=k.st=='ver'||k.st=='ars',pend=k.st=='dug'||k.st=='bukti';
+  const dept=ASSET_DEPT[k.a] || { code: 'ROT', name: 'Departemen Terkait', scope: 'Engineering' };
+  const isHSE = CASE_VIEW_ROLE == 'HSE';
   const sm=DB.filter(x=>k.a==x.a&&x.id!=k.id&&CD[x.id]).map(x=>[x.id,SP[[k.id,x.id].sort().join('|')]||72]).sort((a,b)=>b[1]-a[1]);
+
+  const statusPill = pend
+    ? (isHSE
+        ? `<span class="pillar-pill p-access" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">📋 Belum tervalidasi departemen terkait (${dept.name})</span>`
+        : `<span class="pillar-pill p-access" style="background:#FEE2E2;color:#991B1B;border-color:#FCA5A5;font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">⚠️ Perlu segera divalidasi</span>`)
+    : (isHSE
+        ? `<span class="pillar-pill p-security" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">✓ Tervalidasi oleh departemen terkait (${dept.name})</span>`
+        : `<span class="pillar-pill p-security" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">✓ Terverifikasi oleh pakar departemen</span>`);
+
   const B={
-    r:()=>`<ol class="tl">${ent(k).map(([l,v],i)=>`<li class="${i>3&&!ver?'h':''}"><b class="n">${i+1}</b><div><small>${l} ${i==4?BG(k.st):''}</small>${v?`<span>${v}</span>`:'<span class="mu">Belum ada data</span>'}</div></li>`).join('')}</ol>${ver?'':'<p class="nt">Kandidat penyebab belum diperiksa pakar. Jangan dipakai sebagai kesimpulan. Garis putus-putus berarti belum didukung bukti.</p>'}`,
+    r:()=>`
+      <!-- Switcher Sudut Pandang Pemantauan -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;background:var(--pill-bg);border-radius:18px;margin-bottom:20px;border:1px solid var(--bd);flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-weight:700;font-size:13.5px;color:var(--tx)">Sudut Pandang Pemantauan:</span>
+          <span class="mu" style="font-size:12.5px">${isHSE ? 'Badan Pengawas Keselamatan (HSE)' : 'Tim Penanggung Jawab Teknis Aset'}</span>
+        </div>
+        <div class="tabs" style="margin-bottom:0">
+          <button class="${isHSE?'on':''}" data-case-role="HSE">🏢 HSE (Pemantauan)</button>
+          <button class="${!isHSE?'on':''}" data-case-role="DEPT">🔧 Departemen Terkait (${dept.code})</button>
+        </div>
+      </div>
+
+      <ol class="tl">${ent(k).map(([l,v],i)=>`<li class="${i>3&&!ver?'h':''}"><b class="n">${i+1}</b><div><small>${l} ${i==4?BG(k.st)+statusPill:''}</small>${v?`<span>${v}</span>`:'<span class="mu">Belum ada data</span>'}</div></li>`).join('')}</ol>
+      ${ver?'':(isHSE?`
+        <p class="nt" style="border-left:4px solid var(--dug)">
+          <b>Pemantauan HSE:</b> Kasus pada aset <b>${k.tag}</b> belum tervalidasi oleh departemen terkait (<b>${dept.name}</b>). HSE memantau status kasus untuk memastikan kelayakan investigasi teknis dan kepatuhan keselamatan operasi sebelum status dapat disahkan.
+        </p>
+      `:`
+        <p class="nt" style="background:#FFF1F2;border-color:#FECDD3;color:#9F1239;border-left:4px solid #EF4444">
+          <b>Aksi Departemen ${dept.name}:</b> Kasus pada aset <b>${k.tag}</b> <b>perlu segera divalidasi</b> oleh pakar keandalan. Tinjau bukti teknis atau minta uji tambahan agar tindakan perbaikan dapat segera dieksekusi.
+        </p>
+      `)}`,
     p:()=>c.rp?`<svg class="rs" viewBox="0 0 420 195" role="img" aria-label="Grafik getaran pompa selama 120 hari simulasi"><rect x="34" y="20" width="366" height="47" fill="#F97316" opacity=".16"/><rect x="34" y="67" width="366" height="35" fill="#F59E0B" opacity=".16"/><text x="40" y="34">Kritis ≥ 7,0 mm/s</text><text x="40" y="82">Peringatan ≥ 4,5</text><text x="40" y="157">Normal</text><path class="ln" fill="none" stroke-width="2.8" stroke-linejoin="round" d="${Array.from({length:61},(_,i)=>(i?'L':'M')+RX(i*2)+' '+RY(RV(i*2)).toFixed(1)).join('')}"/>${EV.map(([t,l])=>`<circle cx="${RX(t)}" cy="${RY(RV(t))}" r="4.5" fill="var(--panel)" stroke="var(--tx)" stroke-width="2.2"/><text x="${RX(t)}" y="${RY(RV(t))-10}" text-anchor="middle">${l}</text>`).join('')}<line id="sl" y1="20" y2="165" stroke="var(--tx)" stroke-dasharray="4 3"/><circle id="sc" r="6" fill="var(--c5)" stroke="var(--tx)" stroke-width="2.2"/><text x="34" y="184">Hari 0</text><text x="200" y="184">Hari 60</text><text x="360" y="184">120 hari</text></svg><div class="rv"><span id="rv"></span><small> mm/s · hari ke-<b id="rt"></b></small><span id="rz"></span></div><input type="range" id="rg" min="0" max="120" value="80" aria-label="Waktu simulasi dalam hari"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">${EV.map(([t,l])=>`<button class="pill" data-t="${t}">${l}</button>`).join('')}</div><p class="mu" style="font-size:13.5px;margin-top:12px">Replay skenario seal bocor, bukan pembacaan sensor langsung.</p>`:'<p class="mu">Belum ada deret waktu simulasi untuk kasus ini.</p>',
     g:()=>{const nb=Math.max(1,c.bk.length),h=Math.max(150,nb*52+44),ym=h/2;return`<div class="gw"><svg viewBox="0 0 580 ${h}" role="img" aria-label="Sub-graf kasus ${k.id}"><line x1="60" y1="${ym}" x2="165" y2="${ym}" stroke="var(--tx2)" stroke-width="2"/><line x1="165" y1="${ym}" x2="280" y2="${ym}" stroke="var(--tx2)" stroke-width="2"/><line x1="280" y1="${ym}" x2="405" y2="${ym}" stroke="var(--tx2)" stroke-width="2" ${ver?'':'stroke-dasharray="6 4"'}/><rect x="24" y="${ym-15}" width="72" height="30" rx="10" fill="var(--n7)"/><text x="60" y="${ym+4}" text-anchor="middle" style="fill:#fff;font-size:11px">${k.tag}</text><circle cx="165" cy="${ym}" r="20" fill="var(--chip)" stroke="var(--n7)" stroke-width="2"/><text x="165" y="${ym+4}" text-anchor="middle" style="fill:var(--n9);font-size:11px">${k.id}</text><polygon points="280,${ym-16} 296,${ym} 280,${ym+16} 264,${ym}" fill="var(--c3)" stroke="var(--n7)" stroke-width="2"/><text x="280" y="${ym+30}" text-anchor="middle">${c.g.slice(0,22)}</text><circle cx="405" cy="${ym}" r="16" ${k.st=='dug'?'stroke-dasharray="4 2.5"':''} fill="var(--panel)" stroke="${SC[k.st]}" stroke-width="4"/><text x="405" y="${ym+4}" text-anchor="middle" style="font-size:12px">${{ver:'✓',dug:'?',bukti:'!',ars:'–'}[k.st]}</text><text x="405" y="${ym+30}" text-anchor="middle">${(c.cs||'Belum ada').slice(0,22)}…</text>${c.bk.map((b,i)=>{const by=34+i*50,fx=b[2]=='penyebab'?405:280;return`<line x1="${fx}" y1="${ym}" x2="515" y2="${by}" stroke="var(--tx2)" stroke-width="1.8"/><rect x="505" y="${by-10}" width="20" height="20" rx="4" fill="var(--panel)" stroke="var(--tx2)" stroke-width="2"/><text x="515" y="${by+24}" text-anchor="middle">${b[1].slice(0,18)}</text>`}).join('')}</svg></div><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px"><span class="mu" style="font-size:13.5px">Garis ${ver?'solid: penyebab didukung bukti':'putus-putus: penyebab masih berstatus dugaan'}.</span><button class="pill" data-go="graf">Buka di Knowledge Graph Explorer ›</button></div>`},
     b:()=>evl(c),
     h:()=>{const w=BL[+k.d.slice(5)-1]+' '+k.d.slice(0,4),hs=[[w,'Laporan diterima. Kandidat penyebab berstatus Dugaan.']];if(ver)hs.push(['Sebelum sesi ini','Diverifikasi pakar dengan '+c.bk.length+' bukti tertaut.']);LOG.filter(l=>l[0]==k.id).forEach(l=>hs.push([l[1],l[2]]));return hs.map(([w,t])=>`<div class="it"><span>${t}<small>${w}</small></span></div>`).join('')+'<p class="mu" style="font-size:13.5px;margin-top:12px">Riwayat audit tidak dapat dihapus.</p>'}
   }[TB]();
+
+  const sideCard = pend ? (isHSE ? `
+    <section class="warm" style="background:#FFFBEB;border:1.5px solid #FDE68A;color:#92400E">
+      <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px">
+        <svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px">${IC.shield}</svg>
+        <span>Pemantauan HSE</span>
+      </div>
+      <span class="bdg-pill warn" style="align-self:flex-start;font-size:12px">Belum tervalidasi departemen terkait</span>
+      <p style="font-size:13.5px;line-height:1.45;color:#78350F;margin:8px 0">
+        Kasus pada <b>${k.tag}</b> belum tervalidasi oleh departemen terkait (<b>${dept.name}</b>). HSE memantau antrean untuk memastikan keselamatan proses dan keandalan operasional.
+      </p>
+      <button class="cta" data-go="validasi-${k.id.toLowerCase()}" style="margin-top:8px">
+        Lihat status antrean validasi <i>${GO}</i>
+      </button>
+    </section>
+  ` : `
+    <section class="warm" style="background:#FFF1F2;border:1.5px solid #FECDD3;color:#9F1239">
+      <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px">
+        <svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px;color:#E11D48">${IC.analysis}</svg>
+        <span>Tindakan Departemen ${dept.code}</span>
+      </div>
+      <span class="bdg-pill" style="background:#FEE2E2;color:#991B1B;align-self:flex-start;font-size:12px;font-weight:800">⚠️ Perlu segera divalidasi</span>
+      <p style="font-size:13.5px;line-height:1.45;color:#881337;margin:8px 0">
+        ${c.rq ? 'Pakar meminta bukti tambahan: <b>' + c.rq + '</b>.' : 'Sebagai tim engineering pengampu aset <b>' + k.tag + '</b>, kasus ini <b>perlu segera divalidasi</b> oleh pakar sebelum kesimpulan dan perbaikan dapat dieksekusi.'}
+      </p>
+      <button class="cta" data-go="validasi-${k.id.toLowerCase()}" style="margin-top:8px;background:var(--n9);color:#fff">
+        Periksa bukti & validasi sekarang <i>${GO}</i>
+      </button>
+    </section>
+  `) : `
+    <section class="cd" style="border:1.5px solid #BBF7D0;background:#F0FDF4">
+      <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:#166534">
+        <svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px">${IC.valid}</svg>
+        <span>${isHSE ? 'Tervalidasi Departemen Terkait' : 'Terverifikasi Pakar'}</span>
+      </div>
+      <p style="font-size:13.5px;line-height:1.45;color:#14532D;margin:8px 0 0">
+        Kasus pada <b>${k.tag}</b> telah resmi diverifikasi oleh pakar <b>${dept.name}</b> dengan ${c.bk.length} berkas bukti sah.
+      </p>
+    </section>
+  `;
 
   $('#mv').innerHTML=hd(k,['beranda','Beranda'])+`
     <div class="dg">
@@ -2222,11 +2306,7 @@ function dk(k){
         ${B}
       </section>
       <aside class="col-st">
-        <section class="warm" ${pend?'':'style="display:none"'}>
-          <span class="t">Menunggu validasi pakar</span>
-          <p>${c.rq?'Pakar meminta bukti tambahan: '+c.rq+'.':'Penyebab masih berstatus dugaan sampai bukti diperiksa oleh personel berwenang.'}</p>
-          <button class="cta" data-go="validasi-${k.id.toLowerCase()}">Periksa bukti sekarang<i><svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></i></button>
-        </section>
+        ${sideCard}
         <section class="cd">
           <h2 style="margin-bottom:12px">Kasus serupa</h2>
           ${sm.map(([id,p])=>{const x=DB.find(y=>y.id==id);return`<button class="it" data-go="kasus-${id.toLowerCase()}"><i>${x.a}</i><span>${id} · ${x.g}<small>${BG(x.st)}</small></span><b class="ch${p<85?' w':''}">${p}%</b></button>`}).join('')||'<p class="mu" style="margin:0">Belum ada kasus serupa pada aset ini.</p>'}
@@ -2843,7 +2923,15 @@ $('#mv').addEventListener('click',e=>{
         ru=e.target.closest('[data-ru]'),
         rs=e.target.closest('[data-rs]'),
         km=e.target.closest('[data-kg-mode]'),
-        ks=e.target.closest('[data-kg-sub]');
+        ks=e.target.closest('[data-kg-sub]'),
+        cr=e.target.closest('[data-case-role]');
+  if(cr){
+    CASE_VIEW_ROLE=cr.dataset.caseRole;
+    const raw=location.hash.slice(1),h=raw.split('-');
+    const activeCase=DB.find(x=>x.id==h.slice(1).join('-').toUpperCase());
+    if(activeCase)dk(activeCase);
+    return;
+  }
   if(f){KF=f.dataset.kf;kl()}
   else if(g){GS=g.dataset.g;gr()}
   else if(q){QS=$('#qi').value;QA=q.dataset.qa;cr()}
