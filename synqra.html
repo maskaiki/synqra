@@ -1265,6 +1265,444 @@ textarea {
   min-width: 150px;
 }
 
+/* ========================================================
+   ASSET REPOSITORY & HIERARCHICAL KNOWLEDGE GRAPH (IKMS 2026)
+   1. Sederhana & Bebas Human Error (Pemisahan per aset)
+   2. Sistem Akses (Role & Department Scope)
+   3. Sistem Keamanan Web (Tamper-evident & Evidence Integrity)
+   ======================================================== */
+.kg-shell {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 1120px) {
+  .kg-shell { grid-template-columns: 1fr; }
+}
+
+.repo-card {
+  background: var(--panel);
+  border: 1px solid rgba(220, 228, 236, 0.7);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--sh-md);
+  position: sticky;
+  top: 20px;
+}
+:root[data-theme="dark"] .repo-card { border-color: var(--bd); }
+
+.repo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.repo-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--tx);
+  letter-spacing: -0.015em;
+}
+.repo-header-title svg {
+  width: 22px;
+  height: 22px;
+  color: var(--n7);
+}
+:root[data-theme="dark"] .repo-header-title svg { color: var(--c5); }
+
+.repo-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--tx2);
+  border: 1px solid var(--bd);
+}
+
+.repo-search-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+.repo-search-box svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  color: var(--tx2);
+  pointer-events: none;
+}
+.repo-search-input {
+  width: 100%;
+  border: 1.5px solid var(--bd);
+  background: var(--card);
+  color: var(--tx);
+  border-radius: 14px;
+  padding: 10px 14px 10px 38px;
+  font-size: 13.5px;
+  font-weight: 500;
+  outline: none;
+  transition: all .18s ease;
+}
+.repo-search-input:focus {
+  border-color: var(--c5);
+  box-shadow: 0 0 0 3px rgba(0, 184, 217, 0.15);
+  background: var(--panel);
+}
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.repo-cat {
+  border: 1.5px solid var(--bd);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--card);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.repo-cat.open {
+  border-color: rgba(0, 184, 217, 0.45);
+  box-shadow: var(--sh-sm);
+}
+
+.repo-cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--card);
+  transition: background-color .15s ease;
+}
+.repo-cat-head:hover { background: var(--pill-bg); }
+
+.repo-cat-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.repo-cat-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--panel);
+  color: var(--n7);
+  border: 1px solid var(--bd);
+  flex: none;
+}
+:root[data-theme="dark"] .repo-cat-icon { color: var(--c5); }
+.repo-cat-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx);
+  line-height: 1.2;
+}
+.repo-cat-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tx2);
+  margin-top: 2px;
+}
+
+.repo-chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--tx2);
+  transition: transform .22s ease;
+}
+.repo-cat.open .repo-chevron {
+  transform: rotate(180deg);
+}
+
+.repo-cat-body {
+  padding: 10px 12px 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--bd);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.repo-unit-card {
+  border: 1.5px solid var(--bd);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+  transition: all .18s ease;
+}
+.repo-unit-card.active {
+  border-color: var(--c5);
+  background: rgba(224, 247, 250, 0.4);
+}
+:root[data-theme="dark"] .repo-unit-card.active {
+  background: rgba(22, 78, 99, 0.28);
+  border-color: var(--c5);
+}
+
+.repo-unit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color .15s ease;
+}
+.repo-unit-head:hover { background: var(--pill-bg); }
+
+.repo-unit-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--tx);
+}
+.repo-unit-main svg {
+  width: 17px;
+  height: 17px;
+  color: var(--n7);
+}
+:root[data-theme="dark"] .repo-unit-main svg { color: var(--c5); }
+
+.repo-unit-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--tx2);
+  transition: transform .22s ease;
+}
+.repo-unit-card.open .repo-unit-chevron {
+  transform: rotate(180deg);
+}
+
+.repo-sublist {
+  padding: 6px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-top: 1px dashed var(--bd);
+}
+
+.repo-sub-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tx);
+  text-align: left;
+  transition: all .15s ease;
+  cursor: pointer;
+}
+.repo-sub-btn:hover { background: var(--pill-bg); }
+.repo-sub-btn.active {
+  background: var(--n9);
+  color: #FFFFFF;
+}
+:root[data-theme="dark"] .repo-sub-btn.active {
+  background: var(--c5);
+  color: #0B1F44;
+}
+
+.repo-sub-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.repo-sub-left svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.repo-sub-btn.active .repo-sub-left svg { color: currentColor; }
+
+.repo-sub-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.repo-sub-cnt {
+  font-size: 11.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--tx2);
+  font-weight: 700;
+}
+.repo-sub-btn.active .repo-sub-cnt {
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+}
+:root[data-theme="dark"] .repo-sub-btn.active .repo-sub-cnt {
+  background: rgba(11, 31, 68, 0.25);
+  color: #0B1F44;
+}
+
+.repo-footer-toggle {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--tx2);
+  flex-wrap: wrap;
+}
+
+/* Header & Banner Pilar SYNQRA */
+.kg-banner {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--sh-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.kg-asset-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.kg-asset-badge-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--n7), var(--n9));
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 16px;
+  flex: none;
+  box-shadow: 0 4px 12px rgba(11, 31, 68, 0.2);
+}
+:root[data-theme="dark"] .kg-asset-badge-avatar {
+  background: linear-gradient(135deg, var(--c5), var(--n7));
+  color: #0B1F44;
+}
+.kg-asset-name-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--tx);
+  letter-spacing: -0.02em;
+}
+.kg-asset-sub-dept {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tx2);
+  margin-top: 2px;
+}
+
+.pillar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pillar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.pillar-pill svg { width: 14px; height: 14px; }
+.pillar-pill.p-simple {
+  background: #E0F2FE;
+  color: #0369A1;
+  border-color: #BAE6FD;
+}
+.pillar-pill.p-access {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #FDE68A;
+}
+.pillar-pill.p-security {
+  background: #DCFCE7;
+  color: #166534;
+  border-color: #BBF7D0;
+}
+:root[data-theme="dark"] .pillar-pill.p-simple { background: #082F49; color: #7DD3FC; border-color: #0C4A6E; }
+:root[data-theme="dark"] .pillar-pill.p-access { background: #451A03; color: #FDE68A; border-color: #78350F; }
+:root[data-theme="dark"] .pillar-pill.p-security { background: #052E16; color: #86EFAC; border-color: #14532D; }
+
+/* Sub-komponen View Cards */
+.kg-subview-card {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--bd);
+}
+.kg-subview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.kg-subview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tx);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kg-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.kg-item-box {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kg-item-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 14px;
+}
+.kg-item-box-desc {
+  font-size: 13px;
+  color: var(--tx2);
+  line-height: 1.45;
+}
+
 #ts {
   position: fixed;
   left: 50%;
@@ -1553,7 +1991,17 @@ const IC={
   anl:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   konf:'<path d="M4 6h6l2 2h8v11H4zM12 11v5M9.5 13.5h5"/>',
   lapor:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
-  theme:'<path d="M12 3a9 9 0 109 9c0-.5 0-1-.1-1.5A7 7 0 0113.5 3.1C13 3 12.5 3 12 3z"/>'
+  theme:'<path d="M12 3a9 9 0 109 9c0-.5 0-1-.1-1.5A7 7 0 0113.5 3.1C13 3 12.5 3 12 3z"/>',
+  folder:'<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
+  chevronDown:'<path d="M6 9l6 6 6-6"/>',
+  chevronRight:'<path d="M9 18l6-6-6-6"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 0 4 24.5"/>',
+  analysis:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+  evidence:'<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  history:'<path d="M12 8v4l3 3M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  repo:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/>'
 };
 
 const NAV=[
@@ -1834,11 +2282,95 @@ function dv(k){
 
 $('#mv').addEventListener('click',e=>{const b=e.target.closest('[data-tb]');if(b){TB=b.dataset.tb;route()}});
 
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const hv=(t,s)=>`<header class="top"><h1><span style="color:inherit;font-weight:800">${t}</span> <span>· ${s}</span></h1><span class="sim">Data simulasi</span></header>`,
       GO='<svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>',
       dt=k=>BL[+k.d.slice(5)-1]+' '+k.d.slice(0,4),
       TN={a:'Aset',k:'Kejadian',g:'Gejala',c:'Penyebab',b:'Bukti'};
-let KF='all',GS='cK-033',QS='Seal bocor, getaran naik pada pompa',QA='';
+let KF='all',GS='cK-009',QS='Seal bocor, getaran naik pada pompa',QA='';
+
+const REPO_DATA=[
+  {
+    id:'he',
+    n:'Heat Exchanger',
+    sc:'1 aset',
+    cd:'E',
+    dp:'Process & Thermal Engineering (PRC)',
+    units:[
+      {
+        tag:'E-201',
+        name:'Heat Exchanger (Shell & Tube)',
+        desc:'Shell & Tube Heat Exchanger E-201',
+        dept:'Process & Thermal Engineering',
+        cases:['K-009','K-027'],
+        evidenceCount:6,
+        symptoms:['Rembesan sambungan channel','ΔP naik, suhu keluar turun'],
+        causes:['Gasket channel mengeras','Fouling pada sisi tabung'],
+        actions:['Ganti gasket channel','Pembersihan kimia bundel tabung'],
+        history:[
+          {date:'Sep 2024',desc:'Kasus K-009: Gasket channel mengeras diverifikasi pakar. Tindakan: Ganti gasket channel.'},
+          {date:'Jun 2025',desc:'Kasus K-027: Fouling sisi tabung diverifikasi pakar dengan 4 bukti. Tindakan: Pembersihan kimia.'}
+        ]
+      }
+    ]
+  },
+  {
+    id:'cv',
+    n:'Control Valve',
+    sc:'1 aset',
+    cd:'F',
+    dp:'Piping & Instrumentation (PIP)',
+    units:[
+      {
+        tag:'FCV-301',
+        name:'Control Valve',
+        desc:'Pneumatic Flow Control Valve FCV-301',
+        dept:'Piping & Instrumentation Engineering',
+        cases:['K-031'],
+        evidenceCount:1,
+        symptoms:['Respons valve lambat (lag ~8 detik)'],
+        causes:['Gesekan packing tinggi (Kandidat dugaan)'],
+        actions:['Uji stroke valve (Menunggu hasil uji lapangan)'],
+        history:[
+          {date:'Feb 2026',desc:'Kasus K-031: Laporan teknisi diterima. Pakar meminta bukti uji stroke sebelum konfirmasi.'}
+        ]
+      }
+    ]
+  },
+  {
+    id:'pmp',
+    n:'Pump',
+    sc:'1 aset',
+    cd:'P',
+    dp:'Rotating & Mechanical (ROT)',
+    units:[
+      {
+        tag:'P-101A',
+        name:'Pompa Sentrifugal',
+        desc:'Centrifugal Process Pump P-101A',
+        dept:'Rotating & Mechanical Engineering',
+        cases:['K-014','K-021','K-033'],
+        evidenceCount:6,
+        symptoms:['Seal bocor, getaran naik','Getaran dan bunyi kerikil','Getaran naik 6,9 mm/s, rembesan seal'],
+        causes:['Face mechanical seal aus','Kavitasi di sisi hisap','Kemungkinan seal aus berulang'],
+        actions:['Ganti mechanical seal dan luruskan poros','Inspeksi seal terjadwal'],
+        history:[
+          {date:'Mar 2025',desc:'Kasus K-014: Terverifikasi pakar dengan 3 bukti. Tindakan ganti seal selesai.'},
+          {date:'Nov 2025',desc:'Kasus K-021: Catatan shift malam. Status Dugaan kavitasi.'},
+          {date:'Agu 2026',desc:'Kasus K-033: Laporan getaran dan rembesan seal. Menunggu validasi pakar.'}
+        ]
+      }
+    ]
+  }
+];
+
+let KG_MODE='asset',
+    KG_TAG='E-201',
+    KG_CAT='he',
+    KG_SUB='all',
+    KG_SEARCH='',
+    KG_OPEN={he:true,cv:false,pmp:false},
+    KG_UNIT_OPEN={'E-201':true,'FCV-301':false,'P-101A':false};
 
 function kl(){
   const L=DB.filter(k=>KF=='all'||k.st==KF).sort((a,b)=>a.d<b.d?1:-1);
@@ -1859,58 +2391,396 @@ function kl(){
 }
 
 function gr(){
-  const O=[...DB].sort((a,b)=>(a.tag+a.id)<(b.tag+b.id)?-1:1),XC=[55,165,290,425,565],N={},E=[],A={};let y=42;
-  O.forEach(k=>{
-    const c=CD[k.id],n=Math.max(1,c.bk.length),ym=y+(n-1)*24,ev=k.st=='ver'||k.st=='ars';
-    (A[k.tag]=A[k.tag]||{a:k.a,y:[]}).y.push(ym);
-    N[k.id]={t:'k',x:XC[1],y:ym,l:k.id,d:k.g,k};
-    N['g'+k.id]={t:'g',x:XC[2],y:ym,l:c.g,d:c.g,k};
-    N['c'+k.id]={t:'c',x:XC[3],y:ym,l:c.cs,d:c.cs,k};
-    E.push(['a'+k.tag,k.id,0],[k.id,'g'+k.id,0],['g'+k.id,'c'+k.id,ev?0:1]);
-    c.bk.forEach((b,i)=>{
-      N['b'+k.id+i]={t:'b',x:XC[4],y:y+i*48,l:b[1],d:b[1]+' ('+b[0]+')',k};
-      E.push([(b[2]=='penyebab'?'c':'g')+k.id,'b'+k.id+i,0]);
+  const curCat = REPO_DATA.find(c => c.units.some(u => u.tag == KG_TAG)) || REPO_DATA[0];
+  const curUnit = curCat.units.find(u => u.tag == KG_TAG) || curCat.units[0];
+
+  // Filter kasus: Mode terpisah per aset (Default & Rekomendasi) vs Mode Global
+  const O = (KG_MODE == 'asset' ? DB.filter(k => k.tag == KG_TAG) : [...DB]).sort((a,b)=>(a.tag+a.id)<(b.tag+b.id)?-1:1);
+  const XC = [55, 165, 290, 425, 565], N = {}, E = [], A = {};
+  let y = 42;
+
+  O.forEach(k => {
+    const c = CD[k.id], n = Math.max(1, c.bk.length), ym = y + (n - 1) * 24, ev = k.st == 'ver' || k.st == 'ars';
+    (A[k.tag] = A[k.tag] || { a: k.a, y: [] }).y.push(ym);
+    N[k.id] = { t: 'k', x: XC[1], y: ym, l: k.id, d: k.g, k };
+    N['g' + k.id] = { t: 'g', x: XC[2], y: ym, l: c.g, d: c.g, k };
+    N['c' + k.id] = { t: 'c', x: XC[3], y: ym, l: c.cs, d: c.cs, k };
+    E.push(['a' + k.tag, k.id, 0], [k.id, 'g' + k.id, 0], ['g' + k.id, 'c' + k.id, ev ? 0 : 1]);
+    c.bk.forEach((b, i) => {
+      N['b' + k.id + i] = { t: 'b', x: XC[4], y: y + i * 48, l: b[1], d: b[1] + ' (' + b[0] + ')', k };
+      E.push([(b[2] == 'penyebab' ? 'c' : 'g') + k.id, 'b' + k.id + i, 0]);
     });
-    y+=n*48+12;
+    y += n * 48 + 12;
   });
-  Object.entries(A).forEach(([t,v])=>N['a'+t]={t:'a',x:XC[0],y:v.y.reduce((p,q)=>p+q)/v.y.length,l:t,d:(TY[v.a]||'Aset')+' '+t,k:DB.find(k=>k.tag==t)});
-  if(!N[GS])GS='cK-033';
-  const tx=(x,y,s,st)=>`<text x="${x}" y="${y}" text-anchor="middle" style="${st}">${s}</text>`,
-        sh=n=>{
-          const{x,y,t,k}=n;
-          return t=='a'?`<rect x="${x-30}" y="${y-14}" width="60" height="28" rx="9" style="fill:var(--n7)"/>`+tx(x,y+4,n.l,'fill:#fff;font-size:10px;font-weight:800'):
-                 t=='k'?`<circle cx="${x}" cy="${y}" r="18" style="fill:var(--chip);stroke:var(--n7);stroke-width:2"/>`+tx(x,y+4,n.l,'fill:var(--n9);font-size:10px;font-weight:800'):
-                 t=='g'?`<polygon points="${x},${y-15} ${x+15},${y} ${x},${y+15} ${x-15},${y}" style="fill:var(--c3);stroke:var(--n7);stroke-width:2"/>`:
-                 t=='c'?`<circle cx="${x}" cy="${y}" r="15" ${k.st=='dug'?'stroke-dasharray="4 2.5"':''} style="fill:var(--panel);stroke:${SC[k.st]};stroke-width:4"/>`+tx(x,y+4,{ver:'✓',dug:'?',bukti:'!',ars:'–'}[k.st],'fill:var(--tx);font-size:12px;font-weight:800'):
-                 `<rect x="${x-9}" y="${y-9}" width="18" height="18" rx="4" style="fill:var(--panel);stroke:var(--tx2);stroke-width:2"/>`;
-        };
-  const s=N[GS],c=CD[s.k.id],
-        svg=`<svg viewBox="0 0 650 ${y+10}" role="group" aria-label="Knowledge graph 2D, ${O.length} kasus">
-          ${['Aset','Kejadian','Gejala','Penyebab','Bukti'].map((l,i)=>`<text x="${XC[i]}" y="18" text-anchor="middle">${l}</text>`).join('')}
-          ${E.map(([a,b,d])=>`<line x1="${N[a].x}" y1="${N[a].y}" x2="${N[b].x}" y2="${N[b].y}" style="stroke:var(--tx2);stroke-width:1.8" ${d?'stroke-dasharray="6 4"':''}/>`).join('')}
-          ${Object.entries(N).map(([id,n])=>`<g class="gn" tabindex="0" role="button" data-g="${id}" aria-label="${TN[n.t]}: ${n.d}">${GS==id?`<circle cx="${n.x}" cy="${n.y}" r="24" style="fill:none;stroke:var(--c5);stroke-width:3"/>`:''}${sh(n)}${n.t=='k'||n.t=='a'?'':`<text class="lb2" x="${n.x}" y="${n.y+(n.t=='b'?23:28)}" text-anchor="middle">${n.l.length>20?n.l.slice(0,19)+'…':n.l}</text>`}</g>`).join('')}
-        </svg>`;
-  $('#mv').innerHTML=hv('Knowledge Graph','keterkaitan kausal & bukti pendukung')+`
-    <div class="dg">
-      <section class="cd">
-        <div class="gw">${svg}</div>
-        <div class="lgd">
-          <span><b>Garis solid:</b> didukung bukti</span>
-          <span><b>Putus-putus:</b> masih dugaan</span>
-          <span><b>◆</b> Gejala</span>
-          <span><b>●</b> Kejadian</span>
-          <span><b>Cincin penyebab:</b> ✓ terverifikasi, ? dugaan, ! perlu bukti, – arsip</span>
+
+  Object.entries(A).forEach(([t, v]) => N['a' + t] = { t: 'a', x: XC[0], y: v.y.reduce((p, q) => p + q) / v.y.length, l: t, d: (TY[v.a] || 'Aset') + ' ' + t, k: DB.find(k => k.tag == t) });
+
+  // Pastikan GS mengarah ke node yang valid di grafik ini
+  if (!N[GS]) {
+    const pref = Object.keys(N).find(k => k.startsWith('cK-') || k.startsWith('K-')) || Object.keys(N)[0] || 'a' + KG_TAG;
+    GS = pref;
+  }
+  const s = N[GS] || { t: 'a', d: KG_TAG, k: DB.find(k => k.tag == KG_TAG) || DB[0] };
+  const c = CD[s.k ? s.k.id : 'K-009'] || CD['K-009'];
+
+  const sq = KG_SEARCH.trim().toLowerCase();
+
+  // 1. Panel Kiri: Asset Repository (Sesuai Referensi Teman)
+  const repoHTML = `
+    <aside class="repo-card">
+      <div class="repo-header">
+        <div class="repo-header-title">
+          <svg class="i" viewBox="0 0 24 24">${IC.repo}</svg>
+          <span>Asset Repository</span>
         </div>
-      </section>
-      <aside class="cd">
-        <span class="bd ver" style="margin-bottom:10px">${TN[s.t]} Terpilih</span>
-        <h2 style="margin:4px 0 12px;font-size:20px">${s.d}</h2>
-        ${s.t=='c'?BG(s.k.st):''}
-        <p style="font-size:14.5px;margin:12px 0">Terkait dengan kasus <b>${s.k.id}</b> pada aset <b>${s.k.tag}</b> (${c.bk.length} bukti tertaut).</p>
-        ${s.t=='c'&&(s.k.st=='dug'||s.k.st=='bukti')?'<p class="nt">Garis putus-putus menuju penyebab ini menunjukkan klaim belum didukung bukti terverifikasi.</p>':''}
-        <button class="pill pr" data-go="kasus-${s.k.id.toLowerCase()}" style="margin-top:16px;width:100%;justify-content:center">Buka Detail Kasus ${s.k.id} ›</button>
-      </aside>
-    </div>`;
+        <span class="repo-badge">SYNQRA</span>
+      </div>
+
+      <div class="repo-search-box">
+        <svg class="i" viewBox="0 0 24 24">${IC.cari}</svg>
+        <input class="repo-search-input" id="repo-q" value="${esc(KG_SEARCH)}" placeholder="Cari jenis equipment atau kode aset..." aria-label="Cari jenis equipment atau kode aset">
+      </div>
+
+      <div class="repo-list">
+        ${REPO_DATA.map(cat => {
+          const mCat = !sq || cat.n.toLowerCase().includes(sq) || cat.units.some(u => u.tag.toLowerCase().includes(sq) || u.desc.toLowerCase().includes(sq));
+          if (!mCat) return '';
+          const isCatOpen = KG_OPEN[cat.id] || sq.length > 0;
+          return `
+            <div class="repo-cat ${isCatOpen ? 'open' : ''}">
+              <div class="repo-cat-head" data-rc="${cat.id}" role="button" tabindex="0">
+                <div class="repo-cat-main">
+                  <div class="repo-cat-icon">
+                    <svg class="i" viewBox="0 0 24 24">${IC.folder}</svg>
+                  </div>
+                  <div>
+                    <div class="repo-cat-name">${cat.n}</div>
+                    <div class="repo-cat-sub">${cat.units.length} aset</div>
+                  </div>
+                </div>
+                <svg class="i repo-chevron" viewBox="0 0 24 24">${IC.chevronDown}</svg>
+              </div>
+
+              ${isCatOpen ? `
+                <div class="repo-cat-body">
+                  ${cat.units.map(u => {
+                    const mUnit = !sq || u.tag.toLowerCase().includes(sq) || u.desc.toLowerCase().includes(sq) || cat.n.toLowerCase().includes(sq);
+                    if (!mUnit) return '';
+                    const isUnitActive = KG_TAG == u.tag;
+                    const isUnitOpen = KG_UNIT_OPEN[u.tag] || isUnitActive || sq.length > 0;
+                    return `
+                      <div class="repo-unit-card ${isUnitActive ? 'active' : ''} ${isUnitOpen ? 'open' : ''}">
+                        <div class="repo-unit-head" data-ru="${u.tag}" data-rc="${cat.id}" role="button" tabindex="0">
+                          <div class="repo-unit-main">
+                            <svg class="i" viewBox="0 0 24 24">${IC.folder}</svg>
+                            <span>${u.tag}</span>
+                          </div>
+                          <svg class="i repo-unit-chevron" viewBox="0 0 24 24">${IC.chevronDown}</svg>
+                        </div>
+
+                        ${isUnitOpen ? `
+                          <div class="repo-sublist">
+                            <button class="repo-sub-btn ${isUnitActive && KG_SUB == 'cases' ? 'active' : ''}" data-rs="cases" data-rt="${u.tag}">
+                              <div class="repo-sub-left">
+                                <svg class="i" viewBox="0 0 24 24">${IC.book}</svg>
+                                <span>Knowledge Cases (K)</span>
+                              </div>
+                              <div class="repo-sub-right">
+                                <span class="repo-sub-cnt">${u.cases.length}</span>
+                                <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24">${IC.chevronRight}</svg>
+                              </div>
+                            </button>
+
+                            <button class="repo-sub-btn ${isUnitActive && KG_SUB == 'analysis' ? 'active' : ''}" data-rs="analysis" data-rt="${u.tag}">
+                              <div class="repo-sub-left">
+                                <svg class="i" viewBox="0 0 24 24">${IC.analysis}</svg>
+                                <span>Failure Analysis</span>
+                              </div>
+                              <div class="repo-sub-right">
+                                <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24">${IC.chevronRight}</svg>
+                              </div>
+                            </button>
+
+                            <button class="repo-sub-btn ${isUnitActive && KG_SUB == 'evidence' ? 'active' : ''}" data-rs="evidence" data-rt="${u.tag}">
+                              <div class="repo-sub-left">
+                                <svg class="i" viewBox="0 0 24 24">${IC.evidence}</svg>
+                                <span>Supporting Evidence</span>
+                              </div>
+                              <div class="repo-sub-right">
+                                <span class="repo-sub-cnt">${u.evidenceCount}</span>
+                                <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24">${IC.chevronRight}</svg>
+                              </div>
+                            </button>
+
+                            <button class="repo-sub-btn ${isUnitActive && KG_SUB == 'history' ? 'active' : ''}" data-rs="history" data-rt="${u.tag}">
+                              <div class="repo-sub-left">
+                                <svg class="i" viewBox="0 0 24 24">${IC.history}</svg>
+                                <span>Maintenance History</span>
+                              </div>
+                              <div class="repo-sub-right">
+                                <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24">${IC.chevronRight}</svg>
+                              </div>
+                            </button>
+                          </div>
+                        ` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('') || '<p class="mu" style="font-size:13.5px;text-align:center;padding:12px 0">Tidak ada equipment yang cocok.</p>'}
+      </div>
+
+      <div class="repo-footer-toggle">
+        ${KG_MODE == 'asset' ? `
+          <button class="pill" data-kg-mode="global" style="width:100%;justify-content:center;font-size:13px">
+            🌐 Tinjau Seluruh Aset (Global)
+          </button>
+        ` : `
+          <button class="pill pr" data-kg-mode="asset" style="width:100%;justify-content:center;font-size:13px">
+            📁 Mode Fokus per Aset (${KG_TAG})
+          </button>
+        `}
+      </div>
+    </aside>
+  `;
+
+  // 2. SVG Knowledge Graph (Terpisah per Aset Terpilih)
+  const tx = (x, y, st, txt) => `<text x="${x}" y="${y}" text-anchor="middle" style="${st}">${txt}</text>`;
+  const sh = n => {
+    const { x, y, t, k } = n;
+    const hi = (KG_SUB == 'cases' && t == 'k') ||
+               (KG_SUB == 'analysis' && (t == 'g' || t == 'c')) ||
+               (KG_SUB == 'evidence' && t == 'b');
+    return t == 'a' ? `<rect x="${x-30}" y="${y-14}" width="60" height="28" rx="9" style="fill:var(--n7)"/>` + tx(x, y+4, 'fill:#fff;font-size:10px;font-weight:800', n.l) :
+           t == 'k' ? `<circle cx="${x}" cy="${y}" r="18" style="fill:${hi ? 'var(--c5)' : 'var(--chip)'};stroke:var(--n7);stroke-width:2"/>` + tx(x, y+4, 'fill:var(--n9);font-size:10px;font-weight:800', n.l) :
+           t == 'g' ? `<polygon points="${x},${y-15} ${x+15},${y} ${x},${y+15} ${x-15},${y}" style="fill:${hi ? 'var(--c3)' : 'var(--c3)'};stroke:var(--n7);stroke-width:${hi ? 3 : 2}"/>` :
+           t == 'c' ? `<circle cx="${x}" cy="${y}" r="15" ${k.st == 'dug' ? 'stroke-dasharray="4 2.5"' : ''} style="fill:var(--panel);stroke:${SC[k.st]};stroke-width:${hi ? 5 : 4}"/>` + tx(x, y+4, 'fill:var(--tx);font-size:12px;font-weight:800', { ver: '✓', dug: '?', bukti: '!', ars: '–' }[k.st]) :
+           `<rect x="${x-9}" y="${y-9}" width="18" height="18" rx="4" style="fill:var(--panel);stroke:${hi ? 'var(--c5)' : 'var(--tx2)'};stroke-width:${hi ? 2.5 : 2}"/>`;
+  };
+
+  const svgH = Math.max(160, y + 10);
+  const svg = `<svg viewBox="0 0 650 ${svgH}" role="group" aria-label="Knowledge graph 2D, ${O.length} kasus">
+    ${['Aset', 'Kejadian', 'Gejala', 'Penyebab', 'Bukti'].map((l, i) => `<text x="${XC[i]}" y="18" text-anchor="middle">${l}</text>`).join('')}
+    ${E.map(([a, b, d]) => `<line x1="${N[a].x}" y1="${N[a].y}" x2="${N[b].x}" y2="${N[b].y}" style="stroke:var(--tx2);stroke-width:1.8" ${d ? 'stroke-dasharray="6 4"' : ''}/>`).join('')}
+    ${Object.entries(N).map(([id, n]) => `<g class="gn" tabindex="0" role="button" data-g="${id}" aria-label="${TN[n.t]}: ${n.d}">
+      ${GS == id ? `<circle cx="${n.x}" cy="${n.y}" r="24" style="fill:none;stroke:var(--c5);stroke-width:3"/>` : ''}
+      ${sh(n)}
+      ${n.t == 'k' || n.t == 'a' ? '' : `<text class="lb2" x="${n.x}" y="${n.y + (n.t == 'b' ? 23 : 28)}" text-anchor="middle">${n.l.length > 20 ? n.l.slice(0, 19) + '…' : n.l}</text>`}
+    </g>`).join('')}
+  </svg>`;
+
+  // 3. Sub-komponen View Content (Knowledge Cases, Failure Analysis, Evidence, History)
+  let subViewContent = '';
+  if (KG_SUB == 'cases') {
+    const kCases = DB.filter(x => x.tag == KG_TAG);
+    subViewContent = `
+      <div class="kg-subview-card">
+        <div class="kg-subview-header">
+          <h3><svg class="i" viewBox="0 0 24 24">${IC.book}</svg> Knowledge Cases pada ${KG_TAG} (${kCases.length})</h3>
+          <span class="mu" style="font-size:13px">Semua riwayat kejadian tersimpan terstruktur</span>
+        </div>
+        <div class="kg-item-grid">
+          ${kCases.map(kc => `
+            <div class="kg-item-box">
+              <div class="kg-item-box-head">
+                <span><b>${kc.id}</b> · ${kc.d}</span>
+                ${BG(kc.st)}
+              </div>
+              <div class="kg-item-box-desc">${kc.g}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                <small class="mu">${CD[kc.id].bk.length} berkas bukti</small>
+                <button class="pill" data-go="kasus-${kc.id.toLowerCase()}" style="padding:4px 10px;min-height:30px;font-size:12.5px">Buka Kasus ›</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } else if (KG_SUB == 'analysis') {
+    const kCases = DB.filter(x => x.tag == KG_TAG);
+    subViewContent = `
+      <div class="kg-subview-card">
+        <div class="kg-subview-header">
+          <h3><svg class="i" viewBox="0 0 24 24">${IC.analysis}</svg> Failure Analysis Matrix: ${curUnit.name} (${KG_TAG})</h3>
+          <span class="mu" style="font-size:13px">Hubungan kausal Gejala ➔ Kondisi ➔ Akar Masalah</span>
+        </div>
+        <div class="kg-item-grid">
+          ${kCases.map(kc => {
+            const cd = CD[kc.id];
+            const isVer = kc.st == 'ver' || kc.st == 'ars';
+            return `
+              <div class="kg-item-box">
+                <div class="kg-item-box-head">
+                  <span>Kasus <b>${kc.id}</b></span>
+                  ${BG(kc.st)}
+                </div>
+                <div class="kg-item-box-desc">
+                  <div><b>Gejala:</b> ${cd.g}</div>
+                  <div style="margin-top:4px"><b>Kondisi:</b> ${cd.kd}</div>
+                  <div style="margin-top:4px"><b>${isVer ? 'Penyebab Terverifikasi' : 'Kandidat Dugaan'}:</b> <span style="color:${isVer ? 'var(--ok)' : 'var(--dug)'};font-weight:700">${cd.cs}</span></div>
+                </div>
+                <div class="nt" style="margin-top:8px;padding:8px 10px;font-size:12.5px">
+                  ${isVer ? '✓ Bukti teknis diverifikasi oleh Pakar Validator.' : '⚠️ Status Dugaan: Belum terbukti. Jangan dijadikan rekomendasi final.'}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } else if (KG_SUB == 'evidence') {
+    const kCases = DB.filter(x => x.tag == KG_TAG);
+    const allEvidence = [];
+    kCases.forEach(kc => {
+      CD[kc.id].bk.forEach(b => {
+        allEvidence.push({ caseId: kc.id, type: b[0], title: b[1], supports: b[2], status: kc.st });
+      });
+    });
+    subViewContent = `
+      <div class="kg-subview-card">
+        <div class="kg-subview-header">
+          <h3><svg class="i" viewBox="0 0 24 24">${IC.evidence}</svg> Supporting Evidence Repository (${allEvidence.length} Berkas)</h3>
+          <span class="pillar-pill p-security"><svg class="i" viewBox="0 0 24 24">${IC.shield}</svg> Tamper-Proof Hash Verified</span>
+        </div>
+        <div class="kg-item-grid">
+          ${allEvidence.map((ev, i) => `
+            <div class="kg-item-box">
+              <div class="kg-item-box-head">
+                <span>📎 ${ev.title}</span>
+                <span class="ch" style="font-size:11px">${ev.type}</span>
+              </div>
+              <div class="kg-item-box-desc">
+                Terkait kasus <b>${ev.caseId}</b> · Mendukung <b>${ev.supports}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px" class="mu">
+                <span>Hash: SHA256-${(i+1)*137}a8b…</span>
+                <span style="color:var(--ok);font-weight:700">✓ Sah & Terenkripsi</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } else if (KG_SUB == 'history') {
+    subViewContent = `
+      <div class="kg-subview-card">
+        <div class="kg-subview-header">
+          <h3><svg class="i" viewBox="0 0 24 24">${IC.history}</svg> Maintenance History & Audit Trail: ${curUnit.name}</h3>
+          <span class="mu" style="font-size:13px">Pencatatan tindakan korektif dan pascaperbaikan</span>
+        </div>
+        <div class="dl">
+          ${curUnit.history.map(h => `
+            <div>
+              <small>${h.date}</small>
+              <span>${h.desc}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Panel Kanan: Focused Graph, 3 Pillars Banner, Sub-tabs & Inspector
+  const rightPanelHTML = `
+    <div class="col-st">
+      <!-- 3 Pillars Header Banner -->
+      <div class="kg-banner">
+        <div class="kg-asset-meta">
+          <div class="kg-asset-badge-avatar">${curCat.cd}</div>
+          <div>
+            <div class="kg-asset-name-title">
+              ${KG_MODE == 'asset' ? curUnit.name + ' (' + curUnit.tag + ')' : 'Seluruh Aset Terintegrasi'}
+            </div>
+            <div class="kg-asset-sub-dept">
+              Departemen: <b>${curUnit.dept}</b> · Kode Tag: <b>${curUnit.tag}</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="pillar-row">
+          <span class="pillar-pill p-simple" title="Prinsip 1: Graf terisolasi per aset untuk mencegah salah klik">
+            <svg class="i" viewBox="0 0 24 24">${IC.shield}</svg>
+            1. Sederhana: Fokus ${KG_MODE == 'asset' ? curUnit.tag : 'Global'}
+          </span>
+          <span class="pillar-pill p-access" title="Prinsip 2: Hak akses berdasarkan departemen dan kompetensi teknis">
+            <svg class="i" viewBox="0 0 24 24">${IC.lock}</svg>
+            2. Akses: ${curCat.cd == 'P' ? 'Rotating' : curCat.cd == 'E' ? 'Process' : 'Piping'}
+          </span>
+          <span class="pillar-pill p-security" title="Prinsip 3: Bukti terenkripsi, audit trail tidak dapat dimanipulasi">
+            <svg class="i" viewBox="0 0 24 24">${IC.shield}</svg>
+            3. Keamanan: Audit Verified
+          </span>
+        </div>
+      </div>
+
+      <!-- Sub-view navigation tabs -->
+      <div class="tabs" style="margin-bottom:14px">
+        <button class="${KG_SUB == 'all' ? 'on' : ''}" data-kg-sub="all">Semua Hubungan Graf</button>
+        <button class="${KG_SUB == 'cases' ? 'on' : ''}" data-kg-sub="cases">📖 Knowledge Cases (${curUnit.cases.length})</button>
+        <button class="${KG_SUB == 'analysis' ? 'on' : ''}" data-kg-sub="analysis">📄 Failure Analysis</button>
+        <button class="${KG_SUB == 'evidence' ? 'on' : ''}" data-kg-sub="evidence">📎 Supporting Evidence (${curUnit.evidenceCount})</button>
+        <button class="${KG_SUB == 'history' ? 'on' : ''}" data-kg-sub="history">📋 Maintenance History</button>
+      </div>
+
+      <!-- Main Graph Canvas & Inspector -->
+      <div class="dg">
+        <section class="cd">
+          <div class="gw">${svg}</div>
+          <div class="lgd">
+            <span><b>Garis solid:</b> Terverifikasi pakar</span>
+            <span><b>Putus-putus:</b> Dugaan (belum divalidasi)</span>
+            <span><b>◆</b> Gejala</span>
+            <span><b>●</b> Kejadian</span>
+            <span><b>Cincin:</b> ✓ Terverifikasi, ? Dugaan, ! Perlu bukti</span>
+          </div>
+          ${subViewContent}
+        </section>
+
+        <aside class="cd">
+          <span class="bd ver" style="margin-bottom:10px">${TN[s.t] || 'Node'} Terpilih</span>
+          <h2 style="margin:4px 0 12px;font-size:20px">${s.d || curUnit.tag}</h2>
+          ${s.t == 'c' ? BG(s.k.st) : ''}
+          <p style="font-size:14.5px;margin:12px 0">
+            Terkait dengan kasus <b>${s.k.id}</b> pada aset <b>${s.k.tag}</b> (${c.bk.length} bukti tertaut).
+          </p>
+          ${s.t == 'c' && (s.k.st == 'dug' || s.k.st == 'bukti') ? '<p class="nt">⚠️ Garis putus-putus menuju penyebab ini menunjukkan klaim belum didukung bukti terverifikasi oleh Pakar Validator.</p>' : ''}
+          <button class="pill pr" data-go="kasus-${s.k.id.toLowerCase()}" style="margin-top:16px;width:100%;justify-content:center">
+            Buka Detail Kasus ${s.k.id} ›
+          </button>
+          
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--bd)">
+            <small class="mu" style="display:block;font-size:12.5px;line-height:1.45">
+              <b>🛡️ Proteksi Integritas:</b> Setiap entitas penyebab pada ${curUnit.tag} terkunci hingga personel berwenang melampirkan berkas bukti teknis lapangan yang sesuai (Aturan R2).
+            </small>
+          </div>
+        </aside>
+      </div>
+    </div>
+  `;
+
+  $('#mv').innerHTML = hv('Knowledge Graph & Asset Repository', 'pohon peralatan & hubungan kausal (IKMS 2026)') + `
+    <div class="kg-shell">
+      ${repoHTML}
+      ${rightPanelHTML}
+    </div>
+  `;
+
+  // Real-time search filter binding
+  const rq = $('#repo-q');
+  if (rq) {
+    rq.oninput = e => {
+      KG_SEARCH = e.target.value;
+      gr();
+      const el = $('#repo-q');
+      if (el) {
+        el.focus();
+        el.setSelectionRange(KG_SEARCH.length, KG_SEARCH.length);
+      }
+    };
+  }
 }
 
 function cr(){
@@ -1965,8 +2835,45 @@ function an(){
 }
 
 $('#mv').addEventListener('click',e=>{
-  const f=e.target.closest('[data-kf]'),g=e.target.closest('[data-g]'),q=e.target.closest('[data-qa]');
-  if(f){KF=f.dataset.kf;kl()}else if(g){GS=g.dataset.g;gr()}else if(q){QS=$('#qi').value;QA=q.dataset.qa;cr()}
+  const f=e.target.closest('[data-kf]'),
+        g=e.target.closest('[data-g]'),
+        q=e.target.closest('[data-qa]'),
+        rc=e.target.closest('[data-rc]'),
+        ru=e.target.closest('[data-ru]'),
+        rs=e.target.closest('[data-rs]'),
+        km=e.target.closest('[data-kg-mode]'),
+        ks=e.target.closest('[data-kg-sub]');
+  if(f){KF=f.dataset.kf;kl()}
+  else if(g){GS=g.dataset.g;gr()}
+  else if(q){QS=$('#qi').value;QA=q.dataset.qa;cr()}
+  else if(rc&&!ru){
+    const id=rc.dataset.rc;
+    KG_OPEN[id]=!KG_OPEN[id];
+    gr();
+  }
+  else if(ru){
+    const tag=ru.dataset.ru;
+    KG_TAG=tag;
+    KG_UNIT_OPEN[tag]=!KG_UNIT_OPEN[tag];
+    KG_SUB='all';
+    const matchCases=DB.filter(x=>x.tag==KG_TAG);
+    if(matchCases.length)GS='c'+matchCases[0].id;
+    gr();
+  }
+  else if(rs){
+    const sub=rs.dataset.rs, tag=rs.dataset.rt;
+    KG_TAG=tag;
+    KG_SUB=sub;
+    gr();
+  }
+  else if(km){
+    KG_MODE=km.dataset.kgMode;
+    gr();
+  }
+  else if(ks){
+    KG_SUB=ks.dataset.kgSub;
+    gr();
+  }
 });
 $('#mv').addEventListener('keydown',e=>{
   const g=e.target.closest('[data-g]');
@@ -1981,8 +2888,7 @@ const SM={
 },AS={'P-101A':'P','E-201':'E','FCV-301':'F'},
 LS={step:1,mode:'v',asset:'P-101A',rec:0,sec:0,words:[],shown:0,text:'',fix:{},ex:[],t:0,t2:0};
 
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
-      fmt=s=>String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0'),
+const fmt=s=>String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0'),
       wd=a=>SM[a].split(' ').map((w,i)=>{const m=w.match(/^\{([^|]+)\|([^}]+)\}(.*)$/);return m?{id:i,lo:1,w:m[1],r:m[2],t:m[3]}:{id:i,w}}),
       wtx=x=>x.lo?(LS.fix[x.id]?x.r:x.w)+x.t:x.w,
       ftxt=()=>LS.mode=='t'?LS.text:LS.words.slice(0,LS.shown).map(wtx).join(' '),
