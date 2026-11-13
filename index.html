@@ -1777,7 +1777,10 @@ textarea {
   overflow-y: auto;
   animation: fadeUp .2s ease;
 }
-.modal-backdrop[hidden] {
+.modal-backdrop[hidden],
+#login-view[hidden],
+#shell[hidden],
+[hidden] {
   display: none !important;
 }
 .modal-box {
@@ -4439,8 +4442,10 @@ const fs=(q,a)=>{
 const cb=c=>({rendah:'<span class="bd bukti">▲ Keyakinan rendah</span>',sedang:'<span class="bd dug">◆ Keyakinan sedang</span>',tinggi:'<span class="bd ver">● Keyakinan tinggi</span>'}[c]);
 function sb(){
   const n=LS.ex.filter(e=>e.c=='rendah'&&!e.ok).length;
-  $('#sd').disabled=!!n;
-  $('#sn').textContent=n?n+' entitas berkeyakinan rendah wajib dikonfirmasi sebelum laporan dikirim (Aturan R5).':'Hipotesis akar masalah otomatis berstatus Dugaan hingga diotorisasi oleh pakar.';
+  const btn = $('#btn-send-prelim') || $('#sd');
+  if (btn) btn.disabled=!!n;
+  const sn = $('#sn');
+  if (sn) sn.textContent=n?n+' entitas berkeyakinan rendah wajib dikonfirmasi sebelum laporan dikirim (Aturan R5).':'Hipotesis akar masalah otomatis berstatus Dugaan hingga diotorisasi oleh pakar.';
 }
 /* ==========================================================================
    STATE & CONTROLLER: DUAL REPORTING (PRELIMINARY, TRIAGE, FULL WORKSPACE)
@@ -5013,6 +5018,7 @@ function renderInvestigationWorkspace() {
 }
 
 function lp(){
+  scrollTo(0, 0);
   const bk='<div style="margin-bottom:16px"><button class="bk" data-go="beranda">‹ Kembali ke Beranda</button></div>';
 
   const reportTabs = `
@@ -5088,7 +5094,7 @@ function lp(){
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px">
             <button class="pill" onclick="LS.step=1;lp();">‹ Kembali ke transkrip</button>
             <button class="pill" onclick="tst('Draf preliminary report disimpan di perangkat lokal.');">Simpan draf preliminary</button>
-            <button class="pill pr" id="sd" onclick="tst('Preliminary Report berhasil dikirim ke antrean Triage.');REPORT_VIEW_MODE='triage';lp();">
+            <button class="pill pr" id="btn-send-prelim" onclick="tst('Preliminary Report berhasil dikirim ke antrean Triage.');REPORT_VIEW_MODE='triage';lp();scrollTo(0,0);">
               Kirim ke Triage &amp; Assessment ›
             </button>
           </div>
@@ -5461,14 +5467,18 @@ function route(){
   // Redirect to login if not authenticated or explicitly at #login
   if (!isAuth || raw === 'login') {
     $('#shell').hidden = true;
+    $('#shell').style.display = 'none';
     $('#login-view').hidden = false;
+    $('#login-view').style.display = 'flex';
     scrollTo(0, 0);
     return;
   }
 
   // Authenticated: show shell & hide login
   $('#shell').hidden = false;
+  $('#shell').style.display = '';
   $('#login-view').hidden = true;
+  $('#login-view').style.display = 'none';
   updateUserUI();
 
   const V = {
