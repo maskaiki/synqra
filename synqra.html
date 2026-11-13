@@ -1760,6 +1760,370 @@ textarea {
   .pu, .mic.on, .rec .wv i, .anim, .pbar { animation: none !important; }
   * { transition: none !important; }
 }
+
+/* ==========================================================================
+   MODAL & FORENSIC EVIDENCE PREVIEW STYLES (IKMS 2026 STANDARDS)
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 68, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow-y: auto;
+  animation: fadeUp .2s ease;
+}
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+.modal-box {
+  background: var(--panel);
+  color: var(--tx);
+  border: 1px solid var(--bd);
+  border-radius: 26px;
+  max-width: 880px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(11, 31, 68, 0.28);
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  border-bottom: 1px solid var(--bd);
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  z-index: 10;
+}
+.modal-icon-badge {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--chip);
+  color: var(--n9);
+  flex-shrink: 0;
+}
+.modal-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--pill-bg);
+  color: var(--tx2);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.modal-close:hover {
+  background: var(--bd);
+  color: var(--tx);
+}
+.modal-body {
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 26px;
+  border-top: 1px solid var(--bd);
+  background: var(--card);
+  border-radius: 0 0 26px 26px;
+}
+
+/* Jurnal & Bukti Forensik */
+.journal-citation-box {
+  background: #F0F9FF;
+  border: 1.5px solid #BAE6FD;
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+:root[data-theme="dark"] .journal-citation-box {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.35);
+}
+.forensic-figure-container {
+  background: #0B1F44;
+  border: 1px solid var(--n7);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(11, 31, 68, 0.2);
+}
+.forensic-figure-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.doc-findings-box {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+.doc-integrity-box {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 12px 18px;
+}
+
+/* Color Psychology Modal */
+.color-psych-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.cp-card {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.cp-swatch {
+  width: 48px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.cp-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cp-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--tx);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cp-title code {
+  font-size: 11.5px;
+  background: var(--pill-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--tx2);
+}
+.cp-meta {
+  font-size: 12.5px;
+  color: var(--tx);
+  line-height: 1.45;
+}
+.cp-desc {
+  font-size: 12px;
+  color: var(--tx2);
+  line-height: 1.4;
+}
+
+/* Evidence Tab Styles */
+.evidence-tab-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.evidence-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.evidence-item-card {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 18px;
+  padding: 18px 20px;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.evidence-item-card:hover {
+  box-shadow: var(--sh-md);
+  border-color: var(--n7);
+}
+.evidence-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.evidence-type-badge {
+  background: var(--n9);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+:root[data-theme="dark"] .evidence-type-badge {
+  background: var(--c5);
+  color: #0B1F44;
+}
+.evidence-doc-code {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tx2);
+  font-family: monospace;
+}
+.evidence-target-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.evidence-target-pill.cause {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+.evidence-target-pill.symptom {
+  background: #E0F2FE;
+  color: #0369A1;
+  border: 1px solid #BAE6FD;
+}
+.evidence-hash-snippet {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--tx2);
+  font-family: monospace;
+}
+.evidence-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx);
+  margin-bottom: 6px;
+}
+.evidence-journal-ref {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--tx2);
+  margin-bottom: 8px;
+}
+.evidence-findings-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tx2);
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.evidence-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Upload Section */
+.evidence-upload-section {
+  background: var(--panel);
+  border: 1.5px dashed var(--bd);
+  border-radius: 20px;
+  padding: 22px 24px;
+  transition: border-color .2s ease;
+}
+.evidence-upload-section:hover {
+  border-color: var(--n7);
+}
+.evidence-upload-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.upload-icon-circle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--n9);
+}
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color .18s ease;
+}
+.upload-dropzone:hover {
+  background: var(--pill-bg);
+}
+.upload-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 680px) {
+  .upload-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.form-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--tx);
+  margin-bottom: 6px;
+}
+.form-input, .form-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--tx);
+  font-size: 13.5px;
+  font-family: inherit;
+}
+.form-input:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--n9);
+  box-shadow: 0 0 0 3px var(--c3);
+}
+
 </style>
 </head>
 <body>
@@ -1800,6 +2164,10 @@ textarea {
   <section id="subbar">
     <h1>Selamat pagi, <span>Rina</span></h1>
     <div class="sub-pills">
+      <button class="pill" id="btn-color-psych" title="Kerangka Psikologi Warna & Standar Desain Sistem (IKMS 2026)">
+        <svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Psikologi Warna & Standar</span>
+      </button>
       <button class="pill" data-go="konfig" title="Filter Departemen & Spesifikasi Peralatan">
         <svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
         <span id="dpb">Jun – Nov 2026 · HSE (Semua)</span> ▾
@@ -1843,7 +2211,7 @@ textarea {
               </div>
               <div class="ac-foot">
                 <span>Suhu bearing: <b id="ht" style="color:#fff">72 °C</b></span>
-                <button class="rp-btn" id="rp">Putar replay ›</button>
+                <button class="rp-btn" id="rp">Rekonstruksi Deret Waktu Operasi ›</button>
               </div>
             </div>
           </section>
@@ -1979,11 +2347,29 @@ textarea {
 
 <div id="ts" role="status" aria-live="polite"></div>
 
+<!-- SYSTEM MODAL CONTAINER (PSIKOLOGI WARNA & PRATINJAU BUKTI FORENSIK) -->
+<div id="modal-backdrop" class="modal-backdrop" hidden>
+  <div class="modal-box" id="modal-box" role="dialog" aria-modal="true" tabindex="-1"></div>
+</div>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=s=>document.querySelector(s),tst=m=>{const e=$('#ts');e.textContent=m;e.className='on';clearTimeout(tst.t);tst.t=setTimeout(()=>e.className='',3000)};
 
 const IC={
+  mic:'<path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/>',
+  keyboard:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/>',
+  cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  building:'<path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  alertTriangle:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  cases:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 0 4 24.5"/>',
+  info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
   home:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
   kasus:'<path d="M5 4h14v16H5zM9 9h6M9 13h6"/>',
   graf:'<circle cx="6" cy="7" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.7 8.4l3.2 7.8M16.7 7.7l-3.6 8.5M8 7h8"/>',
@@ -2150,8 +2536,8 @@ function show(t){
   if(P3)P3.set(t);
 }
 $('#rp').onclick=()=>{
-  if(tm){clearInterval(tm);tm=0;$('#rp').textContent='Putar replay ›';return}
-  let t=0;show(0);$('#rp').textContent='Jeda ❚❚';
+  if(tm){clearInterval(tm);tm=0;$('#rp').textContent='Rekonstruksi Deret Waktu Operasi ›';return}
+  let t=0;show(0);$('#rp').textContent='Jeda Rekonstruksi ❚❚';
   tm=setInterval(()=>{t++;show(t);if(t>=120){clearInterval(tm);tm=0;$('#rp').textContent='Putar ulang ›'}},110);
 };
 function pump(el){
@@ -2180,17 +2566,689 @@ function pump(el){
 }
 
 /* Data Detail Kasus, Validasi, Graf, Cari, Analitik, Laporan, Konfigurasi */
+
+/* ==========================================================================
+   FORENSIC FIGURES & MODAL SYSTEM (IKMS 2026 JOURNAL REFERENCES)
+   ========================================================================== */
+const FORENSIC_FIGURES = {
+  'seal-damage': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Gambar Kerusakan Face Mechanical Seal">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid1" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid1)"/>
+      <circle cx="210" cy="140" r="105" fill="#13315C" stroke="#7FDFFF" stroke-width="2.5"/>
+      <circle cx="210" cy="140" r="55" fill="#0B1F44" stroke="#7FDFFF" stroke-width="2"/>
+      <circle cx="210" cy="140" r="82" fill="none" stroke="rgba(255,255,255,0.2)" stroke-dasharray="4 3"/>
+      <path d="M 210 35 L 210 60 M 210 220 L 210 245" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round"/>
+      <path d="M 105 140 L 130 140 M 290 140 L 315 140" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round"/>
+      <path d="M 136 66 L 154 84 M 266 196 L 284 214" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 284 66 L 266 84 M 154 196 L 136 214" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="210" cy="140" r="92" fill="none" stroke="#F97316" stroke-width="3.5" stroke-dasharray="16 4 8 4" opacity="0.85"/>
+      <line x1="284" y1="66" x2="380" y2="55" stroke="#7FDFFF" stroke-width="1.8"/>
+      <circle cx="380" cy="55" r="3" fill="#7FDFFF"/>
+      <text x="390" y="52" fill="#FFFFFF" font-size="12" font-weight="700">Zona Keretakan Termal Radikal (Radial Heat Checks)</text>
+      <text x="390" y="68" fill="#CBD5E1" font-size="11">Micro-crack depth: 0,38 mm akibat hilangnya fluida pelumas</text>
+      <line x1="302" y1="140" x2="380" y2="120" stroke="#F97316" stroke-width="1.8"/>
+      <circle cx="380" cy="120" r="3" fill="#F97316"/>
+      <text x="390" y="117" fill="#FFFFFF" font-size="12" font-weight="700">Jejak Alur Keausan Abrasif (Scoring Track)</text>
+      <text x="390" y="133" fill="#CBD5E1" font-size="11">Lebar alur 0,42 mm; transfer film karbon terkelupas</text>
+      <line x1="210" y1="195" x2="380" y2="185" stroke="#00B8D9" stroke-width="1.8"/>
+      <circle cx="380" cy="185" r="3" fill="#00B8D9"/>
+      <text x="390" y="182" fill="#FFFFFF" font-size="12" font-weight="700">Permukaan Seal Berputar (Silicon Carbide Face)</text>
+      <text x="390" y="198" fill="#CBD5E1" font-size="11">Diameter OD: Ø120 mm · Material: Reaction Bonded SiC</text>
+      <line x1="40" y1="250" x2="100" y2="250" stroke="#FFFFFF" stroke-width="3"/>
+      <line x1="40" y1="244" x2="40" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="100" y1="244" x2="100" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <text x="70" y="242" fill="#FFFFFF" font-size="10.5" font-weight="700" text-anchor="middle">10 mm</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Sumber: API Standard 682 Annex F (Inspection &amp; Failure Analysis)</text>
+    </svg>`,
+  'cavitation-impeller': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Gambar Erosi Kavitasi Sudu Impeler Pompa">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid2)"/>
+      <path d="M 60 210 Q 140 160 210 110 Q 280 60 360 40 Q 300 90 230 140 Q 150 190 70 230 Z" fill="#1E4B6B" stroke="#7FDFFF" stroke-width="2.5"/>
+      <g fill="#EF4444" stroke="#F87171" stroke-width="0.8">
+        <circle cx="170" cy="142" r="3.5"/><circle cx="182" cy="136" r="4.2"/><circle cx="195" cy="128" r="5"/><circle cx="208" cy="122" r="4"/><circle cx="220" cy="115" r="5.5"/><circle cx="232" cy="108" r="3.8"/><circle cx="245" cy="100" r="4.8"/><circle cx="185" cy="148" r="3.2"/><circle cx="198" cy="140" r="4"/><circle cx="212" cy="132" r="3.6"/><circle cx="225" cy="124" r="4.5"/>
+      </g>
+      <path d="M 80 150 Q 140 110 200 80" fill="none" stroke="#00B8D9" stroke-width="2.5" stroke-dasharray="5 3"/>
+      <polygon points="204,78 196,84 194,76" fill="#00B8D9"/>
+      <text x="110" y="115" fill="#7FDFFF" font-size="11" font-weight="600">Arah Aliran Fluida Hisap</text>
+      <line x1="220" y1="115" x2="380" y2="70" stroke="#EF4444" stroke-width="1.8"/>
+      <circle cx="380" cy="70" r="3" fill="#EF4444"/>
+      <text x="390" y="67" fill="#FFFFFF" font-size="12" font-weight="700">Zona Erosi Pitting Kavitasi (Suction Eye)</text>
+      <text x="390" y="83" fill="#CBD5E1" font-size="11">Kerapatan mikro-kawah 48 pori/cm²; kedalaman erosi 1,2 mm</text>
+      <line x1="280" y1="60" x2="380" y2="130" stroke="#7FDFFF" stroke-width="1.8"/>
+      <circle cx="380" cy="130" r="3" fill="#7FDFFF"/>
+      <text x="390" y="127" fill="#FFFFFF" font-size="12" font-weight="700">Permukaan Sudu Tekanan Rendah (Suction Face)</text>
+      <text x="390" y="143" fill="#CBD5E1" font-size="11">Implosi gelembung uap akibat defisit NPSHa terhadap NPSHr</text>
+      <line x1="40" y1="250" x2="120" y2="250" stroke="#FFFFFF" stroke-width="3"/>
+      <line x1="40" y1="244" x2="40" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="120" y1="244" x2="120" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <text x="80" y="242" fill="#FFFFFF" font-size="10.5" font-weight="700" text-anchor="middle">20 mm</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Rujukan: Journal of Fluids Engineering (ASME) / ISO 9906</text>
+    </svg>`,
+  'fouling-tube': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Gambar Fouling Deposit Tabung Heat Exchanger">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid3" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid3)"/>
+      <circle cx="210" cy="140" r="105" fill="#1E4B6B" stroke="#7FDFFF" stroke-width="3"/>
+      <circle cx="210" cy="140" r="85" fill="#78350F" stroke="#F59E0B" stroke-width="2"/>
+      <circle cx="210" cy="140" r="62" fill="#0B1F44" stroke="#EA580C" stroke-width="3" stroke-dasharray="12 4 8 4"/>
+      <circle cx="210" cy="140" r="58" fill="rgba(0,184,217,0.15)"/>
+      <text x="210" y="145" fill="#7FDFFF" font-size="12" font-weight="700" text-anchor="middle">Flow Area</text>
+      <line x1="270" y1="105" x2="380" y2="55" stroke="#F59E0B" stroke-width="1.8"/>
+      <circle cx="380" cy="55" r="3" fill="#F59E0B"/>
+      <text x="390" y="52" fill="#FFFFFF" font-size="12" font-weight="700">Kerak Deposit Karbon (Asphaltene Sludge Layer)</text>
+      <text x="390" y="68" fill="#CBD5E1" font-size="11">Ketebalan kerak 1,8 mm; reduksi luas penampang 22%</text>
+      <line x1="315" y1="140" x2="380" y2="120" stroke="#7FDFFF" stroke-width="1.8"/>
+      <circle cx="380" cy="120" r="3" fill="#7FDFFF"/>
+      <text x="390" y="117" fill="#FFFFFF" font-size="12" font-weight="700">Dinding Tabung Logam (Alloy Tube Wall)</text>
+      <text x="390" y="133" fill="#CBD5E1" font-size="11">Carbon Steel A179 · OD 25,4 mm x BWG 14 (tebal 2,1 mm)</text>
+      <line x1="250" y1="180" x2="380" y2="185" stroke="#EA580C" stroke-width="1.8"/>
+      <circle cx="380" cy="185" r="3" fill="#EA580C"/>
+      <text x="390" y="182" fill="#FFFFFF" font-size="12" font-weight="700">Resistansi Termal Fouling (Rf = 0,00045 m²·K/W)</text>
+      <text x="390" y="198" fill="#CBD5E1" font-size="11">Kompensasi penurunan perpindahan panas &amp; lonjakan ΔP shell</text>
+      <line x1="40" y1="250" x2="90" y2="250" stroke="#FFFFFF" stroke-width="3"/>
+      <line x1="40" y1="244" x2="40" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="90" y1="244" x2="90" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <text x="65" y="242" fill="#FFFFFF" font-size="10.5" font-weight="700" text-anchor="middle">5 mm</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Rujukan: Applied Thermal Engineering / TEMA Heat Exchangers</text>
+    </svg>`,
+  'gasket-creep': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Gambar Degradasi Gasket Channel Flensa">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid4" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid4)"/>
+      <rect x="60" y="45" width="260" height="60" rx="4" fill="#13315C" stroke="#7FDFFF" stroke-width="2"/>
+      <rect x="60" y="175" width="260" height="60" rx="4" fill="#13315C" stroke="#7FDFFF" stroke-width="2"/>
+      <rect x="90" y="112" width="200" height="56" rx="2" fill="#78350F" stroke="#F59E0B" stroke-width="2.2"/>
+      <path d="M 90 140 H 290" stroke="#EF4444" stroke-width="2.5" stroke-dasharray="8 4"/>
+      <path d="M 290 140 L 320 140" stroke="#EF4444" stroke-width="3"/>
+      <polygon points="325,140 315,135 315,145" fill="#EF4444"/>
+      <text x="290" y="130" fill="#EF4444" font-size="11" font-weight="700">Rembesan Fluida</text>
+      <line x1="200" y1="112" x2="380" y2="65" stroke="#F59E0B" stroke-width="1.8"/>
+      <circle cx="380" cy="65" r="3" fill="#F59E0B"/>
+      <text x="390" y="62" fill="#FFFFFF" font-size="12" font-weight="700">Penurunan Elastisitas Gasket (Creep &amp; Hardening)</text>
+      <text x="390" y="78" fill="#CBD5E1" font-size="11">Deformasi plastis 38%; hilangnya kemampuan spring-back</text>
+      <line x1="200" y1="45" x2="380" y2="125" stroke="#7FDFFF" stroke-width="1.8"/>
+      <circle cx="380" cy="125" r="3" fill="#7FDFFF"/>
+      <text x="390" y="122" fill="#FFFFFF" font-size="12" font-weight="700">Relaksasi Tegangan Baut Flensa (Bolt Relaxation)</text>
+      <text x="390" y="138" fill="#CBD5E1" font-size="11">Preload baut turun 34% setelah siklus suhu kontinu 18 bulan</text>
+      <line x1="40" y1="250" x2="100" y2="250" stroke="#FFFFFF" stroke-width="3"/>
+      <line x1="40" y1="244" x2="40" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="100" y1="244" x2="100" y2="256" stroke="#FFFFFF" stroke-width="2"/>
+      <text x="70" y="242" fill="#FFFFFF" font-size="10.5" font-weight="700" text-anchor="middle">15 mm</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Rujukan: Int. J. Pressure Vessels and Piping / ASME Sec VIII</text>
+    </svg>`,
+  'valve-hysteresis': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Grafik Histeresis Gesekan Packing Valve">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid5" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid5)"/>
+      <line x1="60" y1="220" x2="320" y2="220" stroke="#7FDFFF" stroke-width="2"/>
+      <line x1="60" y1="220" x2="60" y2="40" stroke="#7FDFFF" stroke-width="2"/>
+      <text x="190" y="245" fill="#CBD5E1" font-size="11" text-anchor="middle">Sinyal Perintah Controller (%)</text>
+      <text x="35" y="130" fill="#CBD5E1" font-size="11" transform="rotate(-90 35 130)" text-anchor="middle">Posisi Aktual Stem (%)</text>
+      <line x1="60" y1="220" x2="300" y2="60" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" stroke-dasharray="4 4"/>
+      <path d="M 60 220 Q 150 170 230 110 L 300 60" fill="none" stroke="#F97316" stroke-width="3"/>
+      <path d="M 300 60 Q 220 90 140 160 L 60 220" fill="none" stroke="#EF4444" stroke-width="3"/>
+      <path d="M 140 160 L 195 135 L 230 110 L 175 135 Z" fill="rgba(239,68,68,0.25)"/>
+      <line x1="180" y1="135" x2="380" y2="65" stroke="#EF4444" stroke-width="1.8"/>
+      <circle cx="380" cy="65" r="3" fill="#EF4444"/>
+      <text x="390" y="62" fill="#FFFFFF" font-size="12" font-weight="700">Zona Histeresis &amp; Deadband Terukur: 6,4%</text>
+      <text x="390" y="78" fill="#CBD5E1" font-size="11">Ambang batas standar ISA-75.05 maks 1,0%; lag waktu 8,2 s</text>
+      <line x1="230" y1="110" x2="380" y2="125" stroke="#F97316" stroke-width="1.8"/>
+      <circle cx="380" cy="125" r="3" fill="#F97316"/>
+      <text x="390" y="122" fill="#FFFFFF" font-size="12" font-weight="700">Efek Gesekan Statis Tinggi (Stick-Slip Friction)</text>
+      <text x="390" y="138" fill="#CBD5E1" font-size="11">Packing gland dikencangkan berlebih (over-torquing)</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Rujukan: ISA Transactions / Process Safety &amp; Environmental Protection</text>
+    </svg>`,
+  'vib-trend': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Grafik Tren Getaran Spektrum FFT SCADA">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid6" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid6)"/>
+      <line x1="60" y1="220" x2="340" y2="220" stroke="#7FDFFF" stroke-width="2"/>
+      <line x1="60" y1="220" x2="60" y2="40" stroke="#7FDFFF" stroke-width="2"/>
+      <text x="200" y="245" fill="#CBD5E1" font-size="11" text-anchor="middle">Deret Waktu Operasi (Hari ke-)</text>
+      <text x="35" y="130" fill="#CBD5E1" font-size="11" transform="rotate(-90 35 130)" text-anchor="middle">Getaran RMS (mm/s)</text>
+      <rect x="60" y="40" width="280" height="40" fill="#EF4444" opacity="0.15"/>
+      <line x1="60" y1="80" x2="340" y2="80" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="280" y="72" fill="#EF4444" font-size="10" font-weight="700">Zona Kritis ≥ 7,0</text>
+      <rect x="60" y="80" width="280" height="50" fill="#F59E0B" opacity="0.15"/>
+      <line x1="60" y1="130" x2="340" y2="130" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="270" y="122" fill="#F59E0B" font-size="10" font-weight="700">Zona Waspada ≥ 4,5</text>
+      <path d="M 60 190 Q 140 185 200 150 T 280 95 L 340 68" fill="none" stroke="#7FDFFF" stroke-width="3"/>
+      <circle cx="340" cy="68" r="5" fill="#EF4444" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="340" y1="68" x2="380" y2="65" stroke="#EF4444" stroke-width="1.8"/>
+      <circle cx="380" cy="65" r="3" fill="#EF4444"/>
+      <text x="390" y="62" fill="#FFFFFF" font-size="12" font-weight="700">Puncak Getaran 7,8 mm/s (Breach Alarm)</text>
+      <text x="390" y="78" fill="#CBD5E1" font-size="11">Dominasi spektrum pada 1X running speed &amp; harmonik tinggi</text>
+      <line x1="200" y1="150" x2="380" y2="125" stroke="#F59E0B" stroke-width="1.8"/>
+      <circle cx="380" cy="125" r="3" fill="#F59E0B"/>
+      <text x="390" y="122" fill="#FFFFFF" font-size="12" font-weight="700">Inisiasi Anomali (Hari ke-14 s.d. 21)</text>
+      <text x="390" y="138" fill="#CBD5E1" font-size="11">Indikasi degradasi pelumasan film muka seal mekanikal</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Rujukan: ISO 10816-3 Standard / Shock &amp; Vibration Journal</text>
+    </svg>`,
+  'inspection-report': `
+    <svg viewBox="0 0 620 280" role="img" aria-label="Gambar Bagan Protokol Inspeksi Turnaround">
+      <rect width="620" height="280" rx="12" fill="#0B1F44"/>
+      <defs>
+        <pattern id="grid7" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="620" height="280" fill="url(#grid7)"/>
+      <rect x="70" y="35" width="210" height="205" rx="8" fill="#13315C" stroke="#7FDFFF" stroke-width="2"/>
+      <rect x="90" y="55" width="170" height="18" rx="4" fill="#00B8D9" opacity="0.3"/>
+      <line x1="90" y1="90" x2="250" y2="90" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
+      <line x1="90" y1="110" x2="230" y2="110" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
+      <circle cx="230" cy="185" r="28" fill="none" stroke="#10B981" stroke-width="2.5" stroke-dasharray="6 3"/>
+      <text x="230" y="189" fill="#10B981" font-size="9" font-weight="800" text-anchor="middle">VERIFIED</text>
+      <line x1="280" y1="65" x2="380" y2="65" stroke="#7FDFFF" stroke-width="1.8"/>
+      <circle cx="380" cy="65" r="3" fill="#7FDFFF"/>
+      <text x="390" y="62" fill="#FFFFFF" font-size="12" font-weight="700">Protokol Inspeksi Terakreditasi ASME / API</text>
+      <text x="390" y="78" fill="#CBD5E1" font-size="11">Ditandatangani oleh Plant Reliability Specialist Level III</text>
+      <line x1="260" y1="185" x2="380" y2="185" stroke="#10B981" stroke-width="1.8"/>
+      <circle cx="380" cy="185" r="3" fill="#10B981"/>
+      <text x="390" y="182" fill="#FFFFFF" font-size="12" font-weight="700">Integritas Dokumen Permanen (Immutable)</text>
+      <text x="390" y="198" fill="#CBD5E1" font-size="11">Digital signature &amp; hash SHA-256 terdaftar dalam audit trail</text>
+      <text x="390" y="250" fill="#7FDFFF" font-size="11" font-weight="600">Rujukan: ASME Section VIII &amp; Plant Turnaround Manual</text>
+    </svg>`
+};
+
+function openModal(contentHtml) {
+  const bd = $('#modal-backdrop');
+  const box = $('#modal-box');
+  if (!bd || !box) return;
+  box.innerHTML = contentHtml;
+  bd.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const bd = $('#modal-backdrop');
+  if (bd) bd.hidden = true;
+  document.body.style.overflow = '';
+}
+
+window.addEventListener('click', e => {
+  const bd = $('#modal-backdrop');
+  if (e.target === bd) closeModal();
+});
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+function openDocPreview(caseId, idx) {
+  const c = CD[caseId];
+  if (!c || !c.bk[idx]) return;
+  const b = c.bk[idx];
+  const figKey = b[7] || (b[0] == 'Foto' ? 'seal-damage' : b[0] == 'Log' ? 'vib-trend' : 'inspection-report');
+  const figSvg = FORENSIC_FIGURES[figKey] || FORENSIC_FIGURES['inspection-report'];
+
+  const html = `
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-icon-badge">
+          <svg class="i" viewBox="0 0 24 24">${IC.evidence}</svg>
+        </div>
+        <div>
+          <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--tx)">${esc(b[1])}</h2>
+          <span class="mu" style="font-size:12.5px">Kasus: <b>${caseId}</b> · Berkas: <b>${esc(b[4] || 'DOC-REF.pdf')}</b> · Kausalitas: <b style="color:${b[2]=='penyebab'?'var(--ok)':'var(--c6)'}">${b[2]=='penyebab'?'Mendukung Hipotesis Akar Masalah':'Mendukung Gejala Kegagalan'}</b></span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Tutup Pratinjau">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Rujukan Jurnal & Standar Industri -->
+      <div class="journal-citation-box">
+        <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:var(--n9)">
+          <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.book}</svg>
+          <span>Rujukan Standar Rekayasa &amp; Jurnal Peer-Reviewed:</span>
+        </div>
+        <p style="margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--tx)">
+          <b>${esc(b[3] || 'API Standard 682 / Journal of Failure Analysis and Prevention')}</b>
+        </p>
+        <div style="display:flex;gap:12px;margin-top:6px;font-size:11.5px" class="mu">
+          <span>Klasifikasi: <b>Dokumen Bukti Forensik NDT &amp; Metalografi</b></span>
+          <span>Status: <b style="color:var(--ok)">Peer-Reviewed Case Evidence</b></span>
+        </div>
+      </div>
+
+      <!-- Foto Insiden / Gambar Teknik Forensik -->
+      <div style="margin:16px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700;color:var(--tx)">Rekonstruksi &amp; Dokumentasi Forensik Kerusakan (Forensic Failure Evidence):</span>
+          <span class="pillar-pill p-security" style="font-size:11px">High-Resolution Vector Metrology</span>
+        </div>
+        <div class="forensic-figure-container">
+          ${figSvg}
+        </div>
+      </div>
+
+      <!-- Ringkasan Temuan Teknis -->
+      <div class="doc-findings-box">
+        <h4 style="margin:0 0 6px;font-size:13.5px;font-weight:800;color:var(--tx)">Ringkasan Temuan Teknis &amp; Pengujian Lapangan:</h4>
+        <p style="margin:0;font-size:13px;line-height:1.55;color:var(--tx2)">
+          ${esc(b[5] || 'Pemeriksaan menunjukkan keausan fisik dan anomali sinyal yang konsisten dengan degradasi operasional aset.')}
+        </p>
+      </div>
+
+      <!-- Kriptografi & Integritas Data -->
+      <div class="doc-integrity-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--ok)">${IC.shield}</svg>
+            <span style="font-size:12.5px;font-weight:700">Validasi Integritas Kriptografis (SHA-256)</span>
+          </div>
+          <span class="pillar-pill p-security" style="font-size:11px">✓ Status: Integritas Valid (Tamper-Proof)</span>
+        </div>
+        <code style="display:block;margin-top:6px;font-size:11px;word-break:break-all;color:var(--tx2);background:var(--pill-bg);padding:6px 10px;border-radius:6px">
+          ${esc(b[6] || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')}
+        </code>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="pill" onclick="closeModal()">Tutup Pratinjau</button>
+      <button class="pill pr" onclick="downloadDoc('${caseId}', ${idx})">
+        <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.download}</svg>
+        <span>Unduh Berkas Asli (${esc(b[4] || 'DOC.pdf')})</span>
+      </button>
+    </div>
+  `;
+  openModal(html);
+}
+
+function downloadDoc(caseId, idx) {
+  const c = CD[caseId];
+  if (!c || !c.bk[idx]) return;
+  const b = c.bk[idx];
+  const filename = b[4] || `DOC-${caseId}-${idx+1}.pdf`;
+  tst(`Mengunduh berkas resmi [${filename}] · Validasi SHA-256 selesai.`);
+}
+
+function openColorPsychModal() {
+  const html = `
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-icon-badge" style="background:var(--chip);color:var(--n9)">
+          <svg class="i" viewBox="0 0 24 24">${IC.info}</svg>
+        </div>
+        <div>
+          <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--tx)">Psikologi Warna &amp; Kerangka Standar Desain Sistem</h2>
+          <span class="mu" style="font-size:12.5px">Kerangka Justifikasi Pemilihan Warna &amp; Ergonomi Kognitif Ruang Kendali Industri (IKMS 2026)</span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Tutup Dialog">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div style="background:var(--pill-bg);border:1px solid var(--bd);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:13px;line-height:1.5;color:var(--tx)">
+        <b>Prinsip Ergonomi Visual &amp; Faktor Manusia:</b> Di lingkungan industri pengolahan minyak dan gas, antarmuka kontrol harus meminimalkan kelelahan kognitif (<i>cognitive fatigue</i>) dan mencegah salah tafsir sinyal (<i>human error</i>). Setiap warna pada SYNQRA memiliki landasan psikologis dan fungsi rekayasa keandalan yang terdefinisi secara ilmiah:
+      </div>
+
+      <div class="color-psych-grid">
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#0B1F44"></div>
+          <div class="cp-content">
+            <div class="cp-title">Deep Industrial Navy <code>#0B1F44 / #13315C</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Otoritas teknis, stabilitas, ketenangan emosional (<i>cognitive composure</i>), dan tata kelola terpercaya.</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Warna struktural antarmuka enterprise, navigasi shell, identitas aset utama, dan penanda institusional.</div>
+          </div>
+        </div>
+
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#00B8D9"></div>
+          <div class="cp-content">
+            <div class="cp-title">Cyan Electric <code>#00B8D9 / #7FDFFF</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Kejelasan analitis (<i>mental clarity</i>), kecerdasan digital, dan ketajaman persepsi relasi sistem.</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Simpul Knowledge Graph, keterkaitan semantik AI/RAG, jalur kausalitas, dan interaksi data aktif.</div>
+          </div>
+        </div>
+
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#10B981"></div>
+          <div class="cp-content">
+            <div class="cp-title">Emerald Green <code>#10B981 / #D1FAE5</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Afirmasi kebenaran mutlak (<i>confirmed truth</i>), rasa aman, dan kondisi normal keselamatan proses (<i>safe state</i>).</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Status <b>Terkonfirmasi (Verified)</b> yang telah melewati pengesahan pakar validator dengan dukungan berkas bukti fisik sah.</div>
+          </div>
+        </div>
+
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#F59E0B"></div>
+          <div class="cp-content">
+            <div class="cp-title">Amber Gold <code>#F59E0B / #FEF3C7</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Kewaspadaan proaktif (<i>caution without panic</i>). Mengarahkan perhatian tanpa memicu <i>alarm fatigue</i>.</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Status <b>Dugaan (Hypothesis / Suspected)</b> dan garis graf putus-putus. Mencegah tim mengeksekusi rekomendasi sebelum terbukti.</div>
+          </div>
+        </div>
+
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#F97316"></div>
+          <div class="cp-content">
+            <div class="cp-title">Coral Tangerine <code>#F97316 / #FFEDD5</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Dorongan bertindak (<i>action-required</i>), urgensi investigatif, dan penanganan celah bukti teknis.</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Status <b>Perlu Bukti Tambahan</b>. Menjadi sinyal visual bagi personil lapangan untuk melampirkan data NDT atau log sensor.</div>
+          </div>
+        </div>
+
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#EF4444"></div>
+          <div class="cp-content">
+            <div class="cp-title">Crimson Red <code>#EF4444 / #FEE2E2</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Refleks kewaspadaan tinggi terhadap bahaya mendesak dan pelanggaran batas aman (<i>safety limit breach</i>).</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Batas getaran kritis (ISO 10816), status 'Perlu Segera Divalidasi' di departemen pengampu, dan alarm bahaya shutdown.</div>
+          </div>
+        </div>
+
+        <div class="cp-card">
+          <div class="cp-swatch" style="background:#64748B"></div>
+          <div class="cp-content">
+            <div class="cp-title">Slate Steel Gray <code>#64748B / #F1F5F9</code></div>
+            <div class="cp-meta"><b>Makna Psikologis:</b> Netralitas objektif, fakta sejarah, dan ketenangan latar belakang (<i>low cognitive load</i>).</div>
+            <div class="cp-desc"><b>Fungsi Rekayasa:</b> Log kepatuhan permanen (<i>Immutable Audit Trail</i>), catatan arsip, dan garis grid struktur data.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:12px 16px;background:var(--chip);border-radius:14px;border:1px solid var(--c3);font-size:12.5px;line-height:1.45;color:var(--n9)">
+        <b>Kepatuhan Standar Aksesibilitas &amp; Eliminasi Elemen Kasual:</b> Sesuai standar WCAG 2.1 AA dan evaluasi dewan pakar, SYNQRA menerapkan prinsip <i>Dual-Coding</i> (warna selalu dipadukan dengan teks eksplisit dan simbol geometris unik). Elemen kasual/emoji dekoratif ditiadakan secara menyeluruh untuk menjaga wibawa sistem sebagai artefak riset enterprise.
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="pill pr" onclick="closeModal()">Selesai &amp; Tutup Panduan</button>
+    </div>
+  `;
+  openModal(html);
+}
+
+function handleEvidenceUpload(e, caseId) {
+  e.preventDefault();
+  const c = CD[caseId];
+  if (!c) return;
+
+  const title = $('#ev-title').value.trim();
+  const type = $('#ev-type').value;
+  const target = $('#ev-target').value;
+  const journal = $('#ev-journal').value.trim() || 'API / ASME Engineering Standards';
+  const findings = $('#ev-findings').value.trim();
+
+  if (!title || !findings) {
+    tst('Mohon lengkapi judul berkas dan ringkasan temuan teknis.');
+    return;
+  }
+
+  const randHex = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+  const shortType = type.includes('NDT') ? 'NDT' : type.includes('Log') ? 'LOG' : type.includes('Foto') ? 'IMG' : 'DOC';
+  const fileId = `${shortType}-${caseId.replace('-','')}-${Date.now().toString().slice(-4)}.pdf`;
+  const figKey = shortType == 'IMG' ? 'seal-damage' : shortType == 'LOG' ? 'vib-trend' : 'inspection-report';
+
+  c.bk.push([
+    type.split(' ')[0],
+    title,
+    target,
+    journal,
+    fileId,
+    findings,
+    randHex,
+    figKey
+  ]);
+
+  LOG.push([caseId, new Date().toLocaleString('id-ID', {dateStyle:'medium', timeStyle:'short'}), `Rina mengunggah berkas bukti baru [${fileId}]: ${title}`]);
+
+  tst(`Berkas bukti [${fileId}] berhasil diunggah, diverifikasi kriptografis, dan ditautkan.`);
+  route();
+}
+
+function renderEvidenceTab(k, c) {
+  return `
+    <div class="evidence-tab-shell">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+        <div>
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">Repositori Bukti Teknis &amp; Investigasi Lapangan</h3>
+          <span class="mu" style="font-size:13px">Daftar berkas forensik NDT, rekaman sensor SCADA, dan dokumen turnaround yang tertaut secara kausal dengan kasus ${k.id} (${k.tag}).</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="pillar-pill p-security">
+            <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px">${IC.shield}</svg>
+            <span>SHA-256 Verified</span>
+          </span>
+          <span class="ch" style="font-size:12px;font-weight:700">${c.bk.length} Berkas Bukti</span>
+        </div>
+      </div>
+
+      <div class="evidence-cards-list">
+        ${c.bk.map((b, idx) => {
+          const isCause = b[2] == 'penyebab';
+          return `
+            <div class="evidence-item-card">
+              <div class="evidence-card-top">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span class="evidence-type-badge">${esc(b[0])}</span>
+                  <span class="evidence-doc-code">${esc(b[4] || 'DOC-REF-' + (idx+1) + '.pdf')}</span>
+                  <span class="evidence-target-pill ${isCause ? 'cause' : 'symptom'}">
+                    ${isCause ? 'Mendukung Hipotesis Akar Masalah' : 'Mendukung Gejala Kegagalan'}
+                  </span>
+                </div>
+                <div class="evidence-hash-snippet" title="${esc(b[6] || '')}">
+                  <svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--ok)">${IC.shield}</svg>
+                  <span>SHA-256: ${(b[6] || 'e3b0c442').slice(0, 10)}…</span>
+                </div>
+              </div>
+
+              <div class="evidence-card-title">
+                ${esc(b[1])}
+              </div>
+
+              <div class="evidence-journal-ref">
+                <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--n7);flex-shrink:0">${IC.book}</svg>
+                <span>Rujukan: <b>${esc(b[3] || 'API Standard 682 / Journal of Failure Analysis and Prevention')}</b></span>
+              </div>
+
+              <div class="evidence-findings-text">
+                ${esc(b[5] || 'Temuan pengujian lapangan mendokumentasikan anomali fisik dan operasional yang sesuai dengan hipotesis teknis.')}
+              </div>
+
+              <div class="evidence-card-actions">
+                <button class="pill" onclick="openDocPreview('${k.id}', ${idx})" title="Buka Pratinjau Teknis, Foto Insiden &amp; Analisis Forensik">
+                  <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.eye}</svg>
+                  <span>Pratinjau Teknis &amp; Foto Insiden</span>
+                </button>
+                <button class="pill" onclick="downloadDoc('${k.id}', ${idx})" title="Unduh Berkas Resmi">
+                  <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.download}</svg>
+                  <span>Unduh Dokumen</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <section class="evidence-upload-section">
+        <div class="evidence-upload-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="upload-icon-circle">
+              <svg class="i" viewBox="0 0 24 24">${IC.upload}</svg>
+            </div>
+            <div>
+              <h4 style="margin:0;font-size:15px;font-weight:800;color:var(--tx)">Unggah Berkas Bukti Lapangan Baru</h4>
+              <span class="mu" style="font-size:12.5px">Lampirkan hasil inspeksi NDT, log sensor SCADA, atau laporan overhaul untuk memperkuat dasar validasi pakar.</span>
+            </div>
+          </div>
+          <span class="pillar-pill p-access" style="font-size:11px">Akses Teknis &amp; Validasi (Aturan R2)</span>
+        </div>
+
+        <form id="evidence-upload-form" onsubmit="handleEvidenceUpload(event, '${k.id}')" style="margin-top:16px">
+          <div class="upload-dropzone" onclick="$('#ev-file-input').click()">
+            <svg class="i" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--n7);margin-bottom:8px">${IC.upload}</svg>
+            <div style="font-size:14px;font-weight:700;color:var(--tx)">Tarik &amp; letakkan berkas bukti ke sini, atau klik untuk memilih berkas</div>
+            <span class="mu" style="font-size:12px;margin-top:4px">Format yang didukung: PDF, CSV, PNG, JPG, LAS (Ukuran maksimal 25 MB)</span>
+            <input type="file" id="ev-file-input" style="display:none" accept=".pdf,.csv,.png,.jpg,.jpeg,.las">
+          </div>
+
+          <div class="upload-form-grid" style="margin-top:14px">
+            <div>
+              <label class="form-label" for="ev-title">Judul Berkas Bukti Lapangan *</label>
+              <input type="text" id="ev-title" class="form-input" placeholder="Misal: Laporan Pengujian Spektrum Getaran FFT Pompa P-101A" required>
+            </div>
+
+            <div>
+              <label class="form-label" for="ev-type">Kategori Dokumen *</label>
+              <select id="ev-type" class="form-input">
+                <option value="Laporan NDT &amp; Metalografi">Laporan NDT &amp; Metalografi</option>
+                <option value="Log Sensor SCADA / PI System">Log Sensor SCADA / PI System</option>
+                <option value="Foto Makroskopik &amp; Endoskopi">Foto Makroskopik &amp; Endoskopi</option>
+                <option value="SOP &amp; Manual Pemeliharaan">SOP &amp; Manual Pemeliharaan</option>
+                <option value="Laporan Overhaul / Turnaround">Laporan Overhaul / Turnaround</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label" for="ev-target">Pemetaan Kausalitas Graf *</label>
+              <select id="ev-target" class="form-input">
+                <option value="penyebab">Mendukung Hipotesis Akar Masalah</option>
+                <option value="gejala">Mendukung Gejala Kegagalan</option>
+                <option value="kondisi">Mendukung Kondisi Operasi</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label" for="ev-journal">Rujukan Standar Rekayasa / Jurnal</label>
+              <input type="text" id="ev-journal" class="form-input" placeholder="Misal: API Standard 682 4th Ed. / ISO 10816-3">
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label class="form-label" for="ev-findings">Ringkasan Temuan Teknis / Pengujian Lapangan *</label>
+            <textarea id="ev-findings" class="form-textarea" placeholder="Tuliskan temuan kunci hasil inspeksi fisik, anomali data, atau hasil pengukuran metallurgi..." rows="2" required></textarea>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:14px;align-items:center">
+            <span class="mu" style="font-size:12px">Berkas yang diunggah akan otomatis di-hash secara kriptografis dan dicatat ke log audit.</span>
+            <button type="submit" class="pill pr">
+              <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.upload}</svg>
+              <span>Unggah &amp; Tautkan ke Kasus ${k.id}</span>
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  `;
+}
+
 const TY={P:'Pompa sentrifugal',E:'Heat exchanger',F:'Control valve',V:'Pressure vessel',R:'Catalytic reactor',H:'Fired heater'},
       BI={dug:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>',ver:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',bukti:'<path d="M12 4l9 16H3zM12 10v4M12 17h.01"/>',ars:'<path d="M4 5h16v4H4zM6 9v10h12V9M10 13h4"/>'},
       BG=s=>`<span class="bd ${s}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${BI[s]}</svg>${SL[s]}</span>`;
 
 const CD={
-  'K-014':{g:'Seal bocor, getaran naik',kd:'Getaran 7,8 mm/s, bearing 72 °C, aliran 92% dari desain',iv:'Rembesan terlihat di sisi seal; getaran naik tiga minggu sebelum alarm',cs:'Face mechanical seal aus karena pompa sering beroperasi dekat batas bawah aliran',ac:'Ganti mechanical seal dan luruskan ulang poros',vf:'Getaran turun ke 1,9 mm/s setelah 7 hari',rp:1,bk:[['Foto','Foto seal terlepas','penyebab'],['Log','Log getaran 30 hari','gejala'],['Dokumen','Laporan inspeksi IS-0325','penyebab']]},
-  'K-021':{g:'Getaran dan bunyi kerikil',kd:'Aliran 70% dari desain, suhu hisap tinggi',iv:'Belum ada pembongkaran; hanya catatan operator shift malam',cs:'Kavitasi di sisi hisap',ac:'',vf:'',bk:[['Catatan','Catatan operator shift malam','gejala']]},
-  'K-033':{g:'Getaran naik, rembesan seal',kd:'Getaran 6,9 mm/s, aliran 88% dari desain',iv:'Foto rembesan dan tren getaran 14 hari',cs:'Kemungkinan seal aus berulang seperti K-014',ac:'Inspeksi seal dijadwalkan (usulan teknisi)',vf:'',rp:1,bk:[['Foto','Foto rembesan seal','gejala'],['Log','Log getaran 14 hari','gejala']]},
-  'K-031':{g:'Respons valve lambat',kd:'Perintah 60%, posisi aktual tertinggal sekitar 8 detik',iv:'Uji stroke belum dilakukan',cs:'Gesekan packing tinggi',ac:'',vf:'',rq:'Hasil uji stroke',bk:[['Log','Log perintah vs posisi','gejala']]},
-  'K-009':{g:'Rembesan sambungan channel',kd:'Suhu keluar stabil, tekanan shell normal',iv:'Gasket channel diperiksa saat shutdown terjadwal',cs:'Gasket channel mengeras',ac:'Ganti gasket channel',vf:'Tidak ada rembesan setelah 30 hari',bk:[['Foto','Foto gasket channel','penyebab'],['Dokumen','Laporan shutdown SD-0924','penyebab']]},
-  'K-027':{g:'ΔP naik, suhu keluar turun',kd:'ΔP shell naik 40% dari awal, suhu keluar turun 12 °C',iv:'Inspeksi bundel tabung menemukan deposit',cs:'Fouling pada sisi tabung',ac:'Pembersihan kimia bundel tabung',vf:'ΔP kembali ke nilai awal',bk:[['Log','Log ΔP 60 hari','gejala'],['Foto','Foto deposit tabung','penyebab'],['Dokumen','Laporan pembersihan CL-0625','penyebab'],['Log','Log suhu setelah pembersihan','penyebab']]}
+  'K-014':{
+    g:'Seal bocor, getaran naik',
+    kd:'Getaran 7,8 mm/s, bearing 72 °C, aliran 92% dari desain',
+    iv:'Rembesan terlihat di sisi seal; getaran naik tiga minggu sebelum alarm',
+    cs:'Face mechanical seal aus karena pompa sering beroperasi dekat batas bawah aliran',
+    ac:'Ganti mechanical seal dan luruskan ulang poros',
+    vf:'Getaran turun ke 1,9 mm/s setelah 7 hari',
+    rp:1,
+    bk:[
+      ['Foto','Foto seal terlepas – Analisis Keausan Face','penyebab','API Standard 682 4th Ed. / Journal of Failure Analysis and Prevention (2023)','DOC-NDT-P101A-MS014.pdf','Makrofotografi & SEM: Thermal checking dan keausan abrasif pada rotating silicon carbide ring akibat pengoperasian mendekati MCSF.','9f83c12b7a89e4f501239bc7a612d098e41209bca781293e8912efbc12984121','seal-damage'],
+      ['Log','Log getaran 30 hari – SCADA Accelerometer','gejala','ISO 10816-3: Evaluation of machine vibration / Shock and Vibration Journal (2024)','LOG-VIB-P101A-30D.csv','Spektrum FFT: Amplitudo 1X dan modulasi frekuensi tinggi meningkat dari 2,2 mm/s hingga 7,8 mm/s (Zona Kritis ISO).','a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0','vib-trend'],
+      ['Dokumen','Laporan inspeksi IS-0325 – Turnaround Protocol','penyebab','ASME PTC 8.2 Centrifugal Pump Integrity Standards','REP-INSP-IS-0325-REV1.pdf','Pemeriksaan Runout: Misalignment radial 0,18 mm (toleransi maks 0,05 mm); flush line API Plan 11 tersumbat sebagian.','b4c5d6e7f8091a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b','inspection-report']
+    ]
+  },
+  'K-021':{
+    g:'Getaran dan bunyi kerikil',
+    kd:'Aliran 70% dari desain, suhu hisap tinggi',
+    iv:'Belum ada pembongkaran; hanya catatan operator shift malam',
+    cs:'Kavitasi di sisi hisap',
+    ac:'',
+    vf:'',
+    bk:[
+      ['Catatan','Catatan operator shift malam & Log SCADA','gejala','API RP 755 Fatigue Risk Management & Shift Handover / Journal of Fluids Engineering (ASME)','LOG-OPS-NIGHT-20251104.pdf','Observasi Lapangan: Tekanan hisap drop ke 0,4 barG dengan temperatur fluida 68 °C, memicu implosi gelembung kavitasi di suction eye sudu impeler.','c7d8e9f01a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d','cavitation-impeller']
+    ]
+  },
+  'K-033':{
+    g:'Getaran naik, rembesan seal',
+    kd:'Getaran 6,9 mm/s, aliran 88% dari desain',
+    iv:'Foto rembesan dan tren getaran 14 hari',
+    cs:'Kemungkinan seal aus berulang seperti K-014',
+    ac:'Inspeksi seal dijadwalkan (usulan teknisi)',
+    vf:'',
+    rp:1,
+    bk:[
+      ['Foto','Foto rembesan seal gland – Kamera Termal & Lapangan','gejala','Journal of Loss Prevention in the Process Industries (Elsevier, 2024)','IMG-P101A-SEAL-LEAK.jpg','Optik & Termografi: Akumulasi tetesan hidrokarbon (18 tetes/menit) di gland drain port dengan hotspot termal lokal 84 °C pada stuffing box.','d8e9f01a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e','seal-damage'],
+      ['Log','Log getaran 14 hari – CMS Continuous Monitoring','gejala','Mechanical Systems and Signal Processing (2025)','LOG-VIB-P101A-14D.csv','Tren Deret Waktu: Kenaikan getaran kontinu dari 3,1 mm/s ke 6,9 mm/s, berkolerasi dengan osilasi fluktuasi laju alir sisi hisap.','e9f01a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f','vib-trend']
+    ]
+  },
+  'K-031':{
+    g:'Respons valve lambat',
+    kd:'Perintah 60%, posisi aktual tertinggal sekitar 8 detik',
+    iv:'Uji stroke belum dilakukan',
+    cs:'Gesekan packing tinggi',
+    ac:'',
+    vf:'',
+    rq:'Hasil uji stroke valve & kurva histeresis posisi',
+    bk:[
+      ['Log','Log perintah vs posisi aktual – Smart Positioner HART','gejala','ISA Transactions / Process Safety and Environmental Protection (2024)','LOG-VALVE-STROKE-FCV301.csv','Diagnostik Sinyal: Deadband terukur 6,4% (batas normal ISA-75.05 < 1,0%) dengan lag histeresis 8,2 detik akibat over-torquing packing gland.','5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a','valve-hysteresis']
+    ]
+  },
+  'K-009':{
+    g:'Rembesan sambungan channel',
+    kd:'Suhu keluar stabil, tekanan shell normal',
+    iv:'Gasket channel diperiksa saat shutdown terjadwal',
+    cs:'Gasket channel mengeras',
+    ac:'Ganti gasket channel',
+    vf:'Tidak ada rembesan setelah 30 hari',
+    bk:[
+      ['Foto','Foto gasket channel – Pengujian Kekerasan Durometer & SEM','penyebab','International Journal of Pressure Vessels and Piping (Elsevier, 2023)','DOC-NDT-E201-GASKET.pdf','Analisis Metalografi: Degradasi termo-oksidatif material graphite filler spiral wound gasket serta relaksasi tegangan stud bolt flensa.','f01a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a','gasket-creep'],
+      ['Dokumen','Laporan shutdown SD-0924 – Integrity Overhaul','penyebab','ASME Section VIII Div 1 & TEMA Flange Integrity Protocol','REP-SD-0924-E201.pdf','Uji Hidrostatis & Torsi: Penurunan nilai torsi sebesar 34% pada 8 perimeter studs setelah 18 bulan siklus termal operasi.','01a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b','inspection-report']
+    ]
+  },
+  'K-027':{
+    g:'ΔP naik, suhu keluar turun',
+    kd:'ΔP shell naik 40% dari awal, suhu keluar turun 12 °C',
+    iv:'Inspeksi bundel tabung menemukan deposit',
+    cs:'Fouling pada sisi tabung',
+    ac:'Pembersihan kimia bundel tabung',
+    vf:'ΔP kembali ke nilai awal',
+    bk:[
+      ['Log','Log ΔP 60 hari – Transmitter Beda Tekanan Shell','gejala','Applied Thermal Engineering (Elsevier, 2024)','LOG-DP-E201-60D.csv','Data Transmitter: Beda tekanan naik bertahap dari 0,45 bar hingga 0,98 bar (+118% di atas baseline bersih).','1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c','fouling-tube'],
+      ['Foto','Foto deposit tabung – Endoskopi Video Borescope & EDX','penyebab','Journal of Petroleum Science and Engineering (2023)','IMG-E201-TUBE-DEPOSIT.jpg','Inspeksi Boreskopik: Lapisan kerak karbon aspaltena setebal 1,8 mm mereduksi diameter hidrolik tabung sebesar 22%.','2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d','fouling-tube'],
+      ['Dokumen','Laporan pembersihan CL-0625 – Prosedur Kimia & Jetting','penyebab','TEMA 10th Ed. Heat Exchanger Maintenance Standards','REP-CLEAN-CL-0625.pdf','Hasil Sirkulasi Kimia: Ekstraksi 42 kg deposit; koefisien perpindahan panas menyeluruh (U0) pulih ke 345 W/m²·K.','3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e','inspection-report'],
+      ['Log','Log suhu setelah pembersihan – Profil RTD Pt100','penyebab','Applied Thermal Engineering (2024)','LOG-TEMP-POST-CLEAN.csv','Sensor Suhu: Temperatur fluida keluar stabil pada 142,5 °C (desain target 143,0 °C).','4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f','vib-trend']
+    ]
+  }
 };
 
 const SP={'K-014|K-033':90,'K-021|K-033':64,'K-014|K-021':58},LOG=[],
@@ -2204,7 +3262,7 @@ const ASSET_DEPT = {
 };
 let CASE_VIEW_ROLE = 'HSE'; // 'HSE' or 'DEPT'
 
-const ent=k=>{const c=CD[k.id];return[['Identitas aset',k.tag+', '+(TY[k.a]||'Unit proses')],['Gejala kegagalan',c.g],['Kondisi operasi',c.kd],['Hasil investigasi',c.iv],[k.st=='dug'||k.st=='bukti'?'Kandidat penyebab':'Penyebab terkonfirmasi',c.cs],['Tindakan korektif',c.ac],['Verifikasi pascaperbaikan',c.vf]]};
+const ent=k=>{const c=CD[k.id];return[['Identitas aset',k.tag+', '+(TY[k.a]||'Unit proses')],['Gejala kegagalan',c.g],['Kondisi operasi',c.kd],['Temuan investigasi lapangan',c.iv],[k.st=='dug'||k.st=='bukti'?'Hipotesis Akar Masalah (Dugaan)':'Akar Masalah Terkonfirmasi',c.cs],['Tindakan korektif & mitigasi',c.ac],['Verifikasi pascaperbaikan',c.vf]]};
 const evl=c=>c.bk.map(([t,n,s])=>`<div class="it"><i>${t[0]}</i><span>${n}<small>${t} · mendukung ${s}</small></span></div>`).join('')||'<p class="mu">Belum ada bukti tertaut.</p>';
 let TB='r',TK='';
 
@@ -2221,8 +3279,8 @@ function dk(k){
 
   const statusPill = pend
     ? (isHSE
-        ? `<span class="pillar-pill p-access" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">📋 Belum tervalidasi departemen terkait (${dept.name})</span>`
-        : `<span class="pillar-pill p-access" style="background:#FEE2E2;color:#991B1B;border-color:#FCA5A5;font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">⚠️ Perlu segera divalidasi</span>`)
+        ? `<span class="pillar-pill p-access" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex"><svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px">${IC.info}</svg> Belum tervalidasi departemen terkait (${dept.name})</span>`
+        : `<span class="pillar-pill p-access" style="background:#FEE2E2;color:#991B1B;border-color:#FCA5A5;font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex"><svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px;color:#EF4444">${IC.alertTriangle}</svg> Perlu segera divalidasi</span>`)
     : (isHSE
         ? `<span class="pillar-pill p-security" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">✓ Tervalidasi oleh departemen terkait (${dept.name})</span>`
         : `<span class="pillar-pill p-security" style="font-size:11.5px;padding:3px 10px;margin-left:8px;vertical-align:middle;display:inline-flex">✓ Terverifikasi oleh pakar departemen</span>`);
@@ -2236,8 +3294,8 @@ function dk(k){
           <span class="mu" style="font-size:12.5px">${isHSE ? 'Badan Pengawas Keselamatan (HSE)' : 'Tim Penanggung Jawab Teknis Aset'}</span>
         </div>
         <div class="tabs" style="margin-bottom:0">
-          <button class="${isHSE?'on':''}" data-case-role="HSE">🏢 HSE (Pemantauan)</button>
-          <button class="${!isHSE?'on':''}" data-case-role="DEPT">🔧 Departemen Terkait (${dept.code})</button>
+          <button class="${isHSE?'on':''}" data-case-role="HSE"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.building}</svg> HSE (Pemantauan)</button>
+          <button class="${!isHSE?'on':''}" data-case-role="DEPT"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.tool}</svg> Departemen Terkait (${dept.code})</button>
         </div>
       </div>
 
@@ -2253,8 +3311,8 @@ function dk(k){
       `)}`,
     p:()=>c.rp?`<svg class="rs" viewBox="0 0 420 195" role="img" aria-label="Grafik getaran pompa selama 120 hari simulasi"><rect x="34" y="20" width="366" height="47" fill="#F97316" opacity=".16"/><rect x="34" y="67" width="366" height="35" fill="#F59E0B" opacity=".16"/><text x="40" y="34">Kritis ≥ 7,0 mm/s</text><text x="40" y="82">Peringatan ≥ 4,5</text><text x="40" y="157">Normal</text><path class="ln" fill="none" stroke-width="2.8" stroke-linejoin="round" d="${Array.from({length:61},(_,i)=>(i?'L':'M')+RX(i*2)+' '+RY(RV(i*2)).toFixed(1)).join('')}"/>${EV.map(([t,l])=>`<circle cx="${RX(t)}" cy="${RY(RV(t))}" r="4.5" fill="var(--panel)" stroke="var(--tx)" stroke-width="2.2"/><text x="${RX(t)}" y="${RY(RV(t))-10}" text-anchor="middle">${l}</text>`).join('')}<line id="sl" y1="20" y2="165" stroke="var(--tx)" stroke-dasharray="4 3"/><circle id="sc" r="6" fill="var(--c5)" stroke="var(--tx)" stroke-width="2.2"/><text x="34" y="184">Hari 0</text><text x="200" y="184">Hari 60</text><text x="360" y="184">120 hari</text></svg><div class="rv"><span id="rv"></span><small> mm/s · hari ke-<b id="rt"></b></small><span id="rz"></span></div><input type="range" id="rg" min="0" max="120" value="80" aria-label="Waktu simulasi dalam hari"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">${EV.map(([t,l])=>`<button class="pill" data-t="${t}">${l}</button>`).join('')}</div><p class="mu" style="font-size:13.5px;margin-top:12px">Replay skenario seal bocor, bukan pembacaan sensor langsung.</p>`:'<p class="mu">Belum ada deret waktu simulasi untuk kasus ini.</p>',
     g:()=>{const nb=Math.max(1,c.bk.length),h=Math.max(150,nb*52+44),ym=h/2;return`<div class="gw"><svg viewBox="0 0 580 ${h}" role="img" aria-label="Sub-graf kasus ${k.id}"><line x1="60" y1="${ym}" x2="165" y2="${ym}" stroke="var(--tx2)" stroke-width="2"/><line x1="165" y1="${ym}" x2="280" y2="${ym}" stroke="var(--tx2)" stroke-width="2"/><line x1="280" y1="${ym}" x2="405" y2="${ym}" stroke="var(--tx2)" stroke-width="2" ${ver?'':'stroke-dasharray="6 4"'}/><rect x="24" y="${ym-15}" width="72" height="30" rx="10" fill="var(--n7)"/><text x="60" y="${ym+4}" text-anchor="middle" style="fill:#fff;font-size:11px">${k.tag}</text><circle cx="165" cy="${ym}" r="20" fill="var(--chip)" stroke="var(--n7)" stroke-width="2"/><text x="165" y="${ym+4}" text-anchor="middle" style="fill:var(--n9);font-size:11px">${k.id}</text><polygon points="280,${ym-16} 296,${ym} 280,${ym+16} 264,${ym}" fill="var(--c3)" stroke="var(--n7)" stroke-width="2"/><text x="280" y="${ym+30}" text-anchor="middle">${c.g.slice(0,22)}</text><circle cx="405" cy="${ym}" r="16" ${k.st=='dug'?'stroke-dasharray="4 2.5"':''} fill="var(--panel)" stroke="${SC[k.st]}" stroke-width="4"/><text x="405" y="${ym+4}" text-anchor="middle" style="font-size:12px">${{ver:'✓',dug:'?',bukti:'!',ars:'–'}[k.st]}</text><text x="405" y="${ym+30}" text-anchor="middle">${(c.cs||'Belum ada').slice(0,22)}…</text>${c.bk.map((b,i)=>{const by=34+i*50,fx=b[2]=='penyebab'?405:280;return`<line x1="${fx}" y1="${ym}" x2="515" y2="${by}" stroke="var(--tx2)" stroke-width="1.8"/><rect x="505" y="${by-10}" width="20" height="20" rx="4" fill="var(--panel)" stroke="var(--tx2)" stroke-width="2"/><text x="515" y="${by+24}" text-anchor="middle">${b[1].slice(0,18)}</text>`}).join('')}</svg></div><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px"><span class="mu" style="font-size:13.5px">Garis ${ver?'solid: penyebab didukung bukti':'putus-putus: penyebab masih berstatus dugaan'}.</span><button class="pill" data-go="graf">Buka di Knowledge Graph Explorer ›</button></div>`},
-    b:()=>evl(c),
-    h:()=>{const w=BL[+k.d.slice(5)-1]+' '+k.d.slice(0,4),hs=[[w,'Laporan diterima. Kandidat penyebab berstatus Dugaan.']];if(ver)hs.push(['Sebelum sesi ini','Diverifikasi pakar dengan '+c.bk.length+' bukti tertaut.']);LOG.filter(l=>l[0]==k.id).forEach(l=>hs.push([l[1],l[2]]));return hs.map(([w,t])=>`<div class="it"><span>${t}<small>${w}</small></span></div>`).join('')+'<p class="mu" style="font-size:13.5px;margin-top:12px">Riwayat audit tidak dapat dihapus.</p>'}
+    b:()=>renderEvidenceTab(k,c),
+    h:()=>{const w=BL[+k.d.slice(5)-1]+' '+k.d.slice(0,4),hs=[[w,'Laporan diterima. Hipotesis akar masalah berstatus Dugaan.']];if(ver)hs.push(['Sebelum sesi ini','Diverifikasi pakar dengan '+c.bk.length+' bukti tertaut.']);LOG.filter(l=>l[0]==k.id).forEach(l=>hs.push([l[1],l[2]]));return hs.map(([w,t])=>`<div class="it"><span>${t}<small>${w}</small></span></div>`).join('')+'<p class="mu" style="font-size:13.5px;margin-top:12px">Log Kepatuhan Permanen (Immutable Audit Trail) tersimpan secara kriptografis.</p>'}
   }[TB]();
 
   const sideCard = pend ? (isHSE ? `
@@ -2277,7 +3335,7 @@ function dk(k){
         <svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px;color:#E11D48">${IC.analysis}</svg>
         <span>Tindakan Departemen ${dept.code}</span>
       </div>
-      <span class="bdg-pill" style="background:#FEE2E2;color:#991B1B;align-self:flex-start;font-size:12px;font-weight:800">⚠️ Perlu segera divalidasi</span>
+      <span class="bdg-pill" style="background:#FEE2E2;color:#991B1B;align-self:flex-start;font-size:12px;font-weight:800"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:middle;color:#EF4444">${IC.alertTriangle}</svg> Perlu segera divalidasi</span>
       <p style="font-size:13.5px;line-height:1.45;color:#881337;margin:8px 0">
         ${c.rq ? 'Pakar meminta bukti tambahan: <b>' + c.rq + '</b>.' : 'Sebagai tim engineering pengampu aset <b>' + k.tag + '</b>, kasus ini <b>perlu segera divalidasi</b> oleh pakar sebelum kesimpulan dan perbaikan dapat dieksekusi.'}
       </p>
@@ -2335,7 +3393,7 @@ function dv(k){
   $('#mv').innerHTML=hd(k,['kasus-'+k.id.toLowerCase(),'Detail Kasus'])+`
     <div class="dg">
       <section class="cd">
-        <h2 style="margin-bottom:14px">Klaim Laporan & Investigasi</h2>
+        <h2 style="margin-bottom:14px">Data Investigasi &amp; Anomali Lapangan</h2>
         <div class="dl">${en.slice(1).map(([l,v],i)=>`<div><small>${l} ${i==3?BG(k.st):''}</small>${v?`<span>${v}</span>`:'<span class="mu">Belum ada data</span>'}</div>`).join('')}</div>
       </section>
       <section class="cd">
@@ -2345,13 +3403,13 @@ function dv(k){
       </section>
     </div>
     <section class="cd" style="margin-top:22px">
-      <h2 style="margin-bottom:12px">Keputusan Validasi Pakar</h2>
+      <h2 style="margin-bottom:12px">Penetapan Otorisasi Validasi Pakar</h2>
       ${['Apakah bukti langsung mendukung penyebab yang diklaim?','Apakah ada penjelasan alternatif yang belum diperiksa?','Apakah tindakan korektif konsisten dengan penyebab?','Apakah ada rencana atau hasil verifikasi pascaperbaikan?'].map(q=>`<label class="ck"><input type="checkbox">${q}</label>`).join('')}
       <label for="cn" style="display:block;font-size:14px;font-weight:700;color:var(--tx);margin:16px 0 8px">Catatan alasan pakar (wajib diisi)</label>
       <textarea id="cn" aria-describedby="hn" placeholder="Tuliskan alasan teknis verifikasi atau sebutkan bukti tambahan yang perlu dilengkapi…"></textarea>
       <p id="hn" class="mu" style="font-size:13.5px;margin:10px 0 16px">Tombol <b>Terverifikasi</b> aktif jika minimal ada 1 bukti tertaut dan catatan alasan terisi (Aturan R2).</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <button class="pill pr" id="bv">✓ Tetapkan Terverifikasi</button>
+        <button class="pill pr" id="bv">Tetapkan Terverifikasi</button>
         <button class="pill" id="bp">! Minta Bukti Tambahan</button>
       </div>
     </section>`;
@@ -2617,11 +3675,11 @@ function gr(){
       <div class="repo-footer-toggle">
         ${KG_MODE == 'asset' ? `
           <button class="pill" data-kg-mode="global" style="width:100%;justify-content:center;font-size:13px">
-            🌐 Tinjau Seluruh Aset (Global)
+            <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.globe}</svg> Tinjau Seluruh Aset (Global)
           </button>
         ` : `
           <button class="pill pr" data-kg-mode="asset" style="width:100%;justify-content:center;font-size:13px">
-            📁 Mode Fokus per Aset (${KG_TAG})
+            <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.folder}</svg> Mode Fokus per Aset (${KG_TAG})
           </button>
         `}
       </div>
@@ -2701,10 +3759,10 @@ function gr(){
                 <div class="kg-item-box-desc">
                   <div><b>Gejala:</b> ${cd.g}</div>
                   <div style="margin-top:4px"><b>Kondisi:</b> ${cd.kd}</div>
-                  <div style="margin-top:4px"><b>${isVer ? 'Penyebab Terverifikasi' : 'Kandidat Dugaan'}:</b> <span style="color:${isVer ? 'var(--ok)' : 'var(--dug)'};font-weight:700">${cd.cs}</span></div>
+                  <div style="margin-top:4px"><b>${isVer ? 'Akar Masalah Terkonfirmasi' : 'Hipotesis Akar Masalah (Dugaan)'}:</b> <span style="color:${isVer ? 'var(--ok)' : 'var(--dug)'};font-weight:700">${cd.cs}</span></div>
                 </div>
                 <div class="nt" style="margin-top:8px;padding:8px 10px;font-size:12.5px">
-                  ${isVer ? '✓ Bukti teknis diverifikasi oleh Pakar Validator.' : '⚠️ Status Dugaan: Belum terbukti. Jangan dijadikan rekomendasi final.'}
+                  ${isVer ? '✓ Bukti teknis diverifikasi oleh Pakar Validator.' : 'Status Hipotesis (Dugaan): Menunggu kelengkapan bukti teknis lapangan.'}
                 </div>
               </div>
             `;
@@ -2730,7 +3788,7 @@ function gr(){
           ${allEvidence.map((ev, i) => `
             <div class="kg-item-box">
               <div class="kg-item-box-head">
-                <span>📎 ${ev.title}</span>
+                <span><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.evidence}</svg> ${ev.title}</span>
                 <span class="ch" style="font-size:11px">${ev.type}</span>
               </div>
               <div class="kg-item-box-desc">
@@ -2800,10 +3858,10 @@ function gr(){
       <!-- Sub-view navigation tabs -->
       <div class="tabs" style="margin-bottom:14px">
         <button class="${KG_SUB == 'all' ? 'on' : ''}" data-kg-sub="all">Semua Hubungan Graf</button>
-        <button class="${KG_SUB == 'cases' ? 'on' : ''}" data-kg-sub="cases">📖 Knowledge Cases (${curUnit.cases.length})</button>
-        <button class="${KG_SUB == 'analysis' ? 'on' : ''}" data-kg-sub="analysis">📄 Failure Analysis</button>
-        <button class="${KG_SUB == 'evidence' ? 'on' : ''}" data-kg-sub="evidence">📎 Supporting Evidence (${curUnit.evidenceCount})</button>
-        <button class="${KG_SUB == 'history' ? 'on' : ''}" data-kg-sub="history">📋 Maintenance History</button>
+        <button class="${KG_SUB == 'cases' ? 'on' : ''}" data-kg-sub="cases"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.cases}</svg> Knowledge Cases (${curUnit.cases.length})</button>
+        <button class="${KG_SUB == 'analysis' ? 'on' : ''}" data-kg-sub="analysis"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.analysis}</svg> Failure Analysis</button>
+        <button class="${KG_SUB == 'evidence' ? 'on' : ''}" data-kg-sub="evidence"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.evidence}</svg> Supporting Evidence (${curUnit.evidenceCount})</button>
+        <button class="${KG_SUB == 'history' ? 'on' : ''}" data-kg-sub="history"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.history}</svg> Maintenance History</button>
       </div>
 
       <!-- Main Graph Canvas & Inspector -->
@@ -2827,14 +3885,14 @@ function gr(){
           <p style="font-size:14.5px;margin:12px 0">
             Terkait dengan kasus <b>${s.k.id}</b> pada aset <b>${s.k.tag}</b> (${c.bk.length} bukti tertaut).
           </p>
-          ${s.t == 'c' && (s.k.st == 'dug' || s.k.st == 'bukti') ? '<p class="nt">⚠️ Garis putus-putus menuju penyebab ini menunjukkan klaim belum didukung bukti terverifikasi oleh Pakar Validator.</p>' : ''}
+          ${s.t == 'c' && (s.k.st == 'dug' || s.k.st == 'bukti') ? '<p class="nt">Garis putus-putus menuju simpul penyebab menandakan hipotesis akar masalah belum disahkan oleh pakar validator (Aturan R2).</p>' : ''}
           <button class="pill pr" data-go="kasus-${s.k.id.toLowerCase()}" style="margin-top:16px;width:100%;justify-content:center">
             Buka Detail Kasus ${s.k.id} ›
           </button>
           
           <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--bd)">
             <small class="mu" style="display:block;font-size:12.5px;line-height:1.45">
-              <b>🛡️ Proteksi Integritas:</b> Setiap entitas penyebab pada ${curUnit.tag} terkunci hingga personel berwenang melampirkan berkas bukti teknis lapangan yang sesuai (Aturan R2).
+              <b>Sistem Keamanan &amp; Integritas Data:</b> Setiap entitas penyebab pada ${curUnit.tag} terkunci secara kriptografis hingga personel berwenang melampirkan berkas bukti teknis lapangan yang valid (Aturan R2).
             </small>
           </div>
         </aside>
@@ -2892,7 +3950,7 @@ function cr(){
           pd=k=>k.st=='dug'||k.st=='bukti';
     $('#qr').innerHTML=(R.length?R.map((r,i)=>`<button class="it" data-go="kasus-${r.k.id.toLowerCase()}"><i>${i+1}</i><span>${r.k.id} · ${r.k.g}<small>${BG(r.k.st)} · ${r.c.bk.length} bukti · Kata cocok: <b>${r.hit.join(', ')}</b>${QA?'; aset sesuai':''}</small>${pd(r.k)?'<small style="color:var(--buk);font-weight:700">Peringatan: Belum terverifikasi pakar, bukan kesimpulan final.</small>':''}</span><b class="ch${r.s<50?' w':''}">${r.s}%</b></button>`).join(''):'<p class="mu">Tidak ada kasus cocok. Coba kata gejala lain atau lepas filter aset.</p>')+(R.length&&R.every(r=>pd(r.k))?'<p class="nt">Semua hasil masih berstatus dugaan. Perlakukan sebagai kandidat awal, bukan kesimpulan.</p>':'')+'<p class="mu" style="font-size:13px;margin-top:14px">Skor prototipe dihitung dari kecocokan kata kunci + konteks teknis aset.</p>';
     const S=R.filter(r=>r.c.bk.length).sort((a,b)=>(b.k.st=='ver')-(a.k.st=='ver')||b.c.bk.length-a.c.bk.length);
-    $('#rg2').innerHTML=S.length?S.map((r,i)=>{const ok=!pd(r.k);return`<div class="ragi"><span><b>${ok?'Penyebab terverifikasi':'Kandidat penyebab'}:</b> ${r.c.cs}.${ok&&r.c.ac?' <br><b>Tindakan terdahulu:</b> '+r.c.ac+'.':' <br><span class="mu">Belum ada tindakan terverifikasi.</span>'}<button class="fn" data-go="kasus-${r.k.id.toLowerCase()}" aria-label="Sumber ${r.k.id}">[${i+1}: ${r.k.id}]</button></span>${BG(r.k.st)}</div>`}).join('')+'<p class="mu" style="font-size:13px;margin-top:14px">Disusun dari kasus sumber tertaut. Wajib dikroscek engineer di lapangan.</p>':'<p class="nt">Bukti belum cukup untuk merekomendasikan tindakan. Tambahkan bukti atau minta tinjauan pakar.</p>';
+    $('#rg2').innerHTML=S.length?S.map((r,i)=>{const ok=!pd(r.k);return`<div class="ragi"><span><b>${ok?'Akar Masalah Terkonfirmasi':'Hipotesis Akar Masalah'}:</b> ${r.c.cs}.${ok&&r.c.ac?' <br><b>Tindakan terdahulu:</b> '+r.c.ac+'.':' <br><span class="mu">Belum ada tindakan terverifikasi.</span>'}<button class="fn" data-go="kasus-${r.k.id.toLowerCase()}" aria-label="Sumber ${r.k.id}">[${i+1}: ${r.k.id}]</button></span>${BG(r.k.st)}</div>`}).join('')+'<p class="mu" style="font-size:13px;margin-top:14px">Disusun dari kasus sumber tertaut. Wajib dikroscek engineer di lapangan.</p>':'<p class="nt">Bukti belum cukup untuk merekomendasikan tindakan. Tambahkan bukti atau minta tinjauan pakar.</p>';
   };
   $('#qi').value=QS;$('#qb').onclick=run;$('#qi').onkeydown=e=>{if(e.key=='Enter')run()};run();
 }
@@ -2989,7 +4047,7 @@ function ex(){
         wr=LS.mode=='v'?LS.words.slice(0,LS.shown).filter(x=>x.lo&&!LS.fix[x.id]).map(x=>x.w):[],
         lo=s=>wr.some(w=>new RegExp('\\b'+w+'\\b','i').test(s)),
         cz=/duga|kemungkinan|penyebab|aus\b|fouling|kavitasi|gesekan|coking|korosi|flooding/i,
-        R=[['Identitas aset'],['Gejala kegagalan',/getar|rembes|bocor|lambat|bunyi|kerikil|naik|turun|panas|stabil/i,1],['Kondisi operasi',/\d.*(mm|°|%|bar|detik|derajat)/i],['Hasil investigasi',/periks|bongkar|inspeksi|uji|terlihat|ditemukan/i],['Kandidat penyebab',cz],['Tindakan korektif',/ganti|bersih|jadwal|kalibrasi|perbaiki/i],['Verifikasi pascaperbaikan',/setelah (perbaikan|diganti)|kembali normal|turun ke/i]];
+        R=[['Identitas aset'],['Gejala kegagalan',/getar|rembes|bocor|lambat|bunyi|kerikil|naik|turun|panas|stabil/i,1],['Kondisi operasi',/\d.*(mm|°|%|bar|detik|derajat)/i],['Hasil investigasi',/periks|bongkar|inspeksi|uji|terlihat|ditemukan/i],['Hipotesis Akar Masalah',cz],['Tindakan korektif',/ganti|bersih|jadwal|kalibrasi|perbaiki/i],['Verifikasi pascaperbaikan',/setelah (perbaikan|diganti)|kembali normal|turun ke/i]];
   return R.map(([l,re,ng])=>{
     if(!re)return{l,v:a+', '+(TY[AS[a]]||'Unit proses'),c:'tinggi',s:'',ok:0};
     const m=ss.filter(s=>re.test(s)&&!(ng&&cz.test(s))),v=m.join(' ');
@@ -3007,7 +4065,7 @@ const cb=c=>({rendah:'<span class="bd bukti">▲ Keyakinan rendah</span>',sedang
 function sb(){
   const n=LS.ex.filter(e=>e.c=='rendah'&&!e.ok).length;
   $('#sd').disabled=!!n;
-  $('#sn').textContent=n?n+' entitas berkeyakinan rendah wajib dikonfirmasi sebelum laporan dikirim (Aturan R5).':'Kandidat penyebab otomatis berstatus Dugaan sampai diperiksa pakar.';
+  $('#sn').textContent=n?n+' entitas berkeyakinan rendah wajib dikonfirmasi sebelum laporan dikirim (Aturan R5).':'Hipotesis akar masalah otomatis berstatus Dugaan hingga diotorisasi oleh pakar.';
 }
 function lp(){
   const bk='<div style="margin-bottom:16px"><button class="bk" data-go="beranda">‹ Kembali ke Beranda</button></div>';
@@ -3043,8 +4101,8 @@ function lp(){
         </div>
         <h2 style="margin-bottom:12px">2. Metode Akuisisi Laporan</h2>
         <div class="tabs">
-          <button data-lm="v" class="${v?'on':''}">🎙️ Rekaman Suara (Speech-to-Text)</button>
-          <button data-lm="t" class="${v?'':'on'}">⌨️ Ketik Teks Manual</button>
+          <button data-lm="v" class="${v?'on':''}"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.mic}</svg> Rekaman Suara (Speech-to-Text)</button>
+          <button data-lm="t" class="${v?'':'on'}"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.keyboard}</svg> Ketik Teks Manual</button>
         </div>
         ${v?`
           <div id="vb" class="${LS.rec?'rec':''}" style="text-align:center;padding:10px 0">
@@ -3215,18 +4273,18 @@ function kf(){
     const op=KOPEN[c.id]||KQ,cnt=c.ty.reduce((s,t)=>s+t.un.length,0);
     return`<div>
       <button class="trb ${KSEL.c==c.id&&!KSEL.u?'on':''}" data-kc="${c.id}">
-        <span>${op?'▾':'▸'} 📁</span>
+        <span>${op?'▾':'▸'}</span> <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.folder}</svg>
         <span style="flex:1"><b>${esc(c.n)}</b><small style="display:block;font-size:12.5px;margin-top:2px" class="mu">${c.sc=='paper'?'✓ Cakupan paper':'◆ Arsitektur modular'} · ${cnt} unit</small></span>
       </button>
       ${op?`<div class="trc">${c.ty.map(t=>`
         <div>
           <button class="trb" data-kt="${c.id}|${t.id}" style="font-weight:700;padding:8px 12px">
-            <span>📂</span><span style="flex:1">${esc(t.n)}</span><small class="mu">${t.un.length}</small>
+            <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.folder}</svg><span style="flex:1">${esc(t.n)}</span><small class="mu">${t.un.length}</small>
           </button>
           <div class="trc">${t.un.map(u=>{
             const on=KSEL.c==c.id&&KSEL.t==t.id&&KSEL.u==u.tag,kc=DB.filter(k=>k.tag==u.tag).length;
             return`<button class="trb ${on?'on':''}" data-ku="${c.id}|${t.id}|${u.tag}" style="padding:8px 12px">
-              <span>🔧</span><span style="flex:1">${esc(u.tag)} <small class="mu">(${u.cm.length} komp)</small></span>
+              <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.tool}</svg><span style="flex:1">${esc(u.tag)} <small class="mu">(${u.cm.length} komp)</small></span>
               ${kc?`<span class="ch" style="font-size:12px;padding:3px 9px">${kc} kasus</span>`:''}
             </button>`}).join('')}
           </div>
@@ -3278,7 +4336,7 @@ function kf(){
           <div>
             <small>1. Komponen pada ${esc(unit.tag)} (${unit.cm.length})</small>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-              ${unit.cm.map((c,i)=>`<span class="tg">⚙️ ${esc(c)} <button data-ka="del-cm" data-i="${i}" style="border:0;background:none;color:var(--tx2);padding:0 4px;font-weight:800" title="Hapus">×</button></span>`).join('')||'<span class="mu">Belum ada komponen.</span>'}
+              ${unit.cm.map((c,i)=>`<span class="tg"><svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle">${IC.cog}</svg> ${esc(c)} <button data-ka="del-cm" data-i="${i}" style="border:0;background:none;color:var(--tx2);padding:0 4px;font-weight:800" title="Hapus">×</button></span>`).join('')||'<span class="mu">Belum ada komponen.</span>'}
             </div>
             <div class="fgr">
               <input class="in2" id="ncm" placeholder="Tambah komponen baru pada ${esc(unit.tag)}…">
@@ -3289,7 +4347,7 @@ function kf(){
           <div>
             <small>2. Mode kegagalan & taksonomi gejala (${unit.fm.length} mode, ${cat.sy.length} gejala kategori)</small>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-              ${unit.fm.map((f,i)=>`<span class="tg" style="border-color:var(--dug)">⚠️ ${esc(f)} <button data-ka="del-fm" data-i="${i}" style="border:0;background:none;color:var(--tx2);padding:0 4px;font-weight:800" title="Hapus">×</button></span>`).join('')}
+              ${unit.fm.map((f,i)=>`<span class="tg" style="border-color:var(--dug)"><svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;color:var(--dug)">\${IC.alertTriangle}</svg> ${esc(f)} <button data-ka="del-fm" data-i="${i}" style="border:0;background:none;color:var(--tx2);padding:0 4px;font-weight:800" title="Hapus">×</button></span>`).join('')}
               ${cat.sy.map(s=>`<span class="tg"><small>Gejala:</small> ${esc(s)}</span>`).join('')}
             </div>
             <div class="fgr">
@@ -3394,6 +4452,7 @@ function route(){
   }
   scrollTo(0,0);
 }
+const cpBtn = $('#btn-color-psych'); if (cpBtn) cpBtn.onclick = openColorPsychModal;
 addEventListener('hashchange',route);
 route();
 </script>
