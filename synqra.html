@@ -2212,6 +2212,88 @@ textarea {
   flex: 1;
 }
 
+
+/* ==========================================================================
+   AUTHENTICATION & LOGIN VIEW (IKMS 2026)
+   ========================================================================== */
+#login-view {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.08), transparent 45%), radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.06), transparent 50%), var(--bg);
+}
+.login-card {
+  max-width: 440px;
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 28px;
+  padding: 36px 30px;
+  box-shadow: var(--sh-lg);
+  text-align: center;
+}
+.login-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+.login-preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--bd);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  color: var(--tx);
+  width: 100%;
+}
+.login-preset-btn:hover {
+  border-color: var(--c6);
+  background: var(--hvr);
+}
+.login-preset-btn.on {
+  border-color: var(--c6);
+  background: rgba(2, 132, 199, 0.08);
+  box-shadow: 0 0 0 1.5px var(--c6);
+}
+.user-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 250px;
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 18px;
+  box-shadow: var(--sh-lg);
+  z-index: 1000;
+  text-align: left;
+}
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: var(--tx);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+.dropdown-item:hover {
+  background: var(--hvr);
+}
+
 </style>
 </head>
 <body>
@@ -2240,11 +2322,34 @@ textarea {
         <svg class="i" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15zM10 21h4"/></svg>
         <span class="dot" id="ndot"></span>
       </button>
-      <button class="usr" data-go="konfig" title="Rina – Pakar Validator & Konfigurasi Aset">
-        <span class="av">RN</span>
-        <span>Rina</span>
-        <span style="color:var(--tx2);font-size:12px">▾</span>
-      </button>
+      <div style="position:relative">
+        <button class="usr" id="btn-user-profile" onclick="toggleUserMenu(event)" title="Profil Pengguna & Sesi">
+          <span class="av">RN</span>
+          <span>Rina</span>
+          <span style="color:var(--tx2);font-size:12px">▾</span>
+        </button>
+        <div id="user-menu-dropdown" class="user-dropdown" hidden onclick="event.stopPropagation()">
+          <div style="padding:14px;border-bottom:1px solid var(--bd)">
+            <b style="display:block;font-size:13.5px;color:var(--tx)" id="drop-user-name">Rina Suryani, S.T.</b>
+            <span class="mu" style="font-size:12px;display:block;margin-top:2px" id="drop-user-role">Lead Process Safety</span>
+            <span class="pillar-pill p-security" style="font-size:10.5px;margin-top:6px;display:inline-block" id="drop-user-dept">HSE &amp; Process Safety</span>
+          </div>
+          <div style="padding:6px">
+            <button class="dropdown-item" onclick="location.hash='konfig';hideUserMenu();">
+              <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+              <span>Spesifikasi Peralatan</span>
+            </button>
+            <button class="dropdown-item" onclick="location.hash='login';hideUserMenu();" style="color:var(--c6)">
+              <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span>Ganti Akun (Persona)</span>
+            </button>
+            <button class="dropdown-item" onclick="logoutUser();" style="color:var(--e)">
+              <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--e)"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+              <span>Keluar (Sign Out)</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -2437,8 +2542,187 @@ textarea {
 </div>
 
 
+
+<!-- LOGIN VIEW -->
+<div id="login-view" hidden>
+  <div class="login-card">
+    <div style="display:flex;justify-content:center;align-items:center;margin-bottom:12px">
+      <img src="logo%20synqra%20mode%20terang.png" alt="SYNQRA" style="max-height:56px;max-width:200px;object-fit:contain" onerror="this.onerror=null;this.replaceWith(document.getElementById('fallback-login-svg'));">
+      <svg id="fallback-login-svg" viewBox="0 0 40 40" style="width:52px;height:52px;display:none" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="var(--n9)"/>
+        <path d="M13 25C13 27.2 14.8 29 17 29H23C25.2 29 27 27.2 27 25C27 22.8 25.2 21 23 21H17C14.8 21 13 19.2 13 17C13 14.8 14.8 13 17 13H23C25.2 13 27 14.8 27 17" fill="none" stroke="var(--c3)" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="17" cy="13" r="3" fill="var(--c6)"/>
+        <circle cx="23" cy="27" r="3" fill="var(--c4)"/>
+      </svg>
+    </div>
+    <h1 style="font-size:26px;font-weight:900;color:var(--tx);margin:0 0 4px;letter-spacing:-0.02em">SYNQRA</h1>
+    <p class="csub" style="font-size:12.5px;line-height:1.45;margin:0 0 10px">Context-Aware Evidence-Based Knowledge Management System</p>
+    <span class="pillar-pill p-security" style="display:inline-block;margin-bottom:18px">IKMS 2026 Summit Edition</span>
+
+    <div style="text-align:left">
+      <label class="form-label" style="font-size:12px;color:var(--tx2);margin-bottom:6px">Pilih Akun Masuk (Demo Persona):</label>
+      <div class="login-presets">
+        <button type="button" class="login-preset-btn on" data-preset="rina" onclick="selectPersona('rina')">
+          <span class="av" style="width:32px;height:32px;font-size:12px">RN</span>
+          <div style="flex:1">
+            <b style="font-size:13px;display:block">Rina Suryani, S.T.</b>
+            <small class="mu" style="font-size:11.5px">Lead Process Safety (Pakar Validator)</small>
+          </div>
+        </button>
+        <button type="button" class="login-preset-btn" data-preset="ahmad" onclick="selectPersona('ahmad')">
+          <span class="av" style="width:32px;height:32px;font-size:12px">AF</span>
+          <div style="flex:1">
+            <b style="font-size:13px;display:block">Ahmad Fauzi</b>
+            <small class="mu" style="font-size:11.5px">Senior Field Operator (Pelapor Shift)</small>
+          </div>
+        </button>
+        <button type="button" class="login-preset-btn" data-preset="bambang" onclick="selectPersona('bambang')">
+          <span class="av" style="width:32px;height:32px;font-size:12px">BT</span>
+          <div style="flex:1">
+            <b style="font-size:13px;display:block">Ir. Bambang Trihatmojo</b>
+            <small class="mu" style="font-size:11.5px">Plant Reliability Lead (Otoritas CAPA)</small>
+          </div>
+        </button>
+      </div>
+
+      <form id="login-form" onsubmit="handleLoginSubmit(event)">
+        <div style="margin-bottom:12px">
+          <label class="form-label">Email Perusahaan / NIP</label>
+          <input id="login-nip" class="form-input" style="width:100%" value="rina.suryani@synqra.oilgas.id" required>
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="form-label">Kata Sandi (Password)</label>
+          <input id="login-pass" type="password" class="form-input" style="width:100%" value="••••••••" required>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:12.5px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" checked id="login-remember">
+            <span>Ingat sesi di perangkat ini</span>
+          </label>
+          <a href="javascript:void(0)" onclick="tst('Kredensial demo: langsung klik Masuk ke Sistem.')" style="color:var(--c6);text-decoration:none">Bantuan</a>
+        </div>
+
+        <button type="submit" class="pill pr" style="width:100%;justify-content:center;padding:12px;font-size:14.5px;font-weight:700">
+          Masuk ke Sistem (Sign In) ›
+        </button>
+      </form>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:var(--tx2)">
+        <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--c6)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Sesi Terenkripsi · Kepatuhan Regulasi ESDM &amp; CCPS</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+/* ==========================================================================
+   AUTHENTICATION & USER PERSONAS CONTROLLER (IKMS 2026)
+   ========================================================================== */
+const PERSONAS = {
+  rina: {
+    id: 'rina',
+    name: 'Rina Suryani, S.T.',
+    shortName: 'Rina',
+    role: 'Pakar Validator & Process Safety Lead',
+    dept: 'HSE & Process Safety',
+    initials: 'RN',
+    nip: '19940822-202102-2-001',
+    email: 'rina.suryani@synqra.oilgas.id'
+  },
+  ahmad: {
+    id: 'ahmad',
+    name: 'Ahmad Fauzi',
+    shortName: 'Ahmad',
+    role: 'Senior Field Operator (Pelapor Shift)',
+    dept: 'Operasi Kilang Unit II',
+    initials: 'AF',
+    nip: '19910514-201803-1-004',
+    email: 'ahmad.fauzi@synqra.oilgas.id'
+  },
+  bambang: {
+    id: 'bambang',
+    name: 'Ir. Bambang Trihatmojo',
+    shortName: 'Bambang',
+    role: 'Plant Maintenance & Reliability Lead',
+    dept: 'Maintenance & Reliability',
+    initials: 'BT',
+    nip: '19850319-201012-1-002',
+    email: 'bambang.t@synqra.oilgas.id'
+  }
+};
+
+let ACTIVE_PERSONA_ID = 'rina';
+
+function selectPersona(id) {
+  ACTIVE_PERSONA_ID = id;
+  const p = PERSONAS[id];
+  if (!p) return;
+  document.querySelectorAll('.login-preset-btn').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.preset === id);
+  });
+  const nipInput = document.getElementById('login-nip');
+  if (nipInput) nipInput.value = p.email;
+}
+
+function handleLoginSubmit(e) {
+  if (e) e.preventDefault();
+  const p = PERSONAS[ACTIVE_PERSONA_ID] || PERSONAS.rina;
+  localStorage.setItem('synqra_user', JSON.stringify(p));
+  updateUserUI();
+  location.hash = 'beranda';
+  tst('Selamat datang, ' + p.name + '! Sesi terotentikasi.');
+}
+
+function logoutUser() {
+  localStorage.removeItem('synqra_user');
+  hideUserMenu();
+  location.hash = 'login';
+  tst('Anda telah berhasil keluar dari sistem.');
+}
+
+function getActiveUser() {
+  try {
+    return JSON.parse(localStorage.getItem('synqra_user')) || null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function updateUserUI() {
+  const u = getActiveUser() || PERSONAS.rina;
+  const avEl = document.querySelector('.usr .av');
+  if (avEl) avEl.textContent = u.initials;
+  const nameEl = document.querySelector('.usr span:nth-child(2)');
+  if (nameEl) nameEl.textContent = u.shortName;
+  const greetEl = document.querySelector('#subbar h1 span');
+  if (greetEl) greetEl.textContent = u.shortName;
+  const usrBtn = document.querySelector('.usr');
+  if (usrBtn) usrBtn.title = u.name + ' – ' + u.role;
+}
+
+function toggleUserMenu(e) {
+  if (e) e.stopPropagation();
+  const m = document.getElementById('user-menu-dropdown');
+  if (!m) return;
+  const isHidden = m.hidden;
+  m.hidden = !isHidden;
+  if (!m.hidden) {
+    const u = getActiveUser() || PERSONAS.rina;
+    document.getElementById('drop-user-name').textContent = u.name;
+    document.getElementById('drop-user-role').textContent = u.role;
+    document.getElementById('drop-user-dept').textContent = u.dept;
+  }
+}
+
+function hideUserMenu() {
+  const m = document.getElementById('user-menu-dropdown');
+  if (m) m.hidden = true;
+}
+
+document.addEventListener('click', () => hideUserMenu());
+
 const $=s=>document.querySelector(s),tst=m=>{const e=$('#ts');e.textContent=m;e.className='on';clearTimeout(tst.t);tst.t=setTimeout(()=>e.className='',3000)};
 
 const IC={
@@ -5143,38 +5427,53 @@ function syncNav(activeKey){
 }
 
 function route(){
-  const raw=location.hash.slice(1)||'beranda',
-        V={
-          kasus:kl,
-          graf:gr,
-          cari:cr,
-          analitik:an,
-          konfig:kf,
-          laporan:()=>{clearInterval(LS.t);clearInterval(LS.t2);LS.rec=0;if(LS.words.length&&LS.shown<LS.words.length)LS.shown=LS.words.length;lp()}
-        };
-  if(V[raw]){
-    $('#mh').hidden=true;$('#mv').hidden=false;
-    syncNav(raw);
-    V[raw]();
-    scrollTo(0,0);
+  const raw = location.hash.slice(1) || 'beranda';
+  const isAuth = !!getActiveUser();
+
+  // Redirect to login if not authenticated or explicitly at #login
+  if (!isAuth || raw === 'login') {
+    $('#shell').hidden = true;
+    $('#login-view').hidden = false;
+    scrollTo(0, 0);
     return;
   }
-  const h=raw.split('-'),v=h[0],k=DB.find(x=>x.id==h.slice(1).join('-').toUpperCase()),
-        ok=k&&CD[k.id]&&(v=='kasus'||v=='validasi'),
-        vd=ok&&v=='validasi'&&(k.st=='dug'||k.st=='bukti');
-  $('#mh').hidden=!!ok;$('#mv').hidden=!ok;
-  syncNav(ok?(vd?'validasi':'kasus'):'beranda');
-  if(ok){
-    vd?dv(k):dk(k);
-  }else{
+
+  // Authenticated: show shell & hide login
+  $('#shell').hidden = false;
+  $('#login-view').hidden = true;
+  updateUserUI();
+
+  const V = {
+    kasus: kl,
+    graf: gr,
+    cari: cr,
+    analitik: an,
+    konfig: kf,
+    laporan: () => { clearInterval(LS.t); clearInterval(LS.t2); LS.rec = 0; if (LS.words.length && LS.shown < LS.words.length) LS.shown = LS.words.length; lp(); }
+  };
+
+  if (V[raw]) {
+    $('#mh').hidden = true; $('#mv').hidden = false;
+    syncNav(raw);
+    V[raw]();
+    scrollTo(0, 0);
+    return;
+  }
+  const h = raw.split('-'), v = h[0], k = DB.find(x => x.id == h.slice(1).join('-').toUpperCase()),
+        ok = k && CD[k.id] && (v == 'kasus' || v == 'validasi'),
+        vd = ok && v == 'validasi' && (k.st == 'dug' || k.st == 'bukti');
+  $('#mh').hidden = !!ok; $('#mv').hidden = !ok;
+  syncNav(ok ? (vd ? 'validasi' : 'kasus') : 'beranda');
+  if (ok) {
+    vd ? dv(k) : dk(k);
+  } else {
     rh();
-    if(!P3)P3=pump($('#t3'));
+    if (!P3) P3 = pump($('#t3'));
     show(T);
     dispatchEvent(new Event('resize'));
   }
-  scrollTo(0,0);
+  scrollTo(0, 0);
 }
-const cpBtn = $('#btn-color-psych'); if (cpBtn) cpBtn.onclick = openColorPsychModal;
 addEventListener('hashchange',route);
 route();
 </script>
