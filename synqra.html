@@ -2654,6 +2654,8 @@ const PERSONAS = {
 };
 
 let ACTIVE_PERSONA_ID = 'rina';
+// Simpan sesi di memori agar tidak pernah mental ke login saat pindah halaman/kirim laporan
+let SESSION_USER = PERSONAS.rina;
 
 function selectPersona(id) {
   ACTIVE_PERSONA_ID = id;
@@ -2669,25 +2671,30 @@ function selectPersona(id) {
 function handleLoginSubmit(e) {
   if (e) e.preventDefault();
   const p = PERSONAS[ACTIVE_PERSONA_ID] || PERSONAS.rina;
-  localStorage.setItem('synqra_user', JSON.stringify(p));
+  SESSION_USER = p;
+  try { localStorage.setItem('synqra_user', JSON.stringify(p)); } catch (err) {}
   updateUserUI();
   location.hash = 'beranda';
+  route();
   tst('Selamat datang, ' + p.name + '! Sesi terotentikasi.');
 }
 
 function logoutUser() {
-  localStorage.removeItem('synqra_user');
+  SESSION_USER = null;
+  try { localStorage.removeItem('synqra_user'); } catch (err) {}
   hideUserMenu();
   location.hash = 'login';
+  route();
   tst('Anda telah berhasil keluar dari sistem.');
 }
 
 function getActiveUser() {
+  if (SESSION_USER) return SESSION_USER;
   try {
-    return JSON.parse(localStorage.getItem('synqra_user')) || null;
-  } catch(e) {
-    return null;
-  }
+    const saved = JSON.parse(localStorage.getItem('synqra_user'));
+    if (saved) { SESSION_USER = saved; return saved; }
+  } catch (e) {}
+  return null;
 }
 
 function updateUserUI() {
@@ -4542,7 +4549,7 @@ function renderTriageView() {
               Buka Full Investigation Workspace (8 Modul) ›
             </button>
           ` : `
-            <button class="pill pr" style="width:100%;justify-content:center" onclick="tst('Disposisi triage disimpan: ' + PRELIM_DATA.triageDecision);location.hash='beranda';">
+            <button class="pill pr" style="width:100%;justify-content:center" onclick="sd('dug');">
               Simpan Disposisi &amp; Kembali ke Beranda
             </button>
           `}
@@ -4884,7 +4891,7 @@ function renderInvestigationWorkspace() {
 
         <div style="display:flex;gap:12px;justify-content:flex-end">
           <button class="pill" onclick="tst('Catatan revisi dikirim kembali ke tim investigator.');">Minta Klarifikasi / Revisi</button>
-          <button class="pill pr" onclick="tst('Investigasi diotorisasi! Data resmi tersimpan ke Knowledge Base Synqra.');location.hash='beranda';">
+          <button class="pill pr" onclick="sd('ver');">
             Otorisasi &amp; Publikasikan ke Knowledge Base ›
           </button>
         </div>
@@ -5149,13 +5156,34 @@ function mic(){
   LS.rec=1;LS.sec=0;LS.words=[];LS.shown=0;lp();
   LS.t=setInterval(()=>{if(!$('#tm')){clearInterval(LS.t);LS.rec=0;return}LS.sec++;$('#tm').textContent='Merekam '+fmt(LS.sec)+' (ketuk untuk berhenti)'},1000);
 }
-function sd(){
-  const E=LS.ex,a=LS.asset,id='K-0'+(DB.length+28),g=esc((E[1].v||'Laporan baru').slice(0,48));
-  DB.push({id,a:AS[a]||'P',tag:a,g,st:'dug',ev:0,d:'2026-11',m:29});
-  CD[id]={g,kd:esc(E[2].v),iv:esc(E[3].v),cs:esc(E[4].v),ac:esc(E[5].v),vf:esc(E[6].v),bk:[]};
-  Object.assign(LS,{step:1,words:[],shown:0,text:'',fix:{},ex:[],rec:0,sec:0});
-  tst(id+' berhasil dikirim sebagai Dugaan dan masuk Antrean Validasi.');
-  location.hash='beranda';
+function sd(customStatus) {
+  // Pastikan sesi tetap aktif saat mengirim laporan
+  if (!SESSION_USER) SESSION_USER = PERSONAS[ACTIVE_PERSONA_ID] || PERSONAS.rina;
+
+  const E = LS.ex && LS.ex.length ? LS.ex : ex();
+  const a = LS.asset || 'P-101A';
+  const id = 'K-0' + (DB.length + 29);
+  const g = esc(((E[1] && E[1].v) || 'Laporan kejanggalan baru').slice(0, 48));
+  const st = customStatus || 'dug';
+
+  DB.unshift({ id, a: AS[a] || 'P', tag: a, g, st, ev: PRELIM_DATA.evidenceFiles.length || 1, d: '2026-11', m: 29 });
+  CD[id] = {
+    g,
+    kd: esc((E[2] && E[2].v) || 'Parameter operasi tercatat'),
+    iv: esc((E[3] && E[3].v) || 'Pemeriksaan awal lapangan'),
+    cs: esc((E[4] && E[4].v) || 'Praduga awal penyebab'),
+    ac: esc((E[5] && E[5].v) || 'Menunggu tindak lanjut'),
+    vf: esc((E[6] && E[6].v) || ''),
+    bk: (PRELIM_DATA.evidenceFiles || []).map(f => ['Foto', f, 'gejala'])
+  };
+
+  Object.assign(LS, { step: 1, words: [], shown: 0, text: '', fix: {}, ex: [], rec: 0, sec: 0 });
+  REPORT_VIEW_MODE = 'prelim';
+  INV_ACTIVE_MODULE = 'overview';
+
+  location.hash = 'beranda';
+  route();
+  tst(id + ' (' + a + ') berhasil dikirim dan masuk ke Beranda!');
 }
 $('#mv').addEventListener('click',e=>{
   const b=e.target.closest('[data-a],[data-as],[data-lm],[data-lw]');if(!b)return;const d=b.dataset;
