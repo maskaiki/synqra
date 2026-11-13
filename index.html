@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SYNQRA – Intelligence Connected by Evidence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --n9: #0B1F44;
+      --n8: #13315C;
+      --n7: #1E4B6B;
+      --c5: #00B8D9;
+      --c6: #007A94;
+      --c3: #7FDFFF;
+      --bg-outer: #E2E8F0;
+      --bg-shell: #F5F8FA;
+      --panel: #FFFFFF;
+      --card: #F8FAFC;
+      --pill-bg: #EDF2F7;
+      --tx: #0B1F44;
+      --tx2: #334E68;
+      --bd: #CBD5E1;
+      --chip: #E0F7FA;
+      --peach: #FFF3E0;
+      --ptx: #7C2D12;
+      --ok: #059669;
+      --dug: #D97706;
+      --buk: #EA580C;
+      --nm: #DC2626;
+      --ars: #475569;
+      --sh-sm: 0 2px 8px rgba(11, 31, 68, .05);
+      --sh-md: 0 8px 24px rgba(11, 31, 68, .07);
+      --sh-lg: 0 16px 40px rgba(11, 31, 68, .10);
+      box-sizing: border-box;
+    }
+
+    :root[data-contrast="outdoor"] {
+      --bg-outer: #FFFFFF;
+      --bg-shell: #FFFFFF;
+      --panel: #FFFFFF;
+      --card: #F1F5F9;
+      --pill-bg: #E2E8F0;
+      --tx: #051026;
+      --tx2: #0B1F44;
+      --bd: #64748B;
+      --sh-sm: none;
+      --sh-md: 0 0 0 1.5px #0B1F44;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-outer);
+      color: var(--tx);
+      font: 15px/1.55 'Montserrat', system-ui, sans-serif;
+      font-feature-settings: 'tnum';
+      padding: clamp(8px, 1.6vw, 20px)
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      color: inherit
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(.98)
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid var(--n9);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px var(--c3)
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .anim {
+      animation: fadeUp .3s cubic-bezier(.2, .8, .2, 1) both
+    }
+
+    /* Shell & Top Header */
+    #shell {
+      max-width: 1460px;
+      margin: 0 auto;
+      background: var(--bg-shell);
+      border-radius: 32px;
+      padding: clamp(14px, 2vw, 26px);
+      box-shadow: var(--sh-lg);
+      border: 1px solid var(--bd)
+    }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 10px 18px 10px 20px;
+      box-shadow: var(--sh-sm);
+      margin-bottom: 22px;
+      border: 1px solid var(--bd);
+      flex-wrap: wrap
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      border: 0;
+      background: none;
+      padding: 2px 6px;
+      text-align: left
+    }
+
+    .brand svg {
+      width: 42px;
+      height: 42px;
+      flex: none
+    }
+
+    .brand-tx {
+      display: block;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      color: var(--n9);
+      line-height: 1.05
+    }
+
+    .brand-sub {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      color: var(--n7);
+      text-transform: uppercase;
+      margin-top: 2px
+    }
+
+    .top-act {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1.5px solid var(--bd);
+      background: var(--panel);
+      color: var(--tx);
+      border-radius: 999px;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      min-height: 44px;
+      box-shadow: var(--sh-sm)
+    }
+
+    .pill:hover:not(:disabled) {
+      background: var(--pill-bg)
+    }
+
+    .pill.pr {
+      background: var(--n9);
+      border-color: var(--n9);
+      color: #FFFFFF;
+      font-weight: 700
+    }
+
+    .pill.cy {
+      background: var(--c5);
+      border-color: var(--c5);
+      color: #0B1F44;
+      font-weight: 700
+    }
+
+    .pill:disabled {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    .ib {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--pill-bg);
+      border: 1px solid var(--bd);
+      color: var(--tx)
+    }
+
+    .ib .dot {
+      position: absolute;
+      top: 8px;
+      right: 9px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--buk);
+      border: 2px solid var(--panel)
+    }
+
+    .usr {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--pill-bg);
+      border: 1px solid var(--bd);
+      border-radius: 999px;
+      padding: 5px 14px 5px 6px;
+      font-size: 14px;
+      font-weight: 700
+    }
+
+    .av {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--n9);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    svg.i {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: none
+    }
+
+    /* Subbar */
+    #subbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding: 0 4px
+    }
+
+    #subbar h1 {
+      margin: 0;
+      font-size: clamp(22px, 2.6vw, 30px);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--tx)
+    }
+
+    #subbar h1 span {
+      font-weight: 500;
+      color: var(--tx2)
+    }
+
+    /* Layout Workspace: Sidebar Kiri ala MyITS + Konten Utama */
+    #work {
+      display: grid;
+      grid-template-columns: 255px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start
+    }
+
+    #side {
+      background: var(--panel);
+      border-radius: 24px;
+      padding: 16px 12px;
+      box-shadow: var(--sh-md);
+      border: 1px solid var(--bd);
+      position: sticky;
+      top: 16px
+    }
+
+    .s-grp {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--tx2);
+      padding: 10px 12px 6px
+    }
+
+    .s-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--tx);
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+      margin-bottom: 3px
+    }
+
+    .s-btn:hover {
+      background: var(--pill-bg)
+    }
+
+    .s-btn.on {
+      background: var(--n9);
+      color: #FFFFFF;
+      font-weight: 700
+    }
+
+    .s-btn .cnt {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--pill-bg);
+      color: var(--tx);
+      padding: 2px 8px;
+      border-radius: 99px
+    }
+
+    .s-btn.on .cnt {
+      background: var(--c5);
+      color: #0B1F44
+    }
+
+    /* Kartu, Grid & Komponen */
+    .wcard,
+    .cd {
+      background: var(--panel);
+      border-radius: 24px;
+      padding: 22px 24px;
+      box-shadow: var(--sh-md);
+      border: 1px solid var(--bd)
+    }
+
+    .kpi4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px
+    }
+
+    .kbox {
+      background: var(--panel);
+      border: 1px solid var(--bd);
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: var(--sh-sm)
+    }
+
+    .kbox small {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--tx2);
+      margin-bottom: 6px
+    }
+
+    .kbox b {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--tx);
+      line-height: 1.1
+    }
+
+    .kbox span {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--tx2);
+      margin-top: 4px
+    }
+
+    .dg {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+      align-items: start
+    }
+
+    .row2 {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+      margin-bottom: 20px
+    }
+
+    .row3 {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+      margin-bottom: 20px
+    }
+
+    .chd {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap
+    }
+
+    .chd h2,
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--tx)
+    }
+
+    .csub {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--tx2);
+      margin-top: 3px
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px
+    }
+
+    .top h1 {
+      margin: 0;
+      flex: 1;
+      min-width: 200px;
+      font-size: clamp(21px, 2.4vw, 28px);
+      font-weight: 800;
+      color: var(--tx)
+    }
+
+    .top h1 span {
+      font-weight: 500;
+      color: var(--tx2)
+    }
+
+    .bk {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1.5px solid var(--bd);
+      background: var(--panel);
+      color: var(--tx);
+      border-radius: 999px;
+      padding: 0 16px;
+      min-height: 42px;
+      font-size: 14px;
+      font-weight: 700
+    }
+
+    /* Badge Semantik & Psikologi Warna */
+    .bd {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .bd.dug {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A
+    }
+
+    .bd.ver {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #A7F3D0
+    }
+
+    .bd.bukti {
+      background: #FFEDD5;
+      color: #9A3412;
+      border: 1px solid #FED7AA
+    }
+
+    .bd.nm {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA
+    }
+
+    .bd.ars {
+      background: #E2E8F0;
+      color: #334155;
+      border: 1px solid #CBD5E1
+    }
+
+    .bd.info {
+      background: var(--chip);
+      color: var(--n9);
+      border: 1px solid var(--c3)
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      background: var(--pill-bg);
+      padding: 5px;
+      border-radius: 16px;
+      margin-bottom: 18px;
+      width: fit-content;
+      max-width: 100%
+    }
+
+    .tabs button {
+      border: 0;
+      background: none;
+      border-radius: 12px;
+      padding: 8px 16px;
+      min-height: 40px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--tx2)
+    }
+
+    .tabs button:hover {
+      color: var(--tx)
+    }
+
+    .tabs .on {
+      background: var(--n9);
+      color: #FFFFFF;
+      font-weight: 700;
+      box-shadow: var(--sh-sm)
+    }
+
+    /* Tabel & Item */
+    .tbl-wrap {
+      overflow-x: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      font-size: 14px
+    }
+
+    th {
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--tx2);
+      padding: 6px 14px
+    }
+
+    td {
+      padding: 14px;
+      background: var(--card);
+      color: var(--tx);
+      font-weight: 500;
+      border-top: 1px solid var(--bd);
+      border-bottom: 1px solid var(--bd)
+    }
+
+    td:first-child {
+      border-left: 1px solid var(--bd);
+      border-radius: 14px 0 0 14px
+    }
+
+    td:last-child {
+      border-right: 1px solid var(--bd);
+      border-radius: 0 14px 14px 0;
+      text-align: right
+    }
+
+    .it {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--bd);
+      width: 100%;
+      background: none;
+      border-left: 0;
+      border-right: 0;
+      border-top: 0;
+      text-align: left;
+      border-radius: 12px
+    }
+
+    .it:hover {
+      background: var(--card)
+    }
+
+    .it:last-child {
+      border-bottom: 0
+    }
+
+    .it>i {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--chip);
+      color: var(--n9);
+      font-style: normal;
+      font-weight: 800;
+      font-size: 14px;
+      flex: none
+    }
+
+    .it span {
+      flex: 1;
+      min-width: 0;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--tx)
+    }
+
+    .it span small {
+      display: block;
+      font-weight: 500;
+      color: var(--tx2);
+      font-size: 13px;
+      margin-top: 3px
+    }
+
+    .ch {
+      border-radius: 999px;
+      padding: 4px 11px;
+      font-weight: 700;
+      font-size: 13px;
+      background: var(--chip);
+      color: var(--n9)
+    }
+
+    .mu {
+      color: var(--tx2) !important;
+      font-weight: 500 !important
+    }
+
+    .nt {
+      margin: 14px 0 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #7C2D12;
+      background: #FEF3C7;
+      border: 1px solid #FDE68A
+    }
+
+    /* Form, Input, Radio Cards & Upload */
+    .lbl {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--tx);
+      margin: 14px 0 6px
+    }
+
+    .in2,
+    select,
+    textarea {
+      width: 100%;
+      border: 1.5px solid var(--bd);
+      background: var(--card);
+      color: var(--tx);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      min-height: 44px
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical
+    }
+
+    .rc-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))
+    }
+
+    .rc {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--bd);
+      border-radius: 14px;
+      background: var(--card);
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 600
+    }
+
+    .rc input {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--n9);
+      flex: none
+    }
+
+    .rc.on {
+      border-color: var(--n9);
+      background: var(--chip)
+    }
+
+    .up-box {
+      border: 2px dashed var(--bd);
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      background: var(--card);
+      margin-top: 8px
+    }
+
+    .ec {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px
+    }
+
+    .hh {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 14.5px
+    }
+
+    /* Stepper 5 Tahap Triage & 8 Modul Investigasi */
+    .stp {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      margin: 14px 0
+    }
+
+    .st-i {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1.5px solid var(--bd);
+      background: var(--card);
+      font-size: 12.5px;
+      font-weight: 600
+    }
+
+    .st-i b {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 2px
+    }
+
+    .st-i.done {
+      border-color: var(--ok);
+      background: #ECFDF5;
+      color: #065F46
+    }
+
+    .st-i.cur {
+      border-color: var(--n9);
+      background: var(--chip);
+      color: var(--n9)
+    }
+
+    /* Spesifikasi Peralatan (Tanpa kata Pohon & Tanpa Emoji) */
+    .trb {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 10px 14px;
+      border-radius: 12px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .trb:hover {
+      background: var(--pill-bg)
+    }
+
+    .trb.on {
+      background: var(--n9);
+      color: #FFFFFF;
+      font-weight: 700
+    }
+
+    .trb.on .mu {
+      color: var(--c3) !important
+    }
+
+    .trc {
+      margin-left: 16px;
+      padding-left: 14px;
+      border-left: 2px solid var(--bd);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 4px;
+      margin-bottom: 6px
+    }
+
+    .tg {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 13.5px;
+      font-weight: 600
+    }
+
+    .fgr {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px
+    }
+
+    .fgr .in2 {
+      flex: 1;
+      min-width: 150px
+    }
+
+    /* Grafik & Knowledge Graph */
+    .pchart-grid {
+      position: relative;
+      height: 200px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 0 10px 28px 34px;
+      border-bottom: 1.5px solid var(--bd)
+    }
+
+    .pbar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      flex: 1;
+      position: relative
+    }
+
+    .pbar {
+      width: clamp(30px, 3.8vw, 46px);
+      border-radius: 10px 10px 0 0;
+      background: var(--pill-bg);
+      border: 1.5px solid var(--n7);
+      display: flex;
+      flex-direction: column-reverse;
+      overflow: hidden
+    }
+
+    .pbar u {
+      display: block;
+      width: 100%;
+      background: var(--n9)
+    }
+
+    .pbar-lbl {
+      position: absolute;
+      bottom: -24px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--tx2)
+    }
+
+    .gw {
+      overflow-x: auto;
+      padding-bottom: 6px
+    }
+
+    .gw svg {
+      min-width: 640px;
+      width: 100%;
+      height: auto;
+      display: block
+    }
+
+    .gw text {
+      fill: var(--tx);
+      font-size: 11px;
+      font-weight: 700
+    }
+
+    .gw .lb2 {
+      font-size: 10px;
+      font-weight: 600;
+      fill: var(--tx2)
+    }
+
+    .gn {
+      cursor: pointer
+    }
+
+    .ck {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-height: 40px;
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .ck input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--n9)
+    }
+
+    /* Galeri Foto Insiden Jurnal */
+    .inc-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-top: 12px
+    }
+
+    .inc-card {
+      border: 1.5px solid var(--bd);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--card)
+    }
+
+    .inc-card svg {
+      width: 100%;
+      height: 130px;
+      display: block;
+      background: #0B1F44
+    }
+
+    .inc-body {
+      padding: 12px 14px;
+      font-size: 13px
+    }
+
+    .inc-body b {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: var(--tx)
+    }
+
+    #ts {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 24px;
+      background: var(--n9);
+      color: #FFFFFF;
+      border: 2px solid var(--c3);
+      padding: 12px 20px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      z-index: 60;
+      max-width: 92vw;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: var(--sh-lg)
+    }
+
+    #ts.on {
+      opacity: 1
+    }
+
+    /* Responsif Tablet & HP (Mobile-First Lapangan) */
+    @media(max-width:1080px) {
+      .dg {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:860px) {
+      body {
+        padding: 6px
+      }
+
+      #shell {
+        border-radius: 22px;
+        padding: 12px;
+        padding-bottom: 90px
+      }
+
+      #topbar {
+        border-radius: 20px;
+        padding: 10px 14px
+      }
+
+      #work {
+        grid-template-columns: 1fr
+      }
+
+      #side {
+        position: fixed;
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        top: auto;
+        z-index: 50;
+        padding: 6px 8px;
+        border-radius: 20px;
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        box-shadow: var(--sh-lg);
+        border: 1.5px solid var(--n9)
+      }
+
+      .s-grp {
+        display: none
+      }
+
+      .s-btn {
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 10px;
+        font-size: 11.5px;
+        text-align: center;
+        min-width: 74px;
+        margin: 0
+      }
+
+      .s-btn .cnt {
+        display: none
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="shell">
+    <!-- HEADER UTAMA DENGAN LOGO RESMI S-HELM (Sesuai Brand Guideline PDF) -->
+    <header id="topbar">
+      <button class="brand" data-go="beranda" aria-label="SYNQRA Beranda">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <rect width="48" height="48" rx="12" fill="#0B1F44" />
+          <!-- Siluet Helm Keselamatan di bagian atas huruf S -->
+          <path d="M13 18C13 11.5 18 7.5 24.5 7.5C30 7.5 34.5 10.5 36 15.5H13Z" fill="#FFFFFF" />
+          <path d="M22 7.5V13.5M27 8V13.5" stroke="#0B1F44" stroke-width="2" stroke-linecap="round" />
+          <!-- Pita tengah huruf S & Aksen Tech Cyan -->
+          <path d="M12 19.5L35 26.5C36.5 27 36.5 29.5 34.5 30.5L23 36.5L12 30.5V19.5Z" fill="#FFFFFF" />
+          <path d="M12 28.5L26 36.5L19 40.5L12 36.5V28.5Z" fill="#00B8D9" />
+        </svg>
+        <div>
+          <span class="brand-tx">SYNQRA</span>
+          <span class="brand-sub">Intelligence Connected by Evidence</span>
+        </div>
+      </button>
+
+      <div class="top-act">
+        <button class="pill" id="out-btn" title="Mode Kontras Tinggi untuk Terik Matahari di Lapangan">Mode Lapangan:
+          Normal</button>
+        <button class="pill" data-go="konfig" title="Pilih Departemen Aktif">
+          <span id="dpb">Departemen: HSE (Semua)</span> ▾
+        </button>
+        <button class="pill cy" data-go="prelim">+ Preliminary Report</button>
+        <button class="pill pr" data-go="investigasi">Full Investigation</button>
+        <button class="usr" data-go="triage" title="Rina – Validator HSE">
+          <span class="av">RN</span>
+          <span>Rina (HSE)</span>
+        </button>
+      </div>
+    </header>
+
+    <section id="subbar">
+      <div>
+        <h1 id="pg-title">Pusat Penghimpunan & Pelaporan <span>· Fokus Data & Bukti</span></h1>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="pill" data-go="cari">Cari Kasus & RAG</button>
+        <button class="pill" data-go="panduan">Buku Panduan & Warna</button>
+      </div>
+    </section>
+
+    <!-- WORKSPACE: SIDEBAR KIRI ALA MyITS + MAIN AREA -->
+    <div id="work">
+      <nav id="side" aria-label="Menu utama ala MyITS"></nav>
+      <main id="mv" class="anim"></main>
+    </div>
+  </div>
+
+  <div id="ts" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = s => document.querySelector(s),
+      esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])),
+      tst = m => { const e = $('#ts'); e.textContent = m; e.className = 'on'; clearTimeout(tst.t); tst.t = setTimeout(() => e.className = '', 3200) };
+
+    /* Mode Kontras Lapangan (Outdoor Sunlight Mode) */
+    $('#out-btn').onclick = () => {
+      const r = document.documentElement, cur = r.getAttribute('data-contrast') == 'outdoor';
+      if (cur) { r.removeAttribute('data-contrast'); $('#out-btn').textContent = 'Mode Lapangan: Normal'; tst('Mode tampilan standar diaktifkan.') }
+      else { r.setAttribute('data-contrast', 'outdoor'); $('#out-btn').textContent = 'Mode Lapangan: Aktif (Kontras Tinggi)'; tst('Mode Kontras Tinggi aktif untuk visibilitas di bawah sinar matahari.') }
+    };
+
+    /* 1. Data Preliminary Reports & Mekanisme Triage 5 Tahap (Sesuai Brief) */
+    const PRE = [
+      {
+        id: 'PR-101', tag: 'P-101A', dp: 'Rotating & Mechanical', dt: '12 Nov 2026',
+        ccps: 'Suspected Equipment Failure', urg: 'Ya, perlu perhatian segera',
+        st: 4, stLbl: 'Investigation Required', disp: 'Investigasi Lanjutan',
+        g: 'Getaran pompa naik ke 6,9 mm/s disertai rembesan pada mechanical seal',
+        kd: 'Getaran 6,9 mm/s, suhu bearing 71 °C, laju alir 88% desain',
+        iv: 'Rembesan fluida terlihat pada housing seal saat patroli shift pagi',
+        cs: 'Praduga keausan permukaan mechanical seal',
+        ac: 'Usulan pemeriksaan seal dan alignment poros',
+        vf: 'Belum dilakukan',
+        ev: ['Foto rembesan mechanical seal P-101A.jpg', 'Tren getaran 14 hari.csv'],
+        note: 'Berulang setelah K-014, diteruskan ke Full Investigation K-033.', linked: 'K-033'
+      },
+      {
+        id: 'PR-102', tag: 'E-202', dp: 'Process & Thermal', dt: '11 Nov 2026',
+        ccps: 'Abnormal Operating Condition', urg: 'Ya, perlu perhatian segera',
+        st: 2, stLbl: 'Under Triage', disp: 'Menunggu Penetapan HSE',
+        g: 'Differential pressure (ΔP) sisi shell naik bertahap dan suhu keluar turun 9 °C',
+        kd: 'ΔP 1,1 bar (normal < 0,8 bar), suhu keluar 58 °C',
+        iv: 'Pengecekan instrumen tekanan normal, indikasi fouling tabung',
+        cs: 'Praduga akumulasi deposit fouling pada tube bundle',
+        ac: 'Jadwalkan evaluasi laju fouling dan backflush',
+        vf: 'Belum dilakukan',
+        ev: ['Screenshot tren ΔP E-202.png'],
+        note: 'Menunggu keputusan triage HSE untuk eskalasi investigasi.', linked: 'K-034'
+      },
+      {
+        id: 'PR-103', tag: 'FCV-301', dp: 'Piping Engineering', dt: '10 Nov 2026',
+        ccps: 'Potential Hazard / Unsafe Condition', urg: 'Belum dapat dipastikan',
+        st: 3, stLbl: 'Under Monitoring / Verification', disp: 'Perlu Verifikasi',
+        g: 'Respons bukaan control valve tertinggal 8 detik terhadap sinyal perintah',
+        kd: 'Perintah bukaan 60%, posisi aktual 52%, waktu tunda 8 detik',
+        iv: 'Belum dilakukan uji stroke karena unit masih beroperasi',
+        cs: 'Praduga gesekan stem packing tinggi',
+        ac: 'Verifikasi tekanan udara aktuator dan uji stroke saat jendela pemeliharaan',
+        vf: 'Belum dilakukan',
+        ev: ['Log perintah vs posisi aktual FCV-301.csv'],
+        note: 'Ditetapkan HSE untuk verifikasi lapangan terlebih dahulu.', linked: 'K-031'
+      },
+      {
+        id: 'PR-104', tag: 'V-101', dp: 'Process & Thermal', dt: '08 Nov 2026',
+        ccps: 'Near Miss', urg: 'Tidak ada indikasi mendesak yang diketahui',
+        st: 5, stLbl: 'Closed — With Disposition', disp: 'Auto-Closed (Tidak Terbukti)',
+        g: 'Fluktuasi pembacaan level cairan sesaat pada separator V-101',
+        kd: 'Level terbaca naik ke 82% selama 20 detik lalu kembali ke 54%',
+        iv: 'Kalibrasi transmitter dicek oleh tim instrumen, kondisi aktual vessel normal',
+        cs: 'Gangguan sinyal sesaat saat flushing bridle level transmitter',
+        ac: 'Pembersihan jalur impulse transmitter selesai',
+        vf: 'Pembacaan stabil selama 72 jam',
+        ev: ['Catatan kalibrasi LT-101.pdf'],
+        note: 'Loncat dari tahap 2 langsung ke tahap 5 (Auto-Closed) karena aman dan bukan kegagalan alat.', linked: ''
+      }
+    ];
+
+    /* 2. Data Kasus Investigasi & Basis Pengetahuan (Full Investigation + Knowledge Base) */
+    const DB = [
+      { id: 'K-014', a: 'P', tag: 'P-101A', dp: 'Rotating & Mechanical', g: 'Seal bocor, getaran naik', st: 'ver', ev: 3, d: '2025-03', m: 9, ccps: 'Suspected Equipment Failure' },
+      { id: 'K-027', a: 'E', tag: 'E-201', dp: 'Process & Thermal', g: 'ΔP naik, suhu keluar turun', st: 'ver', ev: 4, d: '2025-06', m: 12, ccps: 'Abnormal Operating Condition' },
+      { id: 'K-009', a: 'E', tag: 'E-201', dp: 'Process & Thermal', g: 'Rembesan sambungan channel', st: 'ars', ev: 2, d: '2024-09', m: 3, ccps: 'Potential Hazard / Unsafe Condition' },
+      { id: 'K-021', a: 'P', tag: 'P-101A', dp: 'Rotating & Mechanical', g: 'Getaran dan bunyi kerikil', st: 'dug', ev: 1, d: '2025-11', m: 17, ccps: 'Abnormal Operating Condition' },
+      { id: 'K-031', a: 'F', tag: 'FCV-301', dp: 'Piping Engineering', g: 'Respons valve lambat', st: 'bukti', ev: 2, d: '2026-02', m: 20, ccps: 'Potential Hazard / Unsafe Condition' },
+      { id: 'K-033', a: 'P', tag: 'P-101A', dp: 'Rotating & Mechanical', g: 'Getaran naik, rembesan seal', st: 'dug', ev: 3, d: '2026-08', m: 26, ccps: 'Suspected Equipment Failure' }
+    ];
+
+    const CD = {
+      'K-014': {
+        g: 'Seal bocor, getaran naik', kd: 'Getaran 7,8 mm/s, bearing 72 °C, aliran 92% dari desain',
+        iv: 'Rembesan terlihat di sisi seal; getaran naik tiga minggu sebelum alarm',
+        cs: 'Face mechanical seal aus karena operasi dekat batas minimum aliran',
+        ac: 'Ganti mechanical seal dan luruskan ulang poros (laser alignment)',
+        vf: 'Getaran turun ke 1,9 mm/s setelah 7 hari operasi',
+        obj: 'Menentukan akar penyebab kebocoran berulang pada mechanical seal P-101A dan mencegah pengulangan.',
+        docs: { pid: 1, hazop: 1, op: 1, insp: 1, maint: 1 },
+        haz: { node: 'Node 1: Pompa P-101A Discharge', param: 'Flow / Vibration', gw: 'Less / More', dev: 'Aliran rendah memicu panas dan getaran tinggi pada seal', cause: 'Operasi throttling dekat minimum flow', cons: 'Kerusakan face seal dan pelepasan hidrokarbon', safe: 'Minimum flow recycle line & vibration transmitter VT-101', rec: 'Pasang alarm batas minimum flow di DCS' },
+        fa: { m: 'Root Cause Analysis (RCA)', prob: 'Kebocoran mechanical seal P-101A disertai getaran 7,8 mm/s', fact: 'Misalignment poros 0,18 mm dan operasi di bawah 75% BEP', find: 'Permukaan SiC mechanical seal mengalami thermal cracking', root: 'Kombinasi ketidaksejajaran poros dan kurangnya aliran flushing seal' },
+        risk: { il: 4, ic: 3, rl: 2, rc: 2, mit: 'Pemasangan orifice flushing baru, penyelarasan laser, dan pembaruan batas operasi minimum.' },
+        capa: [{ id: 'ACT-01', act: 'Ganti mechanical seal & lakukan laser alignment', pic: 'Tim Rotating Mechanical', dt: '2025-03-20', st: 'Verified' }, { id: 'ACT-02', act: 'Perbarui SOP batas laju alir minimum P-101A', pic: 'Process Engineering', dt: '2025-04-05', st: 'Completed' }],
+        rev: { rev: 'Rina (Lead Reliability & HSE Validator)', conc: 'Akar penyebab terkonfirmasi melalui bukti fisik seal dan log getaran. Layak masuk Knowledge Base.', st: 'Approved & Verified', ck: [1, 1, 1, 1, 1] },
+        bk: [['Foto', 'Foto permukaan mechanical seal retak termal', 'penyebab'], ['Log', 'Tren getaran & suhu bearing 30 hari', 'gejala'], ['Dokumen', 'Laporan inspeksi bengkel IS-0325 & P&ID', 'penyebab']]
+      },
+      'K-027': {
+        g: 'ΔP naik, suhu keluar turun', kd: 'ΔP shell naik 40% dari awal, suhu keluar turun 12 °C',
+        iv: 'Inspeksi bundel tabung menemukan deposit kerak tebal',
+        cs: 'Fouling kalsium karbonat dan hidrokarbon berat pada sisi tabung',
+        ac: 'Pembersihan kimia (chemical cleaning) bundel tabung dan injeksi antifoulant',
+        vf: 'ΔP kembali ke 0,35 bar dan efisiensi perpindahan panas pulih',
+        obj: 'Mengonfirmasi penyebab penurunan performa termal E-201 dan mengevaluasi interval pembersihan.',
+        docs: { pid: 1, hazop: 1, op: 1, insp: 1, maint: 1 },
+        haz: { node: 'Node 2: Heat Exchanger E-201 Tube Side', param: 'Differential Pressure (ΔP)', gw: 'More', dev: 'ΔP tinggi melintasi tube bundle', cause: 'Akumulasi scale dan fouling', cons: 'Penurunan suhu umpan reaktor dan kenaikan beban pompa', safe: 'Indikator ΔP PDI-201 dan bypass parsial', rec: 'Jadwalkan chemical cleaning bila ΔP > 0,9 bar' },
+        fa: { m: 'Failure Mode and Effects Analysis (FMEA)', prob: 'Kenaikan ΔP 40% disertai penurunan suhu keluar 12 °C', fact: 'Kualitas air pendingin dan temperatur dinding tabung tinggi', find: 'Deposit tebal 2,5 mm menutup 30% penampang bagian dalam tabung', root: 'Fouling sisi tabung akibat pengendapan garam terlarut pada suhu tinggi' },
+        risk: { il: 3, ic: 3, rl: 1, rc: 2, mit: 'Program pembersihan berkala setiap 9 bulan dan pemantauan tren faktor fouling.' },
+        capa: [{ id: 'ACT-01', act: 'Chemical cleaning bundel tabung E-201', pic: 'Maintenance & Process', dt: '2025-06-18', st: 'Verified' }],
+        rev: { rev: 'Rina (Lead Reliability & HSE Validator)', conc: 'Bukti foto endoskopi tabung dan pemulihan ΔP mengonfirmasi fouling sebagai penyebab.', st: 'Approved & Verified', ck: [1, 1, 1, 1, 1] },
+        bk: [['Log', 'Log ΔP dan temperatur 60 hari', 'gejala'], ['Foto', 'Foto deposit bagian dalam bundel tabung', 'penyebab'], ['Dokumen', 'Laporan chemical cleaning CL-0625', 'penyebab'], ['Log', 'Data performa pascapembersihan', 'penyebab']]
+      },
+      'K-033': {
+        g: 'Getaran naik, rembesan seal', kd: 'Getaran 6,9 mm/s, aliran 88% dari desain',
+        iv: 'Foto rembesan dan tren getaran 14 hari dari Preliminary Report PR-101',
+        cs: 'Kemungkinan keausan mechanical seal berulang seperti K-014',
+        ac: 'Inspeksi pembongkaran seal dijadwalkan pada shutdown minggu depan',
+        vf: '',
+        obj: 'Memastikan apakah kenaikan getaran dan rembesan P-101A disebabkan oleh mode kegagalan yang sama dengan K-014.',
+        docs: { pid: 1, hazop: 1, op: 1, insp: 0, maint: 1 },
+        haz: { node: 'Node 1: Pompa P-101A', param: 'Vibration & Containment', gw: 'More', dev: 'Getaran tinggi dan kebocoran kecil pada seal', cause: 'Keausan face seal / ketidakselarasan', cons: 'Kerusakan bearing dan potensi kebocoran fluida proses', safe: 'Sistem pemantauan getaran dan drip pan', rec: 'Lakukan pembongkaran terencana sebelum mencapai batas trip 7,5 mm/s' },
+        fa: { m: 'Root Cause Analysis (RCA)', prob: 'Getaran mencapai 6,9 mm/s disertai rembesan fluida pada P-101A', fact: 'Telah beroperasi 17 bulan sejak perbaikan K-014', find: 'Bukti fisik dalam seal belum tersedia karena pompa belum dibongkar', root: 'Kandidat: keausan face mechanical seal (menunggu bukti pembongkaran)' },
+        risk: { il: 3, ic: 3, rl: 2, rc: 2, mit: 'Pemantauan per shift dan persiapan pompa cadangan P-101B.' },
+        capa: [{ id: 'ACT-01', act: 'Switch operasi ke P-101B dan bongkar mechanical seal P-101A', pic: 'Rotating Engineer', dt: '2026-11-20', st: 'In Progress' }],
+        rev: { rev: 'Rina (Lead Reliability & HSE Validator)', conc: 'Masih berstatus Praduga/Dugaan. Menunggu laporan inspeksi pembongkaran seal sebelum dapat disahkan ke Knowledge Base.', st: 'Pending Review', ck: [0, 1, 1, 1, 0] },
+        bk: [['Foto', 'Foto rembesan eksternal seal P-101A', 'gejala'], ['Log', 'Tren getaran 14 hari', 'gejala'], ['Dokumen', 'P & ID Line Pompa P - 101A / B', 'gejala']]
+  },
+      'K-031': {
+        g: 'Respons valve lambat', kd: 'Perintah 60%, posisi aktual tertinggal sekitar 8 detik',
+        iv: 'Uji stroke belum dilakukan karena jalur proses masih aktif',
+        cs: 'Gesekan stem packing tinggi pada FCV-301',
+        ac: 'Pelumasan stem dan uji diagnostic step-response',
+        vf: '',
+        obj: 'Mengidentifikasi penyebab keterlambatan respons FCV-301 dan mencegah ketidakstabilan kontrol aliran.',
+        docs: { pid: 1, hazop: 0, op: 1, insp: 0, maint: 1 },
+        haz: { node: 'Node 3: Jalur Umpan FCV-301', param: 'Flow Control Response', gw: 'Late / Less', dev: 'Keterlambatan bukaan valve 8 detik', cause: 'Torsi packing berlebih atau kebocoran udara aktuator', cons: 'Osilasi laju alir ke unit hilir', safe: 'Bypass manual dan alarm deviasi posisi', rec: 'Lakukan uji stroke saat jendela perawatan' },
+        fa: { m: 'Failure Mode and Effects Analysis (FMEA)', prob: 'Lag 8 detik antara sinyal perintah 60% dan posisi aktual', fact: 'Pengencangan gland packing dilakukan 2 bulan lalu', find: 'Belum ada kurva histeresis uji stroke', root: 'Kandidat: gesekan packing tinggi (perlu bukti uji stroke)' },
+        risk: { il: 3, ic: 2, rl: 2, rc: 1, mit: 'Siagakan operator untuk pengawasan deviasi bukaan.' },
+        capa: [{ id: 'ACT-01', act: 'Laksanakan uji stroke dan kalibrasi smart positioner', pic: 'Instrumentasi & Piping', dt: '2026-11-22', st: 'Draft' }],
+        rev: { rev: 'Rina (Lead Reliability & HSE Validator)', conc: 'Perlu bukti tambahan berupa hasil uji stroke sebelum penyebab disahkan.', st: 'Revision Required', ck: [0, 0, 1, 1, 0] },
+        rq: 'Hasil uji stroke dan kurva histeresis positioner',
+        bk: [['Log', 'Log sinyal perintah vs posisi aktual', 'gejala'], ['Dokumen', 'Riwayat pengencangan packing FCV-301', 'gejala']]
+      },
+      'K-021': {
+        g: 'Getaran dan bunyi kerikil', kd: 'Aliran 70% dari desain, suhu hisap tinggi',
+        iv: 'Belum ada pembongkaran; hanya catatan operator shift malam',
+        cs: 'Kavitasi di sisi hisap pompa', ac: 'Naikkan level vessel hisap dan periksa strainer', vf: '',
+        obj: 'Mengevaluasi indikasi kavitasi pada operasi aliran rendah.',
+        docs: { pid: 1, hazop: 0, op: 1, insp: 0, maint: 0 },
+        haz: { node: 'Node 1: Suction Line P-101A', param: 'NPSHa / Pressure', gw: 'Less', dev: 'Tekanan hisap mendekati tekanan uap fluida', cause: 'Suhu hisap naik dan strainer parsial tersumbat', cons: 'Kavitasi dan erosi impeller', safe: 'Indikator tekanan hisap PI-101', rec: 'Bersihkan strainer hisap' },
+        fa: { m: 'Root Cause Analysis (RCA)', prob: 'Suara gemeretak kerikil dan kenaikan getaran', fact: 'Suhu hisap naik 8 °C di atas desain', find: 'Baru didukung catatan shift malam', root: 'Kandidat: kavitasi hisap' },
+        risk: { il: 3, ic: 2, rl: 2, rc: 2, mit: 'Jaga level tangki hisap > 55%.' },
+        capa: [{ id: 'ACT-01', act: 'Inspeksi tekanan diferensial strainer hisap', pic: 'Operasi & Rotating', dt: '2026-11-25', st: 'In Progress' }],
+        rev: { rev: 'Rina (Lead Reliability & HSE Validator)', conc: 'Masih berstatus Dugaan.', st: 'Pending Review', ck: [0, 1, 1, 0, 0] },
+        bk: [['Catatan', 'Catatan operator shift malam', 'gejala']]
+      },
+      'K-009': {
+        g: 'Rembesan sambungan channel', kd: 'Suhu keluar stabil, tekanan shell normal',
+        iv: 'Gasket channel diperiksa saat shutdown terjadwal',
+        cs: 'Gasket channel mengeras akibat siklus termal', ac: 'Ganti gasket spiral wound baru', vf: 'Tidak ada rembesan setelah 30 hari',
+        obj: 'Arsip kasus penggantian gasket E-201.',
+        docs: { pid: 1, hazop: 1, op: 1, insp: 1, maint: 1 },
+        haz: { node: 'E-201 Channel Cover', param: 'Containment', gw: 'Other Than', dev: 'Rembesan kecil saat start-up dingin', cause: 'Relaksasi baut dan penuaan gasket', cons: 'Kehilangan fluida minor', safe: 'Inspeksi torsi baut pra-start-up', rec: 'Ganti gasket setiap turnaround' },
+        fa: { m: 'Root Cause Analysis (RCA)', prob: 'Rembesan pada sambungan flange channel E-201', fact: 'Umur pakai gasket > 4 tahun', find: 'Elastisitas elemen sealing menurun', root: 'Degradasi termal gasket channel' },
+        risk: { il: 2, ic: 2, rl: 1, rc: 1, mit: 'Kontrol torsi pengencangan bertahap.' },
+        capa: [{ id: 'ACT-01', act: 'Penggantian gasket spiral wound', pic: 'Mechanical Static', dt: '2024-09-19', st: 'Verified' }],
+        rev: { rev: 'Rina (Lead Reliability & HSE Validator)', conc: 'Terverifikasi dan telah diarsipkan.', st: 'Approved & Verified', ck: [1, 1, 1, 1, 1] },
+        bk: [['Foto', 'Foto kondisi gasket channel lama', 'penyebab'], ['Dokumen', 'Laporan shutdown SD-0924', 'penyebab']]
+      }
+    };
+
+    /* 3. Daftar Aset untuk Monitoring & Spesifikasi Peralatan (Tanpa kata Pohon & Tanpa Emoji) */
+    const MON_ASSETS = [
+      { tag: 'P-101A', n: 'Pompa Sentrifugal Umpan Utama', dp: 'Rotating & Mechanical', st: 'perhatian', last: '12 Nov 2026', find: 'Getaran 6,9 mm/s & rembesan seal (PR-101 / K-033)', act: 'Menunggu pembongkaran & verifikasi pakar' },
+      { tag: 'E-202', n: 'Shell & Tube Heat Exchanger', dp: 'Process & Thermal', st: 'perhatian', last: '11 Nov 2026', find: 'ΔP sisi shell naik ke 1,1 bar (PR-102)', act: 'Dalam Triage HSE untuk jadwal evaluasi fouling' },
+      { tag: 'FCV-301', n: 'Control Valve Aliran Umpan', dp: 'Piping Engineering', st: 'perhatian', last: '10 Nov 2026', find: 'Waktu respons tertinggal 8 detik (PR-103 / K-031)', act: 'Perlu bukti hasil uji stroke di lapangan' },
+      { tag: 'E-201', n: 'Preheater Exchanger Utama', dp: 'Process & Thermal', st: 'aman', last: '05 Nov 2026', find: 'ΔP normal 0,4 bar pascapembersihan K-027', act: 'Operasi normal, tidak ada temuan aktif' },
+      { tag: 'P-101B', n: 'Pompa Sentrifugal Cadangan (Standby)', dp: 'Rotating & Mechanical', st: 'aman', last: '04 Nov 2026', find: 'Uji kesiapan mingguan normal (getaran 1,6 mm/s)', act: 'Siap dioperasikan menggantikan P-101A' },
+      { tag: 'V-101', n: 'Three-Phase Separator', dp: 'Process & Thermal', st: 'aman', last: '08 Nov 2026', find: 'Fluktuasi level sesaat terbukti gangguan sinyal (PR-104 Auto-Closed)', act: 'Ditutup dengan disposisi aman' },
+      { tag: 'T-101', n: 'Kolom Fraksinasi Utama', dp: 'Process & Thermal', st: 'kosong', last: 'Belum ada laporan', find: 'Belum ada laporan kejanggalan pada periode ini', act: 'Pemantauan rutin' },
+      { tag: 'R-101', n: 'Fixed-Bed Catalytic Reactor', dp: 'Process & Thermal', st: 'kosong', last: 'Belum ada laporan', find: 'Belum ada laporan kejanggalan pada periode ini', act: 'Pemantauan rutin' }
+    ];
+
+    const DP = {
+      ALL: { n: 'HSE (Semua Departemen)', d: 'Akses lintas departemen untuk menetapkan tindak lanjut Triage dan pengesahan Knowledge Base.' },
+      ROT: { n: 'Rotating & Mechanical', d: 'Mengelola pompa sentrifugal, kompresor, dan sistem mekanikal berputar.' },
+      PRC: { n: 'Process & Thermal', d: 'Mengelola heat exchanger, kolom, separator, reaktor, dan pemanas proses.' },
+      PIP: { n: 'Piping Engineering', d: 'Mengelola perpipaan proses, control valve, fitting, dan instrumen aliran.' }
+    };
+
+    const EQ = [
+      {
+        id: 'mht', n: 'Mass & Heat Transfer Equipment', sc: 'Cakupan Paper', dp: ['PRC', 'PIP'], cd: 'E',
+        op: [['Differential Pressure (ΔP)', 'bar', '0,2 – 0,8'], ['Suhu keluar fluida', '°C', '65 – 95'], ['Laju alir proses', '% desain', '85 – 110']],
+        sy: ['ΔP naik', 'Suhu keluar turun', 'Rembesan sambungan channel', 'Fouling sisi tabung'],
+        ty: [
+          {
+            id: 'he', n: 'Heat Exchanger (Shell & Tube)', un: [
+              { tag: 'E-201', cm: ['Bundel tabung', 'Gasket channel', 'Shell', 'Baffle', 'Tube sheet'], fm: ['Fouling deposit tabung', 'Gasket channel mengeras', 'Korosi bawah deposit'] },
+              { tag: 'E-202', cm: ['Bundel tabung', 'Gasket channel', 'Baffle'], fm: ['Fouling sisi shell', 'Rembesan flange'] }
+            ]
+          },
+          {
+            id: 'col', n: 'Distillation & Absorption Column', un: [
+              { tag: 'T-101', cm: ['Sieve tray', 'Downcomer', 'Reboiler', 'Demister pad'], fm: ['Flooding kolom', 'Tray fouling'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'rot', n: 'Rotating & Fluid-Moving Equipment', sc: 'Cakupan Paper', dp: ['ROT'], cd: 'P',
+        op: [['Getaran keseluruhan', 'mm/s', '0,8 – 4,5'], ['Suhu bearing', '°C', '45 – 70'], ['Laju alir pompa', '% desain', '80 – 110']],
+        sy: ['Getaran naik', 'Rembesan mechanical seal', 'Suhu bearing tinggi', 'Bunyi kerikil (kavitasi)'],
+        ty: [
+          {
+            id: 'pmp', n: 'Pompa Sentrifugal', un: [
+              { tag: 'P-101A', cm: ['Mechanical seal', 'Bearing housing', 'Impeller', 'Poros (shaft)', 'Casing volute'], fm: ['Face seal aus', 'Kavitasi sisi hisap', 'Misalignment poros'] },
+              { tag: 'P-101B', cm: ['Mechanical seal', 'Bearing housing', 'Impeller', 'Poros (shaft)'], fm: ['Face seal aus', 'Vibrasi unbalance'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'pvi', n: 'Piping, Valve & Instrumentation', sc: 'Cakupan Paper', dp: ['PIP'], cd: 'F',
+        op: [['Perintah bukaan', '%', '0 – 100'], ['Posisi aktual stem', '%', '±1% perintah'], ['Waktu respons stroke', 'detik', '< 3,0']],
+        sy: ['Respons valve lambat', 'Hunting / osilasi bukaan', 'Rembesan stem packing'],
+        ty: [
+          {
+            id: 'cv', n: 'Control Valve', un: [
+              { tag: 'FCV-301', cm: ['Stem & packing box', 'Plug & seat ring', 'Aktuator diafragma', 'Smart positioner'], fm: ['Gesekan packing tinggi', 'Kebocoran udara aktuator', 'Drift kalibrasi positioner'] }
+            ]
+          },
+          {
+            id: 'pip', n: 'Process Piping & Manifold', un: [
+              { tag: 'LN-401', cm: ['Flange & spiral gasket', 'Elbow 90 derajat', 'Sambungan las', 'Pipe support'], fm: ['Erosion-corrosion elbow', 'Rembesan gasket flange'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'ves', n: 'Storage & Process Vessels', sc: 'Ekstensi Modular', dp: ['PRC', 'PIP'], cd: 'V',
+        op: [['Tekanan operasi', 'bar', '4,0 – 12,0'], ['Level cairan', '%', '30 – 75']],
+        sy: ['Level cairan tidak stabil', 'Carry-over cairan ke gas', 'Rembesan nozzle'],
+        ty: [
+          {
+            id: 'sep', n: 'Three-Phase Separator', un: [
+              { tag: 'V-101', cm: ['Mist extractor', 'Weir plate', 'Nozzle inlet/outlet', 'Relief valve (PSV)'], fm: ['Penyumbatan demister', 'Korosi internal'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'rea', n: 'Reactors & Chemical Conversion', sc: 'Ekstensi Modular', dp: ['PRC'], cd: 'R',
+        op: [['Suhu puncak bed', '°C', '320 – 385'], ['ΔP bed katalis', 'bar', '0,4 – 1,2']],
+        sy: ['Hotspot lokal pada bed', 'ΔP reaktor naik'],
+        ty: [
+          {
+            id: 'fbr', n: 'Fixed-Bed Catalytic Reactor', un: [
+              { tag: 'R-101', cm: ['Bed katalis', 'Distributor inlet', 'Thermowell multi-titik', 'Lining refraktori'], fm: ['Deaktivasi katalis', 'Channeling aliran'] }
+            ]
+          }
+        ]
+      }
+    ];
+
+    const SC = { dug: '#D97706', ver: '#059669', bukti: '#EA580C', ars: '#475569' },
+      SL = { dug: 'Dugaan', ver: 'Terverifikasi (Knowledge Base)', bukti: 'Perlu Bukti Tambahan', ars: 'Arsip' },
+      BL = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+      BG = s => `<span class="bd ${s}">${SL[s] || s}</span>`,
+      CCPS_BG = c => {
+        const cl = c.includes('Near Miss') ? 'nm' : c.includes('Hazard') ? 'bukti' : c.includes('Failure') ? 'dug' : 'info';
+        return `<span class="bd ${cl}">${esc(c)}</span>`;
+      };
+
+    /* Navigasi Kiri ala MyITS (Langsung Teks + Ikon Bersih Tanpa Buka Satu-Satu) */
+    function renderSide(active) {
+      const wtPre = PRE.filter(p => p.st <= 3).length,
+        wtInv = DB.filter(k => k.st == 'dug' || k.st == 'bukti').length,
+        kbCnt = DB.filter(k => k.st == 'ver').length;
+      const groups = [
+        ['Penghimpunan & Pelaporan', [
+          ['beranda', 'Beranda & Monitoring', 0],
+          ['prelim', '1. Preliminary Report', 0],
+          ['triage', '2. Triage & HSE', wtPre],
+          ['investigasi', '3. Full Investigation', wtInv]
+        ]],
+        ['Basis Pengetahuan (Valid)', [
+          ['kasus', 'Basis Pengetahuan', kbCnt],
+          ['graf', 'Knowledge Graph', 0],
+          ['cari', 'Pencarian & RAG', 0]
+        ]],
+        ['Pengaturan & Evaluasi', [
+          ['konfig', 'Spesifikasi Peralatan', 0],
+          ['analitik', 'Analitik & Keberulangan', 0],
+          ['panduan', 'Panduan & Psikologi Warna', 0]
+        ]]
+      ];
+      $('#side').innerHTML = groups.map(([g, items]) => `
+    <div class="s-grp">${g}</div>
+    ${items.map(([k, l, c]) => `<button class="s-btn ${active == k ? 'on' : ''}" data-go="${k}">
+      <span>${l}</span>
+      ${c ? `<span class="cnt">${c}</span>` : ''}
+    </button>`).join('')}
+  `).join('');
+    }
+
+    document.addEventListener('click', e => {
+      const g = e.target.closest('[data-go]');
+      if (g) { location.hash = g.dataset.go; return }
+    });
+
+    /* ============================================================================
+       1. BERANDA: FOKUS PENGHIMPUNAN & PELAPORAN + TAB MONITORING TERPISAH (TANPA 3D)
+       ============================================================================ */
+    let H_TAB = 'lapor', M_FLT = 'all';
+    function renderHome() {
+      $('#pg-title').innerHTML = 'Pusat Penghimpunan & Pelaporan <span>· Sistem Manajemen Pengetahuan Berbasis Bukti</span>';
+      const totAsset = MON_ASSETS.length,
+        attAsset = MON_ASSETS.filter(a => a.st == 'perhatian').length,
+        newPre = PRE.length,
+        pendVal = DB.filter(k => k.st == 'dug' || k.st == 'bukti').length,
+        verKb = DB.filter(k => k.st == 'ver').length;
+
+      const kpiH = `
+    <div class="kpi4">
+      <div class="kbox"><small>Laporan Awal Masuk (Preliminary)</small><b>${newPre} Laporan</b><span>${PRE.filter(x => x.st <= 3).length} dalam proses Triage & Screening</span></div>
+      <div class="kbox"><small>Investigasi Aktif (Full Investigation)</small><b>${pendVal} Kasus</b><span>Menunggu kelengkapan bukti & pengesahan</span></div>
+      <div class="kbox"><small>Basis Pengetahuan Terverifikasi</small><b>${verKb} Kasus Sah</b><span>Siap ditelusuri melalui Knowledge Graph & RAG</span></div>
+      <div class="kbox"><small>Cakupan Aset Terdaftar</small><b>${totAsset} Unit</b><span>${attAsset} unit memiliki temuan aktif yang dipantau</span></div>
+    </div>`;
+
+      let bodyH = '';
+      if (H_TAB == 'lapor') {
+        const CP = [[1, 2], [2, 3], [1, 3], [2, 4], [2, 4], [2, 5]];
+        bodyH = `
+      <div class="dg">
+        <section class="wcard">
+          <div class="chd">
+            <div>
+              <h2>Daftar Laporan Awal & Status Triage (Preliminary)</h2>
+              <span class="csub">Memisahkan Abnormality, Potential Hazard, dan Near Miss (CCPS) sebelum masuk Investigasi</span>
+            </div>
+            <button class="pill cy" data-go="prelim">+ Buat Preliminary Report</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ID & Unit</th><th>Klasifikasi CCPS</th><th>Temuan Awal</th><th>Tahap Triage</th><th>Keputusan HSE</th><th>Aksi</th></tr></thead>
+              <tbody>
+                ${PRE.map(p => `<tr>
+                  <td><b>${p.id}</b><br><small class="mu">${p.tag} · ${p.dt}</small></td>
+                  <td>${CCPS_BG(p.ccps)}</td>
+                  <td>${esc(p.g)}</td>
+                  <td><span class="bd ${p.st == 5 ? 'ars' : p.st == 4 ? 'bukti' : 'dug'}">Tahap ${p.st}: ${p.stLbl}</span></td>
+                  <td><b>${esc(p.disp)}</b></td>
+                  <td><button class="pill" data-go="triage-${p.id.toLowerCase()}" style="min-height:36px;padding:6px 12px">Buka Triage</button></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <section class="wcard">
+            <div class="chd">
+              <div>
+                <h2>Pengetahuan Terverifikasi per Bulan</h2>
+                <span class="csub">Proporsi kasus tervalidasi vs masih dalam proses</span>
+              </div>
+            </div>
+            <div class="pchart-grid">
+              ${CP.map(([v, t], i) => `<div class="pbar-col">
+                <div class="pbar" style="height:${Math.round(t / 5 * 155)}px">
+                  <u style="height:${Math.round(v / t * 100)}%" title="${v} terverifikasi dari ${t} kasus"></u>
+                </div>
+                <span class="pbar-lbl">${BL[5 + i]}</span>
+              </div>`).join('')}
+            </div>
+            <div style="display:flex;gap:14px;font-size:13px;font-weight:600;color:var(--tx2);margin-top:12px">
+              <span>■ Deep Navy: Terverifikasi di Knowledge Base</span>
+              <span>□ Abu Terang: Praduga / Investigasi</span>
+            </div>
+          </section>
+
+          <section class="wcard">
+            <div class="chd">
+              <div>
+                <h2>Antrean Full Investigation</h2>
+                <span class="csub">Kasus yang memerlukan HAZOP, RCA, FMEA & persetujuan pakar</span>
+              </div>
+            </div>
+            ${DB.filter(k => k.st == 'dug' || k.st == 'bukti').map(k => `
+              <button class="it" data-go="inv-${k.id.toLowerCase()}">
+                <i>${k.a}</i>
+                <span>${k.id} (${k.tag}) · ${k.g}<small>${BG(k.st)} · ${CD[k.id].bk.length} dokumen/bukti</small></span>
+                <b class="ch">Buka ›</b>
+              </button>
+            `).join('')}
+          </section>
+        </div>
+      </div>`;
+      } else {
+        /* Tab Monitoring Aset Terpisah (Tanpa 3D, Langsung ke Data Status Laporan) */
+        const list = MON_ASSETS.filter(a => M_FLT == 'all' || a.st == M_FLT);
+        const needFollow = MON_ASSETS.filter(a => a.st == 'perhatian');
+        bodyH = `
+      <div class="dg">
+        <section class="wcard">
+          <div class="chd">
+            <div>
+              <h2>Pemantauan Status Aset Berdasarkan Laporan</h2>
+              <span class="csub">Dipisahkan dari modul pelaporan agar fokus pada rekap kondisi tiap unit peralatan</span>
+            </div>
+            <select style="width:auto;min-width:210px" id="m-flt" aria-label="Filter status aset">
+              <option value="all" ${M_FLT == 'all' ? 'selected' : ''}>Semua aset (${MON_ASSETS.length})</option>
+              <option value="perhatian" ${M_FLT == 'perhatian' ? 'selected' : ''}>Perlu perhatian (${attAsset})</option>
+              <option value="aman" ${M_FLT == 'aman' ? 'selected' : ''}>Tanpa temuan aktif</option>
+              <option value="kosong" ${M_FLT == 'kosong' ? 'selected' : ''}>Data belum ada</option>
+            </select>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Tag Unit & Nama Peralatan</th><th>Departemen</th><th>Status</th><th>Temuan / Catatan Terakhir</th><th>Tindak Lanjut</th></tr></thead>
+              <tbody>
+                ${list.map(a => `<tr>
+                  <td><b>${a.tag}</b><br><small class="mu">${a.n}</small></td>
+                  <td>${a.dp}</td>
+                  <td>${a.st == 'perhatian' ? '<span class="bd bukti">Perlu Perhatian</span>' : a.st == 'aman' ? '<span class="bd ver">Tanpa Temuan</span>' : '<span class="bd ars">Data Belum Ada</span>'}</td>
+                  <td>${esc(a.find)}<br><small class="mu">Update: ${a.last}</small></td>
+                  <td><button class="pill" data-go="prelim" style="min-height:36px;padding:6px 12px">Lapor / Cek</button></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="wcard">
+          <div class="chd">
+            <div>
+              <h2>Perlu Ditindaklanjuti Segera</h2>
+              <span class="csub">Unit dengan laporan kejanggalan atau investigasi terbuka</span>
+            </div>
+          </div>
+          ${needFollow.map(a => `
+            <div class="ec">
+              <div class="hh"><span>${a.tag} · ${a.n}</span><span class="bd bukti">Aktif</span></div>
+              <p style="margin:4px 0 8px;font-size:13.5px">${esc(a.find)}</p>
+              <small class="mu" style="display:block;margin-bottom:10px">Tindak lanjut: ${esc(a.act)}</small>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="pill pr" data-go="triage" style="min-height:36px;padding:6px 12px">Lihat Triage</button>
+                <button class="pill" data-go="investigasi" style="min-height:36px;padding:6px 12px">Workspace Investigasi</button>
+              </div>
+            </div>
+          `).join('')}
+        </aside>
+      </div>`;
+      }
+
+      $('#mv').innerHTML = kpiH + `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <div class="tabs" style="margin:0">
+        <button data-htab="lapor" class="${H_TAB == 'lapor' ? 'on' : ''}">1. Fokus Penghimpunan & Pelaporan</button>
+        <button data-htab="mon" class="${H_TAB == 'mon' ? 'on' : ''}">2. Monitoring Status Aset (Terpisah)</button>
+      </div>
+      <span class="mu" style="font-size:13.5px">Data bersifat simulasi riset untuk pengujian sistem manajemen pengetahuan</span>
+    </div>`+ bodyH;
+
+      const flt = $('#m-flt'); if (flt) flt.onchange = () => { M_FLT = flt.value; renderHome() };
+    }
+
+    /* ============================================================================
+       2. PRELIMINARY REPORT / EARLY WARNING REPORT (TANPA BADGE CONFIDENCE)
+       ============================================================================ */
+    const SM_PRE = {
+      'P-101A': 'Pompa P-101A getarannya naik sejak tiga hari lalu, sekarang sekitar 6,9 mm/s. Rembesan terlihat di sisi {sil|seal}. Suhu {bering|bearing} 71 °C dan aliran sekitar 88% dari desain. Saya duga {sil|seal} mulai aus, belum dibongkar. Usul periksa {sil|seal} minggu depan.',
+      'E-202': 'Heat exchanger E-202 mengalami kenaikan ΔP ke 1,1 bar dan suhu keluar turun 9 °C. Indikasi awal ada fouling di sisi tabung. Belum {diperiks|diperiksa} bagian dalam karena unit masih beroperasi.',
+      'FCV-301': 'Control valve FCV-301 responsnya lambat sekitar 8 detik saat perintah bukaan diubah ke 60%. Indikasi awal gesekan {paking|packing} tinggi. Uji stroke belum dilakukan.'
+    };
+    let PR_ST = {
+      step: 1, asset: 'P-101A', dp: 'Rotating & Mechanical', mode: 't',
+      ccps: 'Suspected Equipment Failure', urg: 'Ya, perlu perhatian segera',
+      evFiles: ['Foto kondisi lapangan awal P-101A.jpg'],
+      text: SM_PRE['P-101A'].replace(/\{[^|]+\|([^}]+)\}/g, '$1'),
+      ex: []
+    };
+
+    function extractPrelim(txt, asset) {
+      const ss = txt.split(/(?<=[.!?])\s+/).filter(Boolean),
+        cz = /duga|indikasi|kemungkinan|penyebab|aus|fouling|kavitasi|gesekan/i,
+        R = [
+          ['Identitas Aset', null],
+          ['Gejala / Indikasi Awal', /getar|rembes|bocor|lambat|bunyi|naik|turun|panas/i, 1],
+          ['Parameter Kondisi Operasi', /\d.*(mm|°|%|bar|detik)/i],
+          ['Pemeriksaan Awal Lapangan', /periks|bongkar|terlihat|belum|dilakukan/i],
+          ['Praduga Penyebab Awal', cz],
+          ['Usulan Tindakan Awal', /usul|jadwal|ganti|periksa|evaluasi/i],
+          ['Verifikasi Sementara', /setelah|kembali normal/i]
+        ];
+      return R.map(([l, re, ng]) => {
+        if (!re) return { l, v: asset + ' (' + PR_ST.dp + ')', s: 'Dipilih dari daftar unit aset' };
+        const m = ss.filter(s => re.test(s) && !(ng && cz.test(s)));
+        return { l, v: m.join(' ') || '', s: m[0] || '' };
+      });
+    }
+
+    function renderPrelim() {
+      $('#pg-title').innerHTML = 'Preliminary Report (Early Warning) <span>· Pelaporan Indikasi Awal & Kejanggalan</span>';
+      if (PR_ST.step == 2) {
+        $('#mv').innerHTML = `
+      <div class="top">
+        <button class="bk" data-pra="back">‹ Kembali ke Form Input</button>
+        <h1>Review Ekstraksi Preliminary Report <span>· ${PR_ST.asset}</span></h1>
+        <span class="bd dug">Status: Praduga (Belum Terkonfirmasi)</span>
+      </div>
+      <div class="dg">
+        <section class="wcard">
+          <div class="nt" style="margin:0 0 18px">
+            Catatan Penting: Sesuai kaidah keselamatan proses, seluruh entitas pada <b>Preliminary Report</b> berstatus <b>Praduga</b> (tanpa klaim keyakinan tinggi/rendah) hingga melewati tahap <b>Triage & Full Investigation</b>.
+          </div>
+          <p style="margin:0 0 14px;font-size:14.5px">Periksa hasil penstrukturan teks AI berikut sebelum dikirim ke antrean Triage:</p>
+          ${PR_ST.ex.map((e, i) => `
+            <div class="ec">
+              <div class="hh">
+                <span>${i + 1}. ${e.l}</span>
+                <span class="bd dug">Praduga Awal</span>
+              </div>
+              <textarea data-prei="${i}" aria-label="${e.l}">${esc(e.v)}</textarea>
+              ${e.s ? `<small class="mu" style="display:block;margin-top:6px">Sumber kalimat laporan: "${esc(e.s)}"</small>` : ''}
+            </div>
+          `).join('')}
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+            <button class="pill" data-pra="back">‹ Ubah Input Awal</button>
+            <button class="pill pr" data-pra="submit">Kirim ke Triage & Preliminary Assessment ›</button>
+          </div>
+        </section>
+
+        <aside class="wcard">
+          <h2>Ringkasan Klasifikasi & Bukti Awal</h2>
+          <div style="margin-top:14px;display:grid;gap:12px;font-size:14px">
+            <div><small class="mu" style="display:block">Unit Aset & Departemen</small><b>${PR_ST.asset} · ${PR_ST.dp}</b></div>
+            <div><small class="mu" style="display:block">Jenis Temuan (CCPS)</small>${CCPS_BG(PR_ST.ccps)}</div>
+            <div><small class="mu" style="display:block">Indikasi Bahaya Mendesak</small><b>${esc(PR_ST.urg)}</b></div>
+            <div>
+              <small class="mu" style="display:block;margin-bottom:6px">Bukti Awal Terlampir (${PR_ST.evFiles.length})</small>
+              ${PR_ST.evFiles.map(f => `<div class="tg" style="margin-bottom:6px;width:100%">${esc(f)}</div>`).join('') || '<span class="mu">Belum ada berkas bukti awal</span>'}
+            </div>
+          </div>
+          <hr style="border:0;border-top:1px solid var(--bd);margin:16px 0">
+          <h2>Tahapan Sistem Berikutnya</h2>
+          <div class="stp" style="grid-template-columns:1fr">
+            <div class="st-i done"><b>1. AI Extraction</b>Mengenali aset, gejala, dan parameter operasi</div>
+            <div class="st-i cur"><b>2. Similarity Detection</b>Mencocokkan dengan riwayat kasus ${PR_ST.asset}</div>
+            <div class="st-i"><b>3. Preliminary Screening</b>Menandai urgensi & klasifikasi CCPS</div>
+            <div class="st-i"><b>4. Engineering Triage</b>Pemeriksaan engineer departemen</div>
+            <div class="st-i"><b>5. Follow-up Decision (HSE)</b>Monitoring, Verifikasi, Investigasi, atau Auto-Closed</div>
+          </div>
+        </aside>
+      </div>`;
+        return;
+      }
+
+      const FIND_TYPES = [
+        'Abnormal Operating Condition',
+        'Suspected Equipment Failure',
+        'Potential Hazard / Unsafe Condition',
+        'Near Miss',
+        'Belum yakin kategorinya'
+      ];
+      const URG_TYPES = [
+        'Ya, perlu perhatian segera',
+        'Tidak ada indikasi mendesak yang diketahui',
+        'Belum dapat dipastikan'
+      ];
+
+      $('#mv').innerHTML = `
+    <div class="dg">
+      <section class="wcard">
+        <div class="chd">
+          <div>
+            <h2>Formulir Preliminary Report / Early Warning</h2>
+            <span class="csub">Laporkan kejanggalan, kondisi abnormal, potensi bahaya, atau near miss dari lapangan</span>
+          </div>
+          <span class="bd info">Tahap 1 dari 2</span>
+        </div>
+
+        <div class="row2" style="margin-bottom:0">
+          <div>
+            <label class="lbl" for="pr-asset">1. Pilih Unit Peralatan</label>
+            <select id="pr-asset">
+              ${['P-101A', 'E-202', 'FCV-301', 'E-201', 'P-101B', 'V-101', 'T-101', 'R-101'].map(a => `<option value="${a}" ${PR_ST.asset == a ? 'selected' : ''}>${a}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="lbl" for="pr-dp">2. Departemen Terkait</label>
+            <select id="pr-dp">
+              ${['Rotating & Mechanical', 'Process & Thermal', 'Piping Engineering'].map(d => `<option value="${d}" ${PR_ST.dp == d ? 'selected' : ''}>${d}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <label class="lbl">3. Jenis Temuan (Klasifikasi Keselamatan Proses / CCPS)</label>
+        <div class="rc-grid">
+          ${FIND_TYPES.map(t => `
+            <label class="rc ${PR_ST.ccps == t ? 'on' : ''}">
+              <input type="radio" name="ccps" value="${esc(t)}" ${PR_ST.ccps == t ? 'checked' : ''}>
+              <span>${esc(t)}</span>
+            </label>
+          `).join('')}
+        </div>
+
+        <label class="lbl" for="pr-txt">4. Deskripsi Kejanggalan / Indikasi Awal (Suara atau Teks)</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="pill" data-pra="sample">Isi Contoh Laporan (${PR_ST.asset})</button>
+          <button class="pill" data-pra="voice">Simulasikan Input Transkrip Suara</button>
+        </div>
+        <textarea id="pr-txt" placeholder="Sebutkan gejala yang teramati, pembacaan parameter operasi, dan tindakan pemeriksaan awal…">${esc(PR_ST.text)}</textarea>
+
+        <label class="lbl">5. Unggah Bukti Awal (Opsional — Foto Lapangan, Audio, PDF, CSV, atau Screenshot Tren)</label>
+        <div class="up-box">
+          <p style="margin:0 0 10px;font-weight:600;font-size:14px">Pilih berkas bukti awal untuk membantu proses penyaringan (Triage)</p>
+          <input type="file" id="pr-file" multiple style="max-width:320px;min-height:auto;padding:6px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px">
+            ${PR_ST.evFiles.map((f, i) => `<span class="tg">${esc(f)} <button data-pra="del-ev" data-i="${i}" style="border:0;background:none;font-weight:800">×</button></span>`).join('')}
+          </div>
+        </div>
+
+        <label class="lbl">6. Apakah Terdapat Indikasi Bahaya Mendesak?</label>
+        <div class="rc-grid">
+          ${URG_TYPES.map(u => `
+            <label class="rc ${PR_ST.urg == u ? 'on' : ''}">
+              <input type="radio" name="urg" value="${esc(u)}" ${PR_ST.urg == u ? 'checked' : ''}>
+              <span>${esc(u)}</span>
+            </label>
+          `).join('')}
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+          <button class="pill pr" data-pra="next">Proses AI Extraction & Lanjut Review ›</button>
+        </div>
+      </section>
+
+      <aside class="wcard">
+        <h2>Alur Triage & Preliminary Assessment</h2>
+        <p style="font-size:13.5px;color:var(--tx2);margin:6px 0 14px">Laporan awal tidak langsung diberi status "kegagalan" atau "risiko tinggi", melainkan disaring melalui 5 tahapan berikut:</p>
+        <div class="stp" style="grid-template-columns:1fr">
+          <div class="st-i cur"><b>1. AI Extraction</b>Mengenali aset, gejala, parameter, dan informasi teknis dari laporan</div>
+          <div class="st-i"><b>2. Similarity Detection</b>Mencari laporan sebelumnya yang memiliki indikasi serupa</div>
+          <div class="st-i"><b>3. Preliminary Screening</b>Memisahkan Abnormality, Potential Hazard, dan Near Miss serta urgensi</div>
+          <div class="st-i"><b>4. Engineering Triage</b>Engineer memeriksa apakah indikasi membutuhkan pemeriksaan lanjut</div>
+          <div class="st-i"><b>5. Follow-up Decision</b>Menentukan Monitoring, Verifikasi Lapangan, Investigasi Formal, atau Auto-Closed</div>
+        </div>
+      </aside>
+    </div>`;
+
+      const asEl = $('#pr-asset'), dpEl = $('#pr-dp'), txEl = $('#pr-txt'), flEl = $('#pr-file');
+      if (asEl) asEl.onchange = () => { PR_ST.asset = asEl.value; if (SM_PRE[PR_ST.asset]) PR_ST.text = SM_PRE[PR_ST.asset].replace(/\{[^|]+\|([^}]+)\}/g, '$1'); renderPrelim() };
+      if (dpEl) dpEl.onchange = () => { PR_ST.dp = dpEl.value };
+      if (txEl) txEl.oninput = () => { PR_ST.text = txEl.value };
+      if (flEl) flEl.onchange = () => { Array.from(flEl.files).forEach(f => PR_ST.evFiles.push(f.name)); renderPrelim() };
+      document.querySelectorAll('input[name="ccps"]').forEach(r => r.onchange = () => { PR_ST.ccps = r.value; renderPrelim() });
+      document.querySelectorAll('input[name="urg"]').forEach(r => r.onchange = () => { PR_ST.urg = r.value; renderPrelim() });
+    }
+
+    /* ============================================================================
+       3. DASHBOARD TRIAGE & PENETAPAN AWAL HSE (5 STATUS + BISA LONCAT KE AUTO-CLOSED)
+       ============================================================================ */
+    let TR_SEL = 'PR-102', TR_DP = 'ALL';
+    function renderTriage() {
+      $('#pg-title').innerHTML = 'Triage & Preliminary Assessment <span>· Penyaringan Bukti Awal & Penetapan HSE</span>';
+      const list = PRE.filter(p => TR_DP == 'ALL' || p.dp.includes(TR_DP));
+      const cur = PRE.find(p => p.id == TR_SEL) || list[0] || PRE[0];
+      const simCases = DB.filter(k => k.tag == cur.tag);
+
+      const ST_LIST = [
+        [1, 'Submitted', 'Laporan awal sudah masuk ke database'],
+        [2, 'Under Triage', 'Tim terkait memeriksa kelengkapan, urgensi, dan bukti awal'],
+        [3, 'Under Monitoring / Verification', 'Kejanggalan dipantau atau diperiksa untuk memperoleh bukti tambahan'],
+        [4, 'Investigation Required', 'Temuan memerlukan investigasi formal dan ditautkan ke Full Investigation Report'],
+        [5, 'Closed — With Disposition', 'Laporan ditutup karena sudah ditangani, tidak terbukti (Auto-Closed), atau terduplikasi']
+      ];
+
+      $('#mv').innerHTML = `
+    <div class="wcard" style="margin-bottom:20px">
+      <div class="chd" style="margin-bottom:10px">
+        <div>
+          <h2>Status Preliminary Report per Departemen</h2>
+          <span class="csub">Urutan status dapat langsung melompat (misalnya dari Tahap 1/2 langsung ke Tahap 5 Auto-Closed bila tidak terbukti atau aman)</span>
+        </div>
+        <div class="tabs" style="margin:0">
+          ${[['ALL', 'Semua Departemen (HSE)'], ['Rotating', 'Rotating'], ['Process', 'Process & Thermal'], ['Piping', 'Piping']].map(([k, l]) => `<button data-trdp="${k}" class="${TR_DP == k ? 'on' : ''}">${l}</button>`).join('')}
+        </div>
+      </div>
+      <div class="stp">
+        ${ST_LIST.map(([n, t, d]) => `<div class="st-i ${cur.st == n ? 'cur' : cur.st > n ? 'done' : ''}">
+          <b>${n}. ${t}</b><span>${d}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="dg">
+      <section class="wcard">
+        <h2>Daftar Laporan dalam Triage (${list.length})</h2>
+        <div class="tbl-wrap" style="margin-top:12px">
+          <table>
+            <thead><tr><th>ID & Unit</th><th>Departemen</th><th>Jenis Temuan (CCPS)</th><th>Urgensi</th><th>Status Saat Ini</th><th>Pilih</th></tr></thead>
+            <tbody>
+              ${list.map(p => `<tr style="${p.id == cur.id ? 'outline:2px solid var(--n9)' : ''}">
+                <td><b>${p.id}</b> · ${p.tag}<br><small class="mu">${p.dt}</small></td>
+                <td>${p.dp}</td>
+                <td>${CCPS_BG(p.ccps)}</td>
+                <td>${p.urg.startsWith('Ya') ? '<span class="bd nm">Mendesak</span>' : '<span class="bd ars">Tidak Mendesak</span>'}</td>
+                <td><span class="bd ${p.st == 5 ? 'ars' : p.st == 4 ? 'bukti' : 'dug'}">${p.st}. ${p.stLbl}</span></td>
+                <td><button class="pill ${p.id == cur.id ? 'pr' : ''}" data-trsel="${p.id}" style="min-height:36px;padding:6px 12px">Periksa</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--bd);margin:20px 0">
+        <h2>Detail Hasil AI Extraction & Similarity (${cur.id} · ${cur.tag})</h2>
+        <div class="row2" style="margin-top:12px;margin-bottom:0">
+          <div class="ec">
+            <div class="hh"><span>Gejala & Kondisi Operasi</span><span class="bd dug">Praduga</span></div>
+            <p style="margin:4px 0;font-size:14px"><b>Gejala:</b> ${esc(cur.g)}</p>
+            <p style="margin:4px 0;font-size:14px"><b>Kondisi Operasi:</b> ${esc(cur.kd)}</p>
+            <p style="margin:4px 0;font-size:14px"><b>Pemeriksaan Awal:</b> ${esc(cur.iv)}</p>
+            <p style="margin:4px 0;font-size:14px"><b>Praduga Penyebab:</b> ${esc(cur.cs)}</p>
+          </div>
+          <div class="ec">
+            <div class="hh"><span>Bukti Awal & Kasus Serupa</span><span class="bd info">${simCases.length} Kasus Terkait</span></div>
+            <small class="mu" style="display:block;margin-bottom:6px">Bukti Awal Terlampir:</small>
+            ${cur.ev.map(f => `<div class="tg" style="margin-bottom:6px;width:100%">${esc(f)}</div>`).join('')}
+            <small class="mu" style="display:block;margin:10px 0 6px">Hasil Similarity Detection pada ${cur.tag}:</small>
+            ${simCases.map(k => `<button class="it" data-go="inv-${k.id.toLowerCase()}" style="padding:8px"><span>${k.id} · ${k.g}<small>${BG(k.st)}</small></span></button>`).join('') || '<span class="mu" style="font-size:13px">Belum ada riwayat kasus pada unit ini.</span>'}
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL PENETAPAN AWAL HSE (Sesuai Screenshot Brief) -->
+      <aside class="wcard">
+        <span class="bd info" style="margin-bottom:8px">Otoritas Dashboard HSE</span>
+        <h2>Penetapan Awal (${cur.id})</h2>
+        <p style="font-size:13.5px;color:var(--tx2);margin:6px 0 14px">Pilih tindak lanjut awal berdasarkan informasi dan bukti yang tersedia:</p>
+
+        <div style="display:grid;gap:10px">
+          <label class="rc ${cur.st == 3 && cur.disp == 'Monitoring' ? 'on' : ''}">
+            <input type="radio" name="hse-dec" value="mon" ${cur.st == 3 && cur.disp == 'Monitoring' ? 'checked' : ''}>
+            <div><b>Monitoring</b><br><small class="mu">Kejanggalan dicatat dan dipantau pada tabel Monitoring Aset</small></div>
+          </label>
+          <label class="rc ${cur.st == 3 && cur.disp != 'Monitoring' ? 'on' : ''}">
+            <input type="radio" name="hse-dec" value="ver" ${cur.st == 3 && cur.disp != 'Monitoring' ? 'checked' : ''}>
+            <div><b>Perlu Verifikasi</b><br><small class="mu">Perlu pemeriksaan lapangan atau pengumpulan bukti tambahan</small></div>
+          </label>
+          <label class="rc ${cur.st == 4 ? 'on' : ''}">
+            <input type="radio" name="hse-dec" value="inv" ${cur.st == 4 ? 'checked' : ''}>
+            <div><b>Investigasi Lanjutan (Full Investigation)</b><br><small class="mu">Diteruskan ke investigasi formal (HAZOP, RCA, FMEA, Risk Assessment)</small></div>
+          </label>
+          <label class="rc ${cur.st == 5 ? 'on' : ''}">
+            <input type="radio" name="hse-dec" value="cls" ${cur.st == 5 ? 'checked' : ''}>
+            <div><b>Auto-Closed / Closed With Disposition (Loncat ke Tahap 5)</b><br><small class="mu">Ditutup langsung karena terbukti aman, bukan kegagalan alat, atau sudah tertangani</small></div>
+          </label>
+        </div>
+
+        <label class="lbl" for="tr-note">Catatan Penetapan HSE</label>
+        <textarea id="tr-note" placeholder="Tambahkan alasan penetapan atau hal yang perlu diperiksa oleh departemen ${cur.dp}…">${esc(cur.note)}</textarea>
+
+        <div class="ec" style="margin-top:12px">
+          <small class="mu" style="display:block">Hasil penetapan saat ini:</small>
+          <b style="font-size:15px">${cur.st}. ${cur.stLbl} — ${esc(cur.disp)}</b>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+          <button class="pill pr" data-tra="save" style="flex:1;justify-content:center">Simpan Penetapan HSE</button>
+          ${cur.linked ? `<button class="pill cy" data-go="inv-${cur.linked.toLowerCase()}">Buka Full Investigation (${cur.linked}) ›</button>` : ''}
+        </div>
+      </aside>
+    </div>`;
+    }
+
+    /* ============================================================================
+       4. FULL INVESTIGATION REPORT WORKSPACE (8 MODUL + FOTO JURNAL + CHECKLIST DOKUMEN)
+       ============================================================================ */
+    let INV_ID = 'K-033', INV_TAB = 1;
+    const INV_TABS = [
+      [1, '1. Overview'],
+      [2, '2. Evidence & Dokumen'],
+      [3, '3. HAZOP'],
+      [4, '4. Failure Analysis'],
+      [5, '5. Risk Assessment'],
+      [6, '6. Corrective Actions'],
+      [7, '7. Review & Approval'],
+      [8, '8. History']
+    ];
+
+    function riskLevel(score) {
+      if (score >= 15) return ['High Risk (Merah)', 'nm'];
+      if (score >= 8) return ['Medium Risk (Amber)', 'dug'];
+      return ['Low Risk (Hijau)', 'ver'];
+    }
+
+    function renderInvestigation() {
+      $('#pg-title').innerHTML = 'Full Investigation Workspace <span>· Analisis Teknis, Pembuktian & Pengesahan ke Knowledge Base</span>';
+      const k = DB.find(x => x.id == INV_ID) || DB[0], c = CD[k.id];
+      const preLink = PRE.find(p => p.linked == k.id);
+
+      let modH = '';
+      if (INV_TAB == 1) {
+        /* Modul 1: Incident Overview */
+        modH = `
+      <div class="chd">
+        <div><h2>1. Incident Overview & Linked Preliminary Data</h2><span class="csub">Data awal diimpor otomatis dari Preliminary Report yang dieskalasi oleh HSE</span></div>
+        ${preLink ? `<span class="bd info">Terhubung dari ${preLink.id}</span>` : '<span class="bd info">Kasus Terdaftar</span>'}
+      </div>
+      <div class="row3">
+        <div class="ec"><small class="mu">Asset ID & Tipe</small><b style="font-size:16px;display:block;margin-top:4px">${k.tag} · ${k.dp}</b></div>
+        <div class="ec"><small class="mu">Klasifikasi CCPS</small><div style="margin-top:6px">${CCPS_BG(k.ccps || 'Suspected Equipment Failure')}</div></div>
+        <div class="ec"><small class="mu">Status Knowledge Base</small><div style="margin-top:6px">${BG(k.st)}</div></div>
+      </div>
+      <div class="row2">
+        <div>
+          <label class="lbl">Gejala Kegagalan (Failure Symptoms)</label>
+          <input class="in2" id="ov-g" value="${esc(c.g)}">
+          <label class="lbl">Kondisi Operasi Saat Kejadian (Operating Range)</label>
+          <input class="in2" id="ov-kd" value="${esc(c.kd)}">
+          <label class="lbl">Tujuan Investigasi (Investigation Objective)</label>
+          <textarea id="ov-obj">${esc(c.obj)}</textarea>
+        </div>
+        <div>
+          <label class="lbl">Temuan Investigasi Awal (Initial Finding)</label>
+          <textarea id="ov-iv">${esc(c.iv)}</textarea>
+          <label class="lbl">Dugaan Awal Penyebab (Suspected Failure Cause)</label>
+          <textarea id="ov-cs">${esc(c.cs)}</textarea>
+        </div>
+      </div>
+      <button class="pill pr" data-ina="save-ov">Simpan Ringkasan Overview</button>`;
+      } else if (INV_TAB == 2) {
+        /* Modul 2: Supporting Evidence, Document Checklist (P&ID, HAZOP) & Foto Insiden Jurnal */
+        const DOC_TYPES = [
+          ['pid', 'P&ID / PFD', 'Process drawing, nomor line, dan revisi terkait aset ' + k.tag],
+          ['hazop', 'Existing HAZOP', 'Worksheet studi HAZOP dan safeguard pada node terkait'],
+          ['op', 'Operating Data', 'Tren ΔP, getaran, temperatur, tekanan, dan laju alir'],
+          ['insp', 'Inspection Report', 'Hasil inspeksi fisik, NDT, dan foto komponen/insiden'],
+          ['maint', 'Maintenance History', 'Riwayat work order dan tindakan perbaikan terdahulu']
+        ];
+        modH = `
+      <div class="chd">
+        <div><h2>2. Supporting Evidence, Dokumen Teknis & Foto Insiden</h2><span class="csub">Pintu akses dan unggah dokumen resmi (P&ID, HAZOP, Log Operasi, serta Bukti Visual Insiden)</span></div>
+        <span class="bd info">${c.bk.length} Bukti Tertaut</span>
+      </div>
+
+      <h3 style="font-size:15px;margin:0 0 10px">A. Checklist Kelengkapan Dokumen Teknis (Klik untuk Tandai / Akses)</h3>
+      <div class="row3">
+        ${DOC_TYPES.map(([dk, dn, dd]) => `
+          <label class="rc ${c.docs[dk] ? 'on' : ''}">
+            <input type="checkbox" data-doc="${dk}" ${c.docs[dk] ? 'checked' : ''}>
+            <div><b>${dn}</b><br><small class="mu">${dd}</small></div>
+          </label>
+        `).join('')}
+      </div>
+
+      <div class="dg" style="margin-top:16px">
+        <div>
+          <h3 style="font-size:15px;margin:0 0 10px">B. Daftar Berkas Bukti & Dokumen Tertaut pada ${k.id}</h3>
+          ${c.bk.map(([t, n, s], i) => `
+            <div class="it">
+              <i>${t[0]}</i>
+              <span>${esc(n)}<small>Kategori: <b>${t}</b> · Mendukung klaim: <b>${s}</b></small></span>
+              <span class="bd ver">Tersimpan</span>
+            </div>
+          `).join('')}
+
+          <div class="up-box" style="margin-top:14px">
+            <b style="font-size:14px">Unggah Dokumen Baru (P&ID, Worksheet HAZOP, Foto Insiden, atau CSV Tren)</b>
+            <div class="fgr" style="margin-top:10px">
+              <select id="nbk-t" style="max-width:150px">
+                <option value="Foto">Foto Insiden</option>
+                <option value="Dokumen">Dokumen P&ID / HAZOP</option>
+                <option value="Log">Log Operasi</option>
+              </select>
+              <input class="in2" id="nbk-n" placeholder="Nama dokumen / temuan bukti…">
+              <select id="nbk-s" style="max-width:160px">
+                <option value="penyebab">Mendukung Penyebab</option>
+                <option value="gejala">Mendukung Gejala</option>
+              </select>
+              <button class="pill pr" data-ina="add-bk">+ Unggah Bukti</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size:15px;margin:0 0 10px">C. Referensi Visual Bukti Insiden (Contoh Literatur & Lapangan)</h3>
+          <div class="inc-grid" style="grid-template-columns:1fr">
+            <div class="inc-card">
+              <svg viewBox="0 0 360 125" aria-label="Ilustrasi inspeksi kerusakan permukaan mechanical seal">
+                <rect width="360" height="125" fill="#0B1F44"/>
+                <circle cx="95" cy="62" r="42" fill="none" stroke="#7FDFFF" stroke-width="10"/>
+                <circle cx="95" cy="62" r="24" fill="none" stroke="#CBD5E1" stroke-width="4"/>
+                <path d="M72 34L85 52M118 82L130 96M60 72L78 68" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>
+                <text x="160" y="42" fill="#FFFFFF" font-size="12" font-weight="700">Inspeksi Face Mechanical Seal</text>
+                <text x="160" y="62" fill="#7FDFFF" font-size="11">Je-jak Thermal Cracking &amp; Blistering</text>
+                <text x="160" y="82" fill="#CBD5E1" font-size="10">Akibat dry-running / aliran flushing rendah</text>
+                <text x="160" y="100" fill="#FDE68A" font-size="10">Ref: Kasus P-101A (K-014 &amp; K-033)</text>
+              </svg>
+              <div class="inc-body">
+                <b>Bukti Visual 1: Kerusakan Termal Permukaan Seal Pompa</b>
+                <span class="mu">Menunjukkan retak radial pada cincin Silicon Carbide (SiC) saat operasi di bawah batas minimum flow.</span>
+              </div>
+            </div>
+
+            <div class="inc-card">
+              <svg viewBox="0 0 360 125" aria-label="Ilustrasi fouling bundel tabung heat exchanger">
+                <rect width="360" height="125" fill="#13315C"/>
+                ${[[55, 40], [95, 40], [135, 40], [55, 82], [95, 82], [135, 82]].map(([x, y]) => `
+                  <circle cx="${x}" cy="${y}" r="15" fill="#334E68" stroke="#7FDFFF" stroke-width="2.5"/>
+                  <circle cx="${x}" cy="${y}" r="8" fill="#D97706"/>
+                  <circle cx="${x}" cy="${y}" r="4" fill="#0B1F44"/>
+                `).join('')}
+                <text x="172" y="42" fill="#FFFFFF" font-size="12" font-weight="700">Penampang Tube Bundle E-201/202</text>
+                <text x="172" y="62" fill="#FDE68A" font-size="11">Endapan Kerak / Fouling (2,5 mm)</text>
+                <text x="172" y="82" fill="#CBD5E1" font-size="10">Menyempitkan area alir &amp; menaikkan ΔP 40%</text>
+                <text x="172" y="100" fill="#7FDFFF" font-size="10">Ref: Kasus Heat Exchanger K-027</text>
+              </svg>
+              <div class="inc-body">
+                <b>Bukti Visual 2: Deposit Fouling pada Bagian Dalam Tabung</b>
+                <span class="mu">Bukti visual inspeksi endoskopi yang memvalidasi kenaikan ΔP dan penurunan transfer panas.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+      } else if (INV_TAB == 3) {
+        /* Modul 3: HAZOP Analysis */
+        const h = c.haz;
+        modH = `
+      <div class="chd">
+        <div><h2>3. HAZOP Analysis Worksheet</h2><span class="csub">Menghubungkan penyimpangan parameter proses (Deviation) dengan penyebab, konsekuensi, dan safeguard</span></div>
+        <span class="bd info">Modul Studi Proses</span>
+      </div>
+      <div class="row3">
+        <div><label class="lbl">Process Node</label><input class="in2" id="hz-node" value="${esc(h.node)}"></div>
+        <div><label class="lbl">Process Parameter</label><input class="in2" id="hz-param" value="${esc(h.param)}"></div>
+        <div><label class="lbl">Guide Word</label><input class="in2" id="hz-gw" value="${esc(h.gw)}"></div>
+      </div>
+      <div class="row2">
+        <div>
+          <label class="lbl">Deviation (Penyimpangan Proses)</label><input class="in2" id="hz-dev" value="${esc(h.dev)}">
+          <label class="lbl">Potential Causes (Kemungkinan Penyebab)</label><textarea id="hz-cause">${esc(h.cause)}</textarea>
+          <label class="lbl">Potential Consequences (Konsekuensi terhadap Proses/Safety)</label><textarea id="hz-cons">${esc(h.cons)}</textarea>
+        </div>
+        <div>
+          <label class="lbl">Existing Safeguards (Proteksi Saat Ini)</label><textarea id="hz-safe">${esc(h.safe)}</textarea>
+          <label class="lbl">HAZOP Recommendations (Rekomendasi Tambahan)</label><textarea id="hz-rec">${esc(h.rec)}</textarea>
+        </div>
+      </div>
+      <button class="pill pr" data-ina="save-haz">Simpan Worksheet HAZOP</button>`;
+      } else if (INV_TAB == 4) {
+        /* Modul 4: Failure Analysis (RCA / FMEA) */
+        const f = c.fa;
+        modH = `
+      <div class="chd">
+        <div><h2>4. Engineering Failure Analysis (RCA / FMEA)</h2><span class="csub">Analisis sistematis untuk membedakan gejala, faktor kontributor, dan akar penyebab terbuktikan</span></div>
+      </div>
+      <label class="lbl">Metode Analisis (Analytical Method)</label>
+      <select id="fa-m" style="max-width:420px">
+        ${['Root Cause Analysis (RCA)', 'Failure Mode and Effects Analysis (FMEA)', 'Fishbone / 5-Whys Analysis'].map(m => `<option value="${m}" ${f.m == m ? 'selected' : ''}>${m}</option>`).join('')}
+      </select>
+      <div class="row2">
+        <div>
+          <label class="lbl">Problem Definition (Definisi Masalah)</label><textarea id="fa-prob">${esc(f.prob)}</textarea>
+          <label class="lbl">Potential Contributing Factors (Faktor Kontributor)</label><textarea id="fa-fact">${esc(f.fact)}</textarea>
+        </div>
+        <div>
+          <label class="lbl">Investigation Findings (Temuan Teknis & Bukti Fisik)</label><textarea id="fa-find">${esc(f.find)}</textarea>
+          <label class="lbl">Verified Root Cause (Akar Penyebab Terkonfirmasi)</label><textarea id="fa-root">${esc(f.root)}</textarea>
+        </div>
+      </div>
+      <button class="pill pr" data-ina="save-fa">Simpan Analisis Kegagalan</button>`;
+      } else if (INV_TAB == 5) {
+        /* Modul 5: Risk Assessment (Matriks 5x5) */
+        const r = c.risk, initScore = r.il * r.ic, resScore = r.rl * r.rc,
+          [iLbl, iCl] = riskLevel(initScore), [rLbl, rCl] = riskLevel(resScore);
+        modH = `
+      <div class="chd">
+        <div><h2>5. Risk Assessment (Matriks Risiko 5×5)</h2><span class="csub">Evaluasi tingkat risiko awal (Initial Risk) dan risiko sisa setelah mitigasi (Residual Risk)</span></div>
+      </div>
+      <div class="row2">
+        <div class="ec">
+          <div class="hh"><span>Initial Risk (Sebelum Tindakan Korektif)</span><span class="bd ${iCl}">Skor ${initScore}: ${iLbl}</span></div>
+          <label class="lbl">Likelihood (Kemungkinan 1–5)</label>
+          <select id="rk-il">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${r.il == n ? 'selected' : ''}>${n}</option>`).join('')}</select>
+          <label class="lbl">Consequence / Severity (Dampak 1–5)</label>
+          <select id="rk-ic">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${r.ic == n ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        </div>
+        <div class="ec">
+          <div class="hh"><span>Residual Risk (Target Setelah Mitigasi)</span><span class="bd ${rCl}">Skor ${resScore}: ${rLbl}</span></div>
+          <label class="lbl">Residual Likelihood (1–5)</label>
+          <select id="rk-rl">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${r.rl == n ? 'selected' : ''}>${n}</option>`).join('')}</select>
+          <label class="lbl">Residual Consequence (1–5)</label>
+          <select id="rk-rc">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${r.rc == n ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        </div>
+      </div>
+      <label class="lbl">Risk Mitigation / Control Measures (Tindakan Pengendalian Risiko)</label>
+      <textarea id="rk-mit">${esc(r.mit)}</textarea>
+      <button class="pill pr" data-ina="save-rk" style="margin-top:12px">Simpan Penilaian Risiko</button>`;
+      } else if (INV_TAB == 6) {
+        /* Modul 6: Corrective Actions (CAPA Register) */
+        modH = `
+      <div class="chd">
+        <div><h2>6. Corrective & Preventive Actions (CAPA Register)</h2><span class="csub">Penetapan tindakan perbaikan, penanggung jawab (PIC), tenggat waktu, dan verifikasi pascaperbaikan</span></div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ID Aksi</th><th>Tindakan Korektif & Preventif</th><th>Penanggung Jawab</th><th>Target Selesai</th><th>Status</th></tr></thead>
+          <tbody>
+            ${c.capa.map(a => `<tr>
+              <td><b>${a.id}</b></td>
+              <td>${esc(a.act)}</td>
+              <td>${esc(a.pic)}</td>
+              <td>${a.dt}</td>
+              <td><span class="bd ${a.st == 'Verified' || a.st == 'Completed' ? 'ver' : 'dug'}">${a.st}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="ec" style="margin-top:16px">
+        <b>Tambah Tindakan Korektif Baru</b>
+        <div class="fgr">
+          <input class="in2" id="cp-act" placeholder="Uraian tindakan korektif…">
+          <input class="in2" id="cp-pic" placeholder="PIC / Departemen" style="max-width:200px">
+          <input class="in2" type="date" id="cp-dt" value="2026-11-30" style="max-width:170px">
+          <button class="pill pr" data-ina="add-capa">+ Tambah Action</button>
+        </div>
+      </div>
+      <label class="lbl">Hasil Verifikasi Pascaperbaikan (Diisi Setelah Perbaikan Selesai)</label>
+      <input class="in2" id="cp-vf" value="${esc(c.vf)}" placeholder="Contoh: Getaran turun ke 1,9 mm/s setelah 7 hari operasi…">`;
+      } else if (INV_TAB == 7) {
+        /* Modul 7: Engineering Review & Approval (Pintu Masuk ke Knowledge Base) */
+        const rv = c.rev, CK_LABELS = [
+          'Bukti teknis (foto insiden, log operasi, atau laporan inspeksi) telah diverifikasi',
+          'Kesimpulan akar penyebab didukung langsung oleh analisis RCA / FMEA / HAZOP',
+          'Penilaian risiko (Initial & Residual Risk) telah diperiksa',
+          'Tindakan korektif (CAPA) dan penanggung jawab telah ditetapkan secara jelas',
+          'Dokumentasi lengkap dan layak dipublikasikan ke Basis Pengetahuan (Knowledge Base)'
+        ];
+        modH = `
+      <div class="chd">
+        <div><h2>7. Engineering Review & Pengesahan ke Knowledge Base</h2><span class="csub">Hanya kasus yang disetujui pada tahap ini yang sah masuk ke Knowledge Graph & Rekomendasi RAG</span></div>
+        ${BG(k.st)}
+      </div>
+      <div class="row2">
+        <div>
+          <label class="lbl">Assigned Engineering / HSE Reviewer</label>
+          <input class="in2" id="rv-name" value="${esc(rv.rev)}">
+          <label class="lbl">Investigation Conclusion & Catatan Pengesahan</label>
+          <textarea id="rv-conc">${esc(rv.conc)}</textarea>
+        </div>
+        <div class="ec">
+          <b style="display:block;margin-bottom:8px">Completion & Evidence Traceability Checklist</b>
+          ${CK_LABELS.map((l, i) => `
+            <label class="ck">
+              <input type="checkbox" data-rvck="${i}" ${rv.ck[i] ? 'checked' : ''}>
+              <span>${l}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div class="nt" style="margin-bottom:16px">
+        Aturan Integritas SYNQRA: Penyebab tidak dapat diubah menjadi <b>Terverifikasi (Knowledge Base)</b> apabila belum memiliki bukti pendukung dan catatan kesimpulan pakar.
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="pill pr" data-ina="approve">Sahkan & Masukkan ke Knowledge Base (Terverifikasi)</button>
+        <button class="pill" data-ina="req-ev">Kembalikan: Perlu Bukti Tambahan</button>
+      </div>`;
+      } else {
+        /* Modul 8: History & Traceability */
+        modH = `
+      <div class="chd">
+        <div><h2>8. Investigation History & Audit Traceability</h2><span class="csub">Rekam jejak lengkap dari Preliminary Report hingga pengesahan akhir (tidak dapat dihapus)</span></div>
+      </div>
+      <div class="stp" style="grid-template-columns:1fr">
+        <div class="st-i done"><b>1. Preliminary Report Submitted</b>Laporan indikasi awal diterima dan diekstraksi oleh sistem (${preLink ? preLink.id : 'Arsip'})</div>
+        <div class="st-i done"><b>2. Escalated for Full Investigation</b>Ditetapkan oleh HSE pada tahap Triage untuk investigasi teknis mendalam</div>
+        <div class="st-i ${c.bk.length ? 'done' : 'cur'}"><b>3. Evidence & Document Collection</b>${c.bk.length} berkas bukti serta referensi P&ID / HAZOP tertaut</div>
+        <div class="st-i ${c.fa.root ? 'done' : 'cur'}"><b>4. Engineering Assessment (HAZOP, RCA/FMEA, Risk)</b>Metode: ${esc(c.fa.m)} · Akar penyebab: ${esc(c.fa.root)}</div>
+        <div class="st-i ${k.st == 'ver' ? 'done' : 'cur'}"><b>5. Review, Approval & Knowledge Base Publication</b>Status: ${SL[k.st]} · Catatan: ${esc(c.rev.conc)}</div>
+      </div>`;
+      }
+
+      $('#mv').innerHTML = `
+    <div class="wcard" style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <label for="inv-sel" style="font-weight:700;font-size:14px">Pilih Kasus Investigasi:</label>
+          <select id="inv-sel" style="width:auto;min-width:280px;font-weight:700">
+            ${DB.map(x => `<option value="${x.id}" ${x.id == k.id ? 'selected' : ''}>${x.id} (${x.tag}) — ${x.g} [${SL[x.st]}]</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="pill" data-ina="prev" ${INV_TAB <= 1 ? 'disabled' : ''}>‹ Modul Sebelumnya</button>
+          <button class="pill" data-ina="next" ${INV_TAB >= 8 ? 'disabled' : ''}>Modul Berikutnya ›</button>
+        </div>
+      </div>
+      <div class="tabs" style="margin:14px 0 0;width:100%">
+        ${INV_TABS.map(([n, l]) => `<button data-itab="${n}" class="${INV_TAB == n ? 'on' : ''}">${l}</button>`).join('')}
+      </div>
+    </div>
+    <section class="wcard">${modH}</section>`;
+
+      const sel = $('#inv-sel'); if (sel) sel.onchange = () => { INV_ID = sel.value; renderInvestigation() };
+    }
+
+    /* ============================================================================
+       5. BASIS PENGETAHUAN, KNOWLEDGE GRAPH, PENCARIAN RAG, SPESIFIKASI & PANDUAN
+       ============================================================================ */
+    let KF = 'all', GS = 'cK-014', QS = 'Seal bocor dan getaran naik pada pompa', QA = '';
+
+    function renderKasus() {
+      $('#pg-title').innerHTML = 'Basis Pengetahuan & Daftar Kasus <span>· Kasus Terverifikasi vs Dalam Investigasi</span>';
+      const L = DB.filter(k => KF == 'all' || k.st == KF);
+      $('#mv').innerHTML = `
+    <section class="wcard">
+      <div class="chd">
+        <div>
+          <h2>Repositori Kasus Kegagalan Peralatan</h2>
+          <span class="csub">Hanya kasus berstatus Terverifikasi yang dijadikan rujukan utama pada kesimpulan RAG</span>
+        </div>
+        <div class="tabs" style="margin:0">
+          ${[['all', 'Semua (' + DB.length + ')'], ['ver', 'Terverifikasi (' + DB.filter(x => x.st == 'ver').length + ')'], ['dug', 'Dugaan (' + DB.filter(x => x.st == 'dug').length + ')'], ['bukti', 'Perlu Bukti (' + DB.filter(x => x.st == 'bukti').length + ')'], ['ars', 'Arsip (' + DB.filter(x => x.st == 'ars').length + ')']].map(([f, l]) => `<button data-kf="${f}" class="${KF == f ? 'on' : ''}">${l}</button>`).join('')}
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ID Kasus & Gejala</th><th>Unit Aset</th><th>Departemen</th><th>Penyebab & Bukti</th><th>Status</th><th>Workspace</th></tr></thead>
+          <tbody>
+            ${L.map(k => `<tr>
+              <td><b>${k.id}</b> · ${esc(k.g)}<br><small class="mu">Periode: ${k.d}</small></td>
+              <td><b>${k.tag}</b></td>
+              <td>${k.dp}</td>
+              <td>${esc(CD[k.id].cs)}<br><small class="mu">${CD[k.id].bk.length} bukti tertaut</small></td>
+              <td>${BG(k.st)}</td>
+              <td><button class="pill" data-go="inv-${k.id.toLowerCase()}" style="min-height:36px;padding:6px 12px">Buka 8 Modul ›</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </section>`;
+    }
+
+    function renderGraf() {
+      $('#pg-title').innerHTML = 'Knowledge Graph Explorer <span>· Keterlacakan Kejadian, Penyebab & Bukti</span>';
+      const O = [...DB], XC = [60, 175, 305, 445, 585], N = {}, E = [], A = {}; let y = 44;
+      O.forEach(k => {
+        const c = CD[k.id], n = Math.max(1, c.bk.length), ym = y + (n - 1) * 24, ev = k.st == 'ver' || k.st == 'ars';
+        (A[k.tag] = A[k.tag] || { a: k.a, y: [] }).y.push(ym);
+        N[k.id] = { t: 'Kejadian', x: XC[1], y: ym, l: k.id, d: k.g, k };
+        N['g' + k.id] = { t: 'Gejala', x: XC[2], y: ym, l: c.g, d: c.g, k };
+        N['c' + k.id] = { t: 'Penyebab', x: XC[3], y: ym, l: c.cs, d: c.cs, k };
+        E.push(['a' + k.tag, k.id, 0], [k.id, 'g' + k.id, 0], ['g' + k.id, 'c' + k.id, ev ? 0 : 1]);
+        c.bk.forEach((b, i) => {
+          N['b' + k.id + i] = { t: 'Bukti', x: XC[4], y: y + i * 48, l: b[1], d: b[1] + ' (' + b[0] + ')', k };
+          E.push([(b[2] == 'penyebab' ? 'c' : 'g') + k.id, 'b' + k.id + i, 0]);
+        });
+        y += n * 48 + 14;
+      });
+      Object.entries(A).forEach(([t, v]) => N['a' + t] = { t: 'Aset', x: XC[0], y: v.y.reduce((p, q) => p + q) / v.y.length, l: t, d: 'Unit Aset ' + t, k: DB.find(k => k.tag == t) });
+      if (!N[GS]) GS = 'cK-014';
+      const s = N[GS], c = CD[s.k.id],
+        sh = n => {
+          const { x, y, t, k } = n;
+          return t == 'Aset' ? `<rect x="${x - 32}" y="${y - 14}" width="64" height="28" rx="8" fill="var(--n9)"/><text x="${x}" y="${y + 4}" text-anchor="middle" style="fill:#fff;font-size:10.5px">${n.l}</text>` :
+            t == 'Kejadian' ? `<circle cx="${x}" cy="${y}" r="18" fill="var(--chip)" stroke="var(--n7)" stroke-width="2"/><text x="${x}" y="${y + 4}" text-anchor="middle" style="fill:var(--n9);font-size:10px">${n.l}</text>` :
+              t == 'Gejala' ? `<polygon points="${x},${y - 14} ${x + 14},${y} ${x},${y + 14} ${x - 14},${y}" fill="var(--c3)" stroke="var(--n7)" stroke-width="2"/>` :
+                t == 'Penyebab' ? `<circle cx="${x}" cy="${y}" r="15" ${k.st == 'dug' ? 'stroke-dasharray="4 2.5"' : ''} fill="var(--panel)" stroke="${SC[k.st]}" stroke-width="4"/><text x="${x}" y="${y + 4}" text-anchor="middle" style="font-size:11px">${{ ver: '✓', dug: '?', bukti: '!', ars: '–' }[k.st]}</text>` :
+                  `<rect x="${x - 9}" y="${y - 9}" width="18" height="18" rx="4" fill="var(--panel)" stroke="var(--tx2)" stroke-width="2"/>`;
+        };
+      const svg = `<svg viewBox="0 0 660 ${y + 10}" role="group" aria-label="Knowledge graph 2D">
+    ${['Unit Aset', 'Kejadian', 'Gejala', 'Penyebab', 'Bukti'].map((l, i) => `<text x="${XC[i]}" y="18" text-anchor="middle">${l}</text>`).join('')}
+    ${E.map(([a, b, d]) => `<line x1="${N[a].x}" y1="${N[a].y}" x2="${N[b].x}" y2="${N[b].y}" stroke="var(--tx2)" stroke-width="1.8" ${d ? 'stroke-dasharray="6 4"' : ''}/>`).join('')}
+    ${Object.entries(N).map(([id, n]) => `<g class="gn" data-g="${id}">${GS == id ? `<circle cx="${n.x}" cy="${n.y}" r="23" fill="none" stroke="var(--c5)" stroke-width="3"/>` : ''}${sh(n)}${n.t == 'Kejadian' || n.t == 'Aset' ? '' : `<text class="lb2" x="${n.x}" y="${n.y + 26}" text-anchor="middle">${n.l.slice(0, 19)}</text>`}</g>`).join('')}
+  </svg>`;
+
+      $('#mv').innerHTML = `
+    <div class="dg">
+      <section class="wcard">
+        <div class="chd"><div><h2>Peta Relasi Kausal & Bukti Pendukung</h2><span class="csub">Garis solid = sudah terverifikasi lewat Full Investigation; Garis putus-putus = masih praduga/dugaan</span></div></div>
+        <div class="gw">${svg}</div>
+      </section>
+      <aside class="wcard">
+        <span class="bd info">${s.t} Terpilih</span>
+        <h2 style="margin:10px 0">${esc(s.d)}</h2>
+        ${s.t == 'Penyebab' ? BG(s.k.st) : ''}
+        <p style="font-size:14px">Kasus <b>${s.k.id}</b> pada aset <b>${s.k.tag}</b> (${c.bk.length} bukti tertaut).</p>
+        <button class="pill pr" data-go="inv-${s.k.id.toLowerCase()}" style="width:100%;justify-content:center;margin-top:12px">Buka Workspace Investigasi ${s.k.id} ›</button>
+      </aside>
+    </div>`;
+    }
+
+    function renderCari() {
+      $('#pg-title').innerHTML = 'Pencarian Hibrida & Jawaban RAG <span>· Telusur Kasus Serupa Berbasis Bukti</span>';
+      $('#mv').innerHTML = `
+    <div class="dg">
+      <section class="wcard">
+        <h2>Pencarian Kasus Serupa (Semantik + Kata Kunci + Konteks Teknis)</h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+          <input class="in2" id="qi" value="${esc(QS)}" style="flex:1" aria-label="Kata kunci pencarian">
+          <button class="pill pr" id="qb">Telusuri</button>
+        </div>
+        <div class="tabs">
+          ${[['', 'Semua Aset'], ['P', 'Pompa Sentrifugal'], ['E', 'Heat Exchanger'], ['F', 'Control Valve']].map(([a, l]) => `<button data-qa="${a}" class="${QA == a ? 'on' : ''}">${l}</button>`).join('')}
+        </div>
+        <div id="qr"></div>
+      </section>
+      <aside class="wcard">
+        <h2>Sintesis Rekomendasi (RAG)</h2>
+        <p class="csub" style="margin-bottom:12px">Setiap klaim penyebab dan tindakan korektif wajib merujuk pada bukti sumber</p>
+        <div id="rg2"></div>
+      </aside>
+    </div>`;
+      const run = () => {
+        QS = $('#qi').value;
+        const tk = QS.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 3 && !['pada', 'yang', 'dan', 'dari'].includes(w)),
+          R = DB.filter(k => CD[k.id] && (!QA || k.a == QA)).map(k => {
+            const c = CD[k.id], t = (c.g + ' ' + c.kd + ' ' + c.iv + ' ' + c.cs + ' ' + k.tag).toLowerCase(), hit = tk.filter(w => t.includes(w.slice(0, 5)));
+            return { k, c, hit, s: Math.round(100 * (.75 * (tk.length ? hit.length / tk.length : 0) + .25 * (QA ? 1 : .5))) };
+          }).filter(r => r.hit.length).sort((a, b) => b.s - a.s).slice(0, 5);
+        $('#qr').innerHTML = R.map((r, i) => `
+      <button class="it" data-go="inv-${r.k.id.toLowerCase()}">
+        <i>${i + 1}</i>
+        <span>${r.k.id} (${r.k.tag}) · ${r.k.g}<small>${BG(r.k.st)} · ${r.c.bk.length} bukti · Kecocokan istilah: ${r.hit.join(', ')}</small></span>
+        <b class="ch">${r.s}%</b>
+      </button>
+    `).join('') || '<p class="mu">Tidak ada kasus yang cocok.</p>';
+        $('#rg2').innerHTML = R.map((r, i) => {
+          const ok = r.k.st == 'ver' || r.k.st == 'ars';
+          return `<div class="ec">
+        <div class="hh"><span>Sumber [${i + 1}]: ${r.k.id} (${r.k.tag})</span>${BG(r.k.st)}</div>
+        <p style="margin:4px 0;font-size:13.5px"><b>${ok ? 'Akar Penyebab Terverifikasi' : 'Kandidat Penyebab (Belum Disahkan)'}:</b> ${esc(r.c.cs)}</p>
+        <p style="margin:4px 0;font-size:13.5px"><b>Tindakan:</b> ${esc(r.c.ac || 'Menunggu hasil investigasi')}</p>
+        <button class="pill" data-go="inv-${r.k.id.toLowerCase()}" style="min-height:34px;padding:4px 12px;margin-top:6px">Lihat Dokumen & Bukti [${i + 1}] ›</button>
+      </div>`;
+        }).join('');
+      };
+      $('#qb').onclick = run; $('#qi').onkeydown = e => { if (e.key == 'Enter') run() }; run();
+    }
+
+    /* Spesifikasi Peralatan (Kata "Pohon" & Semua Lambang Emoji/Gerigi Dihapus Sesuai Revisi Poin 4) */
+    let KDP = 'ALL', KSEL = { c: 'mht', t: 'he', u: 'E-201' }, KOPEN = { mht: 1, rot: 1, pvi: 1, ves: 0, rea: 0 };
+    function renderKonfig() {
+      $('#pg-title').innerHTML = 'Spesifikasi Peralatan <span>· Hierarki Kategori, Jenis, Unit, Komponen & Parameter Operasi</span>';
+      const cats = EQ.filter(c => KDP == 'ALL' || c.dp.includes(KDP));
+      let cat = EQ.find(c => c.id == KSEL.c) || cats[0] || EQ[0];
+      if (cats.length && !cats.includes(cat)) { cat = cats[0]; KSEL.c = cat.id; KSEL.t = cat.ty[0].id; KSEL.u = cat.ty[0].un[0].tag }
+      const typ = cat.ty.find(t => t.id == KSEL.t) || cat.ty[0],
+        unit = typ.un.find(u => u.tag == KSEL.u) || typ.un[0];
+
+      const listH = cats.map(c => {
+        const op = KOPEN[c.id], cnt = c.ty.reduce((s, t) => s + t.un.length, 0);
+        return `<div>
+      <button class="trb ${KSEL.c == c.id && !KSEL.u ? 'on' : ''}" data-kc="${c.id}">
+        <span><b>${esc(c.n)}</b><small style="display:block;font-size:12px" class="mu">${c.sc} · ${cnt} unit</small></span>
+        <span>${op ? '▾' : '▸'}</span>
+      </button>
+      ${op ? `<div class="trc">${c.ty.map(t => `
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--tx2);padding:6px 10px">${esc(t.n)} (${t.un.length})</div>
+          <div class="trc">${t.un.map(u => {
+          const on = KSEL.c == c.id && KSEL.t == t.id && KSEL.u == u.tag;
+          return `<button class="trb ${on ? 'on' : ''}" data-ku="${c.id}|${t.id}|${u.tag}" style="padding:8px 12px">
+              <span>${esc(u.tag)} <small class="mu">(${u.cm.length} komponen)</small></span>
+            </button>`;
+        }).join('')}</div>
+        </div>
+      `).join('')}</div>` : ''}
+    </div>`;
+      }).join('');
+
+      $('#mv').innerHTML = `
+    <div class="wcard" style="margin-bottom:20px">
+      <div class="chd" style="margin-bottom:10px">
+        <div><h2>Filter Hak Akses Departemen</h2><span class="csub">${DP[KDP].d}</span></div>
+      </div>
+      <div class="tabs" style="margin:0">
+        ${Object.entries(DP).map(([k, v]) => `<button data-kdp="${k}" class="${KDP == k ? 'on' : ''}">${v.n}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="dg">
+      <section class="wcard">
+        <h2>Spesifikasi Peralatan</h2>
+        <span class="csub" style="margin-bottom:14px">Kategori › Jenis Peralatan › Tag Unit › Komponen</span>
+        <div style="display:flex;flex-direction:column;gap:4px">${listH}</div>
+      </section>
+
+      <section class="wcard">
+        <div class="chd">
+          <div>
+            <small class="mu">${esc(cat.n)} › ${esc(typ.n)}</small>
+            <h2 style="font-size:22px;margin-top:4px">${esc(unit.tag)} (${esc(typ.n)})</h2>
+          </div>
+          <span class="bd info">${cat.sc}</span>
+        </div>
+
+        <label class="lbl">1. Daftar Komponen pada ${esc(unit.tag)} (${unit.cm.length})</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${unit.cm.map((c, i) => `<span class="tg">${esc(c)} <button data-ka="del-cm" data-i="${i}" style="border:0;background:none;font-weight:800;color:var(--tx2)" title="Hapus">×</button></span>`).join('')}
+        </div>
+        <div class="fgr">
+          <input class="in2" id="ncm" placeholder="Nama komponen baru…">
+          <button class="pill" data-ka="add-cm">+ Tambah Komponen</button>
+        </div>
+
+        <label class="lbl">2. Mode Kegagalan & Gejala Terkait</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${unit.fm.map((f, i) => `<span class="tg">${esc(f)} <button data-ka="del-fm" data-i="${i}" style="border:0;background:none;font-weight:800;color:var(--tx2)">×</button></span>`).join('')}
+        </div>
+        <div class="fgr">
+          <input class="in2" id="nfm" placeholder="Tambah mode kegagalan baru…">
+          <button class="pill" data-ka="add-fm">+ Tambah Mode Kegagalan</button>
+        </div>
+
+        <label class="lbl">3. Parameter Kondisi Operasi Standar</label>
+        <div style="display:grid;gap:8px;margin-top:8px">
+          ${cat.op.map(([p, u, r]) => `<div style="display:flex;justify-content:space-between;background:var(--card);padding:10px 14px;border-radius:12px;border:1px solid var(--bd);font-size:14px"><b>${esc(p)} (${esc(u)})</b><span>Rentang Normal: <b>${esc(r)} ${esc(u)}</b></span></div>`).join('')}
+        </div>
+      </section>
+    </div>`;
+    }
+
+    function renderAnalitik() {
+      $('#pg-title').innerHTML = 'Analitik & Peta Keberulangan <span>· Evaluasi Status Pengetahuan & Klasifikasi CCPS</span>';
+      const ccpsCnt = ['Abnormal Operating Condition', 'Suspected Equipment Failure', 'Potential Hazard / Unsafe Condition', 'Near Miss'].map(c => [c, PRE.filter(p => p.ccps == c).length + DB.filter(k => k.ccps == c).length]);
+      $('#mv').innerHTML = `
+    <div class="row2">
+      <section class="wcard">
+        <h2>Distribusi Klasifikasi Temuan (CCPS)</h2>
+        <span class="csub" style="margin-bottom:14px">Membedakan Abnormality, Suspected Failure, Potential Hazard, dan Near Miss</span>
+        ${ccpsCnt.map(([c, n]) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)">${CCPS_BG(c)}<b>${n} Laporan/Kasus</b></div>`).join('')}
+      </section>
+      <section class="wcard">
+        <h2>Peta Keberulangan Kasus per Unit</h2>
+        <span class="csub" style="margin-bottom:14px">Memantau jeda waktu antar kejadian berulang pada aset kritis</span>
+        <div class="ec"><b>P-101A (Pompa Sentrifugal)</b><p style="margin:6px 0 0;font-size:14px">3 kejadian tercatat (K-014, K-021, K-033) dengan jeda keberulangan <b>8 bulan</b> dan <b>9 bulan</b>.</p></div>
+        <div class="ec"><b>E-201 / E-202 (Heat Exchanger)</b><p style="margin:6px 0 0;font-size:14px">2 kasus selesai (K-009, K-027) dan 1 indikasi fouling aktif dalam Triage (PR-102).</p></div>
+      </section>
+    </div>`;
+    }
+
+    function renderPanduan() {
+      $('#pg-title').innerHTML = 'Buku Panduan & Psikologi Warna <span>· Standar Penggunaan Sistem & Brand Guideline</span>';
+      $('#mv').innerHTML = `
+    <div class="row2">
+      <section class="wcard">
+        <h2>Panduan Alur Kerja Dua Tingkat (Two-Tier Workflow)</h2>
+        <ol style="line-height:1.8;font-size:14px;padding-left:20px">
+          <li><b>Preliminary Report (Early Warning):</b> Digunakan teknisi/operator di HP atau komputer untuk melaporkan kejanggalan awal, kondisi abnormal, potensi bahaya, atau <i>near miss</i> beserta foto awal. Seluruh ekstraksi AI berstatus <b>Praduga</b>.</li>
+          <li><b>Triage & Penetapan HSE:</b> Menyaring laporan melalui 5 tahap. HSE menetapkan apakah laporan cukup <b>Auto-Closed</b> (loncat langsung ke tahap 5 bila aman), <b>Monitoring</b>, <b>Perlu Verifikasi</b>, atau <b>Investigasi Lanjutan</b>.</li>
+          <li><b>Full Investigation Workspace (8 Modul):</b> Menggabungkan bukti fisik, foto insiden, checklist <b>P&ID</b> dan <b>HAZOP</b>, analisis <b>RCA/FMEA</b>, <b>Matriks Risiko 5×5</b>, dan <b>CAPA</b>. Hanya kasus yang disahkan di Modul 7 yang masuk ke <b>Knowledge Base</b>.</li>
+        </ol>
+      </section>
+      <section class="wcard">
+        <h2>Psikologi & Makna Warna Resmi SYNQRA</h2>
+        <div style="display:grid;gap:10px;margin-top:10px;font-size:13.5px">
+          <div style="padding:10px 14px;border-radius:12px;background:#0B1F44;color:#fff"><b>Deep Navy (#0B1F44):</b> Stabilitas, otoritas keteknikan, kepercayaan, dan fokus mata.</div>
+          <div style="padding:10px 14px;border-radius:12px;background:#1E4B6B;color:#fff"><b>Steel Blue (#1E4B6B):</b> Konteks rekayasa proses dan keandalan struktur industri.</div>
+          <div style="padding:10px 14px;border-radius:12px;background:#00B8D9;color:#0B1F44"><b>Tech Cyan (#00B8D9):</b> Inovasi AI, ekstraksi informasi, dan konektivitas bukti.</div>
+          <div style="padding:10px 14px;border-radius:12px;background:#F5F8FA;color:#0B1F44;border:1px solid var(--bd)"><b>Soft White (#F5F8FA):</b> Ruang kerja terang untuk mencegah kelelahan mata dan menjaga keterbacaan di bawah sinar matahari lapangan.</div>
+        </div>
+      </section>
+    </div>`;
+    }
+
+    /* Event Delegation untuk Seluruh Interaksi */
+    $('#mv').addEventListener('click', e => {
+      const htab = e.target.closest('[data-htab]'),
+        pra = e.target.closest('[data-pra]'),
+        trdp = e.target.closest('[data-trdp]'),
+        trsel = e.target.closest('[data-trsel]'),
+        tra = e.target.closest('[data-tra]'),
+        itab = e.target.closest('[data-itab]'),
+        ina = e.target.closest('[data-ina]'),
+        kf = e.target.closest('[data-kf]'),
+        gn = e.target.closest('[data-g]'),
+        qa = e.target.closest('[data-qa]'),
+        kdp = e.target.closest('[data-kdp]'),
+        kc = e.target.closest('[data-kc]'),
+        ku = e.target.closest('[data-ku]'),
+        ka = e.target.closest('[data-ka]');
+
+      if (htab) { H_TAB = htab.dataset.htab; renderHome(); return }
+      if (pra) {
+        const act = pra.dataset.pra;
+        if (act == 'sample') { PR_ST.text = SM_PRE[PR_ST.asset] || SM_PRE['P-101A']; PR_ST.text = PR_ST.text.replace(/\{[^|]+\|([^}]+)\}/g, '$1'); renderPrelim() }
+        else if (act == 'voice') { PR_ST.text = (SM_PRE[PR_ST.asset] || SM_PRE['P-101A']).replace(/\{[^|]+\|([^}]+)\}/g, '$1'); tst('Transkrip suara selesai diproses.'); renderPrelim() }
+        else if (act == 'del-ev') { PR_ST.evFiles.splice(+pra.dataset.i, 1); renderPrelim() }
+        else if (act == 'next') { if (PR_ST.text.trim().length < 10) return tst('Isi deskripsi indikasi awal terlebih dahulu.'); PR_ST.ex = extractPrelim(PR_ST.text, PR_ST.asset); PR_ST.step = 2; renderPrelim(); scrollTo(0, 0) }
+        else if (act == 'back') { PR_ST.step = 1; renderPrelim() }
+        else if (act == 'submit') {
+          const nid = 'PR-' + (PRE.length + 101);
+          PRE.unshift({ id: nid, tag: PR_ST.asset, dp: PR_ST.dp, dt: '13 Nov 2026', ccps: PR_ST.ccps, urg: PR_ST.urg, st: 2, stLbl: 'Under Triage', disp: 'Menunggu Penetapan HSE', g: PR_ST.ex[1].v || 'Indikasi abnormal dilaporkan', kd: PR_ST.ex[2].v, iv: PR_ST.ex[3].v, cs: PR_ST.ex[4].v, ac: PR_ST.ex[5].v, vf: '', ev: [...PR_ST.evFiles], note: 'Laporan baru masuk ke antrean Triage.', linked: '' });
+          PR_ST.step = 1; TR_SEL = nid; tst(nid + ' berhasil dikirim ke Triage & Preliminary Assessment.'); location.hash = 'triage';
+        }
+        return;
+      }
+      if (trdp) { TR_DP = trdp.dataset.trdp; renderTriage(); return }
+      if (trsel) { TR_SEL = trsel.dataset.trsel; renderTriage(); return }
+      if (tra && tra.dataset.tra == 'save') {
+        const cur = PRE.find(p => p.id == TR_SEL); if (!cur) return;
+        const dec = document.querySelector('input[name="hse-dec"]:checked')?.value || 'mon';
+        cur.note = $('#tr-note').value.trim();
+        if (dec == 'mon') { cur.st = 3; cur.stLbl = 'Under Monitoring / Verification'; cur.disp = 'Monitoring' }
+        else if (dec == 'ver') { cur.st = 3; cur.stLbl = 'Under Monitoring / Verification'; cur.disp = 'Perlu Verifikasi' }
+        else if (dec == 'cls') { cur.st = 5; cur.stLbl = 'Closed — With Disposition'; cur.disp = 'Auto-Closed (Ditutup HSE)' }
+        else if (dec == 'inv') {
+          cur.st = 4; cur.stLbl = 'Investigation Required'; cur.disp = 'Investigasi Lanjutan';
+          if (!cur.linked) {
+            const kid = 'K-0' + (DB.length + 30); cur.linked = kid;
+            DB.unshift({ id: kid, a: cur.tag[0], tag: cur.tag, dp: cur.dp, g: cur.g.slice(0, 45), st: 'dug', ev: cur.ev.length, d: '2026-11', m: 29, ccps: cur.ccps });
+            CD[kid] = { g: cur.g, kd: cur.kd, iv: cur.iv, cs: cur.cs, ac: cur.ac, vf: '', obj: 'Investigasi lanjutan eskalasi dari ' + cur.id, docs: { pid: 1, hazop: 0, op: 1, insp: 0, maint: 0 }, haz: { node: 'Node ' + cur.tag, param: 'Parameter Operasi', gw: 'More', dev: cur.g, cause: cur.cs, cons: 'Potensi gangguan operasi', safe: 'Alarm & inspeksi lokal', rec: cur.ac }, fa: { m: 'Root Cause Analysis (RCA)', prob: cur.g, fact: cur.kd, find: cur.iv, root: cur.cs }, risk: { il: 3, ic: 3, rl: 2, rc: 2, mit: cur.ac }, capa: [{ id: 'ACT-01', act: cur.ac || 'Verifikasi teknis lapangan', pic: cur.dp, dt: '2026-11-28', st: 'In Progress' }], rev: { rev: 'Rina (HSE Validator)', conc: 'Menunggu kelengkapan bukti investigasi.', st: 'Pending Review', ck: [0, 0, 1, 1, 0] }, bk: cur.ev.map(f => ['Foto', f, 'gejala']) };
+          }
+        }
+        tst('Penetapan HSE untuk ' + cur.id + ' disimpan: ' + cur.disp); renderTriage(); return;
+      }
+      if (itab) { INV_TAB = +itab.dataset.itab; renderInvestigation(); return }
+      if (ina) {
+        const act = ina.dataset.ina, k = DB.find(x => x.id == INV_ID) || DB[0], c = CD[k.id];
+        if (act == 'prev' && INV_TAB > 1) { INV_TAB--; renderInvestigation() }
+        else if (act == 'next' && INV_TAB < 8) { INV_TAB++; renderInvestigation() }
+        else if (act == 'save-ov') { c.g = $('#ov-g').value; k.g = c.g; c.kd = $('#ov-kd').value; c.obj = $('#ov-obj').value; c.iv = $('#ov-iv').value; c.cs = $('#ov-cs').value; tst('Overview ' + k.id + ' disimpan.') }
+        else if (act == 'add-bk') { const n = $('#nbk-n').value.trim(); if (!n) return tst('Isi nama dokumen/bukti.'); c.bk.push([$('#nbk-t').value, n, $('#nbk-s').value]); k.ev = c.bk.length; tst('Dokumen bukti berhasil ditambahkan.'); renderInvestigation() }
+        else if (act == 'save-haz') { c.haz = { node: $('#hz-node').value, param: $('#hz-param').value, gw: $('#hz-gw').value, dev: $('#hz-dev').value, cause: $('#hz-cause').value, cons: $('#hz-cons').value, safe: $('#hz-safe').value, rec: $('#hz-rec').value }; c.docs.hazop = 1; tst('Worksheet HAZOP disimpan.') }
+        else if (act == 'save-fa') { c.fa = { m: $('#fa-m').value, prob: $('#fa-prob').value, fact: $('#fa-fact').value, find: $('#fa-find').value, root: $('#fa-root').value }; c.cs = c.fa.root; tst('Analisis kegagalan disimpan.') }
+        else if (act == 'save-rk') { c.risk = { il: +$('#rk-il').value, ic: +$('#rk-ic').value, rl: +$('#rk-rl').value, rc: +$('#rk-rc').value, mit: $('#rk-mit').value }; tst('Matriks penilaian risiko diperbarui.'); renderInvestigation() }
+        else if (act == 'add-capa') { const a = $('#cp-act').value.trim(); if (!a) return tst('Isi tindakan korektif.'); c.capa.push({ id: 'ACT-0' + (c.capa.length + 1), act: a, pic: $('#cp-pic').value || 'Engineering', dt: $('#cp-dt').value, st: 'In Progress' }); c.vf = $('#cp-vf').value; renderInvestigation(); tst('Tindakan CAPA ditambahkan.') }
+        else if (act == 'approve') { if (!c.bk.length) return tst('Wajib ada bukti tertaut sebelum disahkan.'); c.rev.conc = $('#rv-conc').value; k.st = 'ver'; c.rev.st = 'Approved & Verified'; tst(k.id + ' resmi disahkan dan masuk ke Knowledge Base!'); renderInvestigation(); renderSide('investigasi') }
+        else if (act == 'req-ev') { c.rev.conc = $('#rv-conc').value; k.st = 'bukti'; c.rev.st = 'Revision Required'; tst(k.id + ' ditetapkan Perlu Bukti Tambahan.'); renderInvestigation() }
+        return;
+      }
+      if (kf) { KF = kf.dataset.kf; renderKasus(); return }
+      if (gn) { GS = gn.dataset.g; renderGraf(); return }
+      if (qa) { QS = $('#qi').value; QA = qa.dataset.qa; renderCari(); return }
+      if (kdp) { KDP = kdp.dataset.kdp; $('#dpb').textContent = 'Departemen: ' + DP[KDP].n; renderKonfig(); return }
+      if (kc) { const id = kc.dataset.kc; KOPEN[id] = !KOPEN[id]; KSEL.c = id; renderKonfig(); return }
+      if (ku) { const [c, t, u] = ku.dataset.ku.split('|'); KSEL = { c, t, u }; renderKonfig(); return }
+      if (ka) {
+        const act = ka.dataset.ka, cat = EQ.find(c => c.id == KSEL.c) || EQ[0], typ = cat.ty.find(t => t.id == KSEL.t) || cat.ty[0], unit = typ.un.find(u => u.tag == KSEL.u) || typ.un[0];
+        if (act == 'add-cm') { const v = $('#ncm').value.trim(); if (!v) return; unit.cm.push(v); tst('Komponen ditambahkan.'); renderKonfig() }
+        else if (act == 'del-cm') { unit.cm.splice(+ka.dataset.i, 1); renderKonfig() }
+        else if (act == 'add-fm') { const v = $('#nfm').value.trim(); if (!v) return; unit.fm.push(v); tst('Mode kegagalan ditambahkan.'); renderKonfig() }
+        else if (act == 'del-fm') { unit.fm.splice(+ka.dataset.i, 1); renderKonfig() }
+      }
+    });
+
+    $('#mv').addEventListener('change', e => {
+      const doc = e.target.closest('[data-doc]'), rvck = e.target.closest('[data-rvck]');
+      if (doc) { CD[INV_ID].docs[doc.dataset.doc] = doc.checked ? 1 : 0; renderInvestigation() }
+      else if (rvck) { CD[INV_ID].rev.ck[+rvck.dataset.rvck] = rvck.checked ? 1 : 0 }
+    });
+    $('#mv').addEventListener('input', e => {
+      if (e.target.dataset.prei !== undefined) PR_ST.ex[+e.target.dataset.prei].v = e.target.value;
+    });
+
+    function route() {
+      const h = location.hash.slice(1) || 'beranda';
+      if (h.startsWith('triage-')) { TR_SEL = h.slice(7).toUpperCase(); renderSide('triage'); renderTriage(); scrollTo(0, 0); return }
+      if (h.startsWith('inv-')) { INV_ID = h.slice(4).toUpperCase(); renderSide('investigasi'); renderInvestigation(); scrollTo(0, 0); return }
+      const map = {
+        beranda: renderHome,
+        prelim: renderPrelim,
+        triage: renderTriage,
+        investigasi: renderInvestigation,
+        kasus: renderKasus,
+        graf: renderGraf,
+        cari: renderCari,
+        konfig: renderKonfig,
+        analitik: renderAnalitik,
+        panduan: renderPanduan
+      };
+      const fn = map[h] || renderHome;
+      renderSide(map[h] ? h : 'beranda');
+      fn();
+      scrollTo(0, 0);
+    }
+    addEventListener('hashchange', route);
+    route();
+  </script>
+</body>
+
+</html>
