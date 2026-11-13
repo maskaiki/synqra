@@ -2124,6 +2124,94 @@ textarea {
   box-shadow: 0 0 0 3px var(--c3);
 }
 
+
+/* ==========================================================================
+   FULL INVESTIGATION WORKSPACE & TRIAGE STYLES (IKMS 2026 - CCPS COMPLIANT)
+   ========================================================================== */
+.inv-workspace-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.inv-header-card {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: var(--sh-sm);
+}
+.inv-module-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.inv-module-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--bd);
+  background: var(--card);
+  color: var(--tx2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.inv-module-btn:hover {
+  background: var(--hvr);
+  color: var(--tx);
+  border-color: var(--tx2);
+}
+.inv-module-btn.on {
+  background: var(--n9);
+  color: #fff;
+  border-color: var(--n9);
+}
+.inv-module-body {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--sh-md);
+}
+.inv-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  background: var(--card);
+  font-size: 13px;
+  cursor: pointer;
+}
+.inv-timeline-step {
+  display: flex;
+  gap: 14px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--bd);
+  background: var(--card);
+  border-radius: 0 10px 10px 0;
+  margin-bottom: 8px;
+}
+.inv-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+.inv-step-content {
+  flex: 1;
+}
+
 </style>
 </head>
 <body>
@@ -2188,8 +2276,8 @@ textarea {
           <section class="wcard" aria-label="Kondisi Aset Utama">
             <div class="chd">
               <div>
-                <h2>Kondisi Aset Utama</h2>
-                <span class="csub">Pemantauan skenario & model 3D interaktif</span>
+                <h2>Visualisasi Insiden Aktif</h2>
+                <span class="csub">Digital Twin Kasus K-033 · Pompa Sentrifugal P-101A</span>
               </div>
               <button class="go" data-go="kasus-k-033" aria-label="Buka kasus K-033" title="Buka Detail K-033">
                 <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
@@ -2198,12 +2286,12 @@ textarea {
 
             <div class="asset-card">
               <div class="ac-top">
-                <span class="ac-tag">P-101A · POMPA SENTRIFUGAL</span>
-                <span class="sim">Data simulasi</span>
+                <span class="ac-tag">P-101A · KASUS AKTIF</span>
+                <span class="sim" style="background:rgba(21,101,192,0.22);color:#fff;border-color:rgba(144,202,249,0.4);font-weight:700">Digital Twin Kasus · Bukan Live SCADA</span>
               </div>
               <div class="ac-body">
                 <div>
-                  <span class="ac-lbl">Getaran saat ini</span>
+                  <span class="ac-lbl">Parameter Terlapor saat Insiden</span>
                   <div class="ac-val"><span id="hv">7,8</span><small>mm/s</small></div>
                   <div class="co-pill" role="status"><i id="cd"></i><span id="ct">Seal: alarm aktif</span></div>
                 </div>
@@ -4067,31 +4155,668 @@ function sb(){
   $('#sd').disabled=!!n;
   $('#sn').textContent=n?n+' entitas berkeyakinan rendah wajib dikonfirmasi sebelum laporan dikirim (Aturan R5).':'Hipotesis akar masalah otomatis berstatus Dugaan hingga diotorisasi oleh pakar.';
 }
+/* ==========================================================================
+   STATE & CONTROLLER: DUAL REPORTING (PRELIMINARY, TRIAGE, FULL WORKSPACE)
+   IKMS 2026 - Context-Aware Evidence-Based KMS (CCPS Compliant)
+   ========================================================================== */
+let REPORT_VIEW_MODE = 'prelim'; // 'prelim', 'triage', 'workspace'
+let INV_ACTIVE_MODULE = 'overview'; // 8 modules: overview, evidence, hazop, failure, risk, actions, review, history
+
+let PRELIM_DATA = {
+  findingType: 'Abnormal Operating Condition',
+  urgent: 'Tidak ada indikasi bahaya mendesak langsung',
+  evidenceFiles: ['log_dcs_e202_shift_pagi.csv', 'foto_flange_e202.jpg'],
+  triageDecision: 'Investigasi Lanjutan',
+  triageNotes: 'ΔP terbaca 1,35 bar melewati batas desain (0,2–0,8 bar). Dicurigai akumulasi deposit wax/aspaltene pada sisi shell dan kemacetan mekanis control valve TCV-201.'
+};
+
+function renderTriageView() {
+  const stages = [
+    { num: 1, title: 'Submitted', desc: 'Laporan awal (preliminary) diterima dari operator lapangan.', active: true },
+    { num: 2, title: 'Under Triage', desc: 'Screening kelengkapan parameter operasi, bukti awal, dan tingkat urgensi.', active: true },
+    { num: 3, title: 'Under Monitoring / Verification', desc: 'Pemantauan parameter DCS 24 jam atau verifikasi fisik lapangan oleh teknisi.', active: PRELIM_DATA.triageDecision == 'Monitoring' || PRELIM_DATA.triageDecision == 'Perlu Verifikasi' },
+    { num: 4, title: 'Investigation Required', desc: 'Anomali terbukti signifikan, diteruskan ke Full Investigation Workspace (8 Modul).', active: PRELIM_DATA.triageDecision == 'Investigasi Lanjutan' },
+    { num: 5, title: 'Closed — With Disposition', desc: 'Kasus selesai ditangani atau ditutup dengan catatan disposisi resmi.', active: false }
+  ];
+
+  return `
+    <div class="dg">
+      <section class="cd">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">Triage &amp; Preliminary Assessment</h3>
+            <span class="mu" style="font-size:12.5px">Mekanisme penyaringan agar laporan awal tidak serta-merta divonis sebagai kegagalan kritis</span>
+          </div>
+          <span class="pillar-pill p-security">CCPS Triage Lifecycle</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+          ${stages.map(s => `
+            <div class="inv-timeline-step" style="opacity:${s.active ? '1' : '0.45'}">
+              <div class="inv-step-num" style="background:${s.active ? 'var(--n9)' : 'var(--chip)'};color:${s.active ? '#fff' : 'var(--n9)'}">${s.num}</div>
+              <div class="inv-step-content">
+                <div style="font-size:14px;font-weight:700;color:var(--tx)">${s.title} ${s.active ? '<span class="ch" style="font-size:11px;margin-left:6px">Aktif</span>' : ''}</div>
+                <div class="mu" style="font-size:12.5px">${s.desc}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-weight:700;font-size:13.5px">Data Laporan Masuk (#TRG-2026-088)</span>
+            <span class="bd dug">Praduga Awal</span>
+          </div>
+          <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:13px">
+            <span class="mu">Tag Aset:</span><b>E-202 (Heat Exchanger Shell &amp; Tube)</b>
+            <span class="mu">Jenis Temuan:</span><span>${PRELIM_DATA.findingType}</span>
+            <span class="mu">Indikasi Mendesak:</span><span>${PRELIM_DATA.urgent}</span>
+            <span class="mu">Rentang Desain:</span><span>ΔP 0,2–0,8 bar</span>
+            <span class="mu">Aktual Terlapor:</span><b style="color:var(--e)">ΔP 1,35 bar (melebihi rentang operasi)</b>
+            <span class="mu">Bukti Awal:</span><span>${PRELIM_DATA.evidenceFiles.join(', ')}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="cd">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0;font-size:15px;font-weight:800;color:var(--tx)">Penetapan Awal Disposisi</h3>
+          <span class="mu" style="font-size:12px">Wewenang: Lead Operator / Shift Enjinir</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Tentukan langkah mitigasi awal berdasarkan data skrining laporan preliminary:</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid ${PRELIM_DATA.triageDecision=='Monitoring'?'var(--n9)':'var(--bd)'};border-radius:10px;cursor:pointer;background:var(--card)">
+            <input type="radio" name="triage-act" value="Monitoring" ${PRELIM_DATA.triageDecision=='Monitoring'?'checked':''} onchange="PRELIM_DATA.triageDecision=this.value;lp();" style="margin-top:3px">
+            <div>
+              <b style="font-size:13.5px;color:var(--tx)">1. Cukup Monitoring (DCS Trend Watch)</b>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Anomali ringan tanpa risiko proses. Pantau kecenderungan data parameter selama 24 jam ke depan.</p>
+            </div>
+          </label>
+
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid ${PRELIM_DATA.triageDecision=='Perlu Verifikasi'?'var(--n9)':'var(--bd)'};border-radius:10px;cursor:pointer;background:var(--card)">
+            <input type="radio" name="triage-act" value="Perlu Verifikasi" ${PRELIM_DATA.triageDecision=='Perlu Verifikasi'?'checked':''} onchange="PRELIM_DATA.triageDecision=this.value;lp();" style="margin-top:3px">
+            <div>
+              <b style="font-size:13.5px;color:var(--tx)">2. Perlu Verifikasi Lapangan</b>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Tugaskan teknisi maintenance atau operator lapangan memeriksa fisik, sambungan flange, atau kalibrasi instrumen.</p>
+            </div>
+          </label>
+
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid ${PRELIM_DATA.triageDecision=='Investigasi Lanjutan'?'var(--n9)':'var(--bd)'};border-radius:10px;cursor:pointer;background:var(--card)">
+            <input type="radio" name="triage-act" value="Investigasi Lanjutan" ${PRELIM_DATA.triageDecision=='Investigasi Lanjutan'?'checked':''} onchange="PRELIM_DATA.triageDecision=this.value;lp();" style="margin-top:3px">
+            <div>
+              <b style="font-size:13.5px;color:var(--tx)">3. Eskalasi ke Investigasi Penuh (Full Investigation)</b>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Potensi bahaya proses atau kegagalan berulang. Buka workspace investigasi terstruktur (8 modul) untuk tim lintas disiplin.</p>
+            </div>
+          </label>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <label class="form-label">Catatan Disposisi Triage</label>
+          <textarea class="form-textarea" rows="3" onchange="PRELIM_DATA.triageNotes=this.value;">${PRELIM_DATA.triageNotes}</textarea>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+          ${PRELIM_DATA.triageDecision == 'Investigasi Lanjutan' ? `
+            <button class="pill pr" style="width:100%;justify-content:center" onclick="REPORT_VIEW_MODE='workspace';INV_ACTIVE_MODULE='overview';lp();tst('Membuka Full Investigation Workspace untuk E-202...');">
+              Buka Full Investigation Workspace (8 Modul) ›
+            </button>
+          ` : `
+            <button class="pill pr" style="width:100%;justify-content:center" onclick="tst('Disposisi triage disimpan: ' + PRELIM_DATA.triageDecision);location.hash='beranda';">
+              Simpan Disposisi &amp; Kembali ke Beranda
+            </button>
+          `}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderInvestigationWorkspace() {
+  const modules = [
+    { id: 'overview', name: '1. Overview', icon: IC.cases },
+    { id: 'evidence', name: '2. Evidence & P&ID', icon: IC.evidence },
+    { id: 'hazop', name: '3. Analisis HAZOP', icon: IC.tool },
+    { id: 'failure', name: '4. RCA & FMEA', icon: IC.analysis },
+    { id: 'risk', name: '5. Risk Matrix 5x5', icon: IC.alertTriangle },
+    { id: 'actions', name: '6. Tindakan CAPA', icon: IC.cog },
+    { id: 'review', name: '7. Review Pakar', icon: IC.valid },
+    { id: 'history', name: '8. Audit Trail', icon: IC.history }
+  ];
+
+  const currentModIdx = modules.findIndex(m => m.id === INV_ACTIVE_MODULE);
+
+  const modNav = modules.map((m, idx) => `
+    <button class="inv-module-btn ${INV_ACTIVE_MODULE == m.id ? 'on' : ''}" onclick="INV_ACTIVE_MODULE='${m.id}';lp();">
+      <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px">${m.icon}</svg>
+      <span>${m.name}</span>
+    </button>
+  `).join('');
+
+  let moduleContent = '';
+
+  // MODUL 1: OVERVIEW
+  if (INV_ACTIVE_MODULE == 'overview') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">1. Incident Overview &amp; Problem Statement</h3>
+          <span class="mu" style="font-size:12.5px">Case ID: #INV-2026-0042</span>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:var(--tx);margin-bottom:10px">
+            <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px;color:var(--c6)">${IC.evidence}</svg>
+            <span>Tersambung dari Laporan Awal (Preliminary Report)</span>
+          </div>
+          <p class="mu" style="font-size:12.5px;margin:0 0 12px">Informasi awal dari 7 entitas AI dan catatan shift operator ditautkan langsung untuk menjaga keterlacakan data (traceability):</p>
+          <div style="display:grid;grid-template-columns:180px 1fr;gap:8px;font-size:13px">
+            <span class="mu">Tag Aset:</span><b>E-202</b>
+            <span class="mu">Tipe Peralatan:</span><span>Heat Exchanger (Shell &amp; Tube) - Crude Preheater</span>
+            <span class="mu">Gejala Terlapor:</span><span>Peningkatan Differential Pressure (ΔP) abnormal</span>
+            <span class="mu">Rentang Desain Normal:</span><span>ΔP 0,2–0,8 bar</span>
+            <span class="mu">Nilai Aktual Terbaca:</span><b style="color:var(--e)">1,35 bar (melebihi batas aman operasi)</b>
+            <span class="mu">Status Praduga:</span><span>Dugaan fouling pada sisi shell / hambatan tube bundle</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label class="form-label">Deskripsi Insiden &amp; Pernyataan Masalah (Problem Statement)</label>
+            <textarea class="form-textarea" rows="3">Heat Exchanger E-202 mengalami peningkatan differential pressure yang melampaui batas operasi normal (0,2–0,8 bar) sejak shift pagi. Operator mencatat kenaikan konsisten hingga 1,35 bar disertai penurunan laju alir sisi crude. Diperlukan investigasi komprehensif untuk mencegah plugging total atau kebocoran shell.</textarea>
+          </div>
+
+          <div>
+            <label class="form-label">Dugaan Awal Penyebab (Hypothesis)</label>
+            <input class="form-input" value="Dugaan awal fouling deposit wax/aspaltene pada sisi shell dan kegagalan respons bypass valve TCV-201.">
+            <small class="mu" style="display:block;margin-top:4px">Catatan CCPS: Informasi ini masih berupa hipotesis investigasi, bukan kesimpulan akhir.</small>
+          </div>
+
+          <div>
+            <label class="form-label">Tujuan Investigasi (Investigation Objective)</label>
+            <textarea class="form-textarea" rows="2">Mengidentifikasi mekanisme pengendapan fouling, memvalidasi kinerja instrumen kendali temperatur TCV-201, serta menyusun rekomendasi pembersihan dan pencegahan berulang.</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  // MODUL 2: EVIDENCE
+  else if (INV_ACTIVE_MODULE == 'evidence') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">2. Dokumen Teknis &amp; Bukti Pendukung (Evidence)</h3>
+          <span class="mu" style="font-size:12.5px">Dokumen &amp; Log Lapangan</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Semua bukti fisik, diagram rekayasa (P&amp;ID), lembar data HAZOP, dan rekaman telemetri DCS diarsipkan secara terpusat:</p>
+
+        <div class="upload-dropzone" style="margin-bottom:18px" onclick="tst('Area unggah dokumen investigasi siap menerima berkas baru.')">
+          <svg class="i" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--n7);margin-bottom:6px">${IC.upload}</svg>
+          <div style="font-size:14px;font-weight:700">Area Unggah Dokumen Investigasi</div>
+          <span class="mu" style="font-size:12.5px">Tarik berkas P&amp;ID, foto borescope, hasil lab, atau log sheet ke sini (PDF, DWG, CSV, JPG)</span>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <h4 style="font-size:14px;font-weight:700;margin:0 0 10px;color:var(--tx)">Daftar Periksa Bukti Minimum (Minimum Evidence Checklist)</h4>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status checklist P&amp;ID diperbarui.');">
+              <span><b>Diagram P&amp;ID Terbaru</b>: P&amp;ID-HE-202-Rev4.pdf (Revisi 4, disahkan Okt 2025)</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status log sheet DCS diperbarui.');">
+              <span><b>Log Sheet Parameter DCS 48 Jam Terakhir</b>: log_dcs_e202_shift_pagi.csv (Interval 1 menit)</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status datasheet peralatan diperbarui.');">
+              <span><b>Lembar Data Desain (Equipment Datasheet)</b>: MDS-E202-Crude-Preheater.pdf</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" onchange="tst('Dokumen HAZOP ditandai.');">
+              <span><b>Laporan Analisis HAZOP Eksisting</b>: HAZOP-Node-04-Crude-Preheat.pdf</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" onchange="tst('Foto inspeksi visual ditandai.');">
+              <span><b>Foto Visual Inspeksi / Borescope Bundle</b>: foto_flange_e202.jpg &amp; borescope_bundle.png</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  // MODUL 3: HAZOP
+  else if (INV_ACTIVE_MODULE == 'hazop') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">3. Analisis HAZOP Terintegrasi (Hazard and Operability)</h3>
+          <span class="pillar-pill p-security">Node 04: Shell Side Preheat</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Penyelarasan parameter insiden dengan studi bahaya proses HAZOP fasilitas eksisting:</p>
+
+        <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;font-size:13px">
+          <div style="display:grid;grid-template-columns:160px 1fr;gap:6px">
+            <span class="mu">Node Analisis:</span><b>Node 04 — Aliran Crude Preheat Shell Side E-202</b>
+            <span class="mu">Parameter:</span><span>Tekanan &amp; Aliran (Pressure Drop &amp; Flow)</span>
+            <span class="mu">Kata Pandu (Guideword):</span><b style="color:var(--c6)">MORE / HIGH (Tekanan Diferensial Tinggi)</b>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--bd);margin:4px 0">
+          <div>
+            <b class="mu" style="display:block;margin-bottom:4px">Potensi Penyebab (Causes):</b>
+            <ul style="margin:0;padding-left:18px;line-height:1.5">
+              <li>Akumulasi deposit lilin paraffin / aspaltene pada celah antar tabung (tube pitch).</li>
+              <li>Kegagalan buka penuh pada valve kendali temperatur bypass TCV-201.</li>
+              <li>Beban alir crude berat melampaui rentang desain termal.</li>
+            </ul>
+          </div>
+          <div>
+            <b class="mu" style="display:block;margin-bottom:4px">Konsekuensi Bahaya (Consequences):</b>
+            <ul style="margin:0;padding-left:18px;line-height:1.5">
+              <li>Penurunan drastis koefisien perpindahan panas (heat duty drop).</li>
+              <li>Peningkatan beban kerja pompa hulu P-201A/B memicu trips overpressure.</li>
+              <li>Risiko termal ekspansi abnormal pada sambungan flange shell.</li>
+            </ul>
+          </div>
+          <div>
+            <b class="mu" style="display:block;margin-bottom:4px">Safeguards &amp; Pengaman Eksisting:</b>
+            <p style="margin:0">Transmitter Tekanan Diferensial PDT-202, Alarm DCS High-ΔP di ruang kendali utama, dan Katup Pelepas Tekanan PSV-202A.</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  // MODUL 4: FAILURE ANALYSIS
+  else if (INV_ACTIVE_MODULE == 'failure') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">4. Analisis Kegagalan (RCA 5-Why &amp; FMEA)</h3>
+          <span class="pillar-pill p-accuracy">Akar Masalah Terverifikasi</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Dekomposisi kausal hierarkis untuk membuktikan akar masalah teknis (root cause):</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n8);color:#fff">W1</div>
+            <div class="inv-step-content">
+              <b>Mengapa ΔP E-202 melonjak hingga 1,35 bar?</b>
+              <p class="mu" style="margin:2px 0 0;font-size:12.5px">Karena luas penampang hidrolik aliran fluida pada tube bundle menyempit drastis.</p>
+            </div>
+          </div>
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n8);color:#fff">W2</div>
+            <div class="inv-step-content">
+              <b>Mengapa luas penampang aliran menyempit?</b>
+              <p class="mu" style="margin:2px 0 0;font-size:12.5px">Terjadi pengendapan deposit berat kerak wax &amp; aspaltene yang menempel pada dinding tabung luar.</p>
+            </div>
+          </div>
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n8);color:#fff">W3</div>
+            <div class="inv-step-content">
+              <b>Mengapa laju pengendapan kerak meningkat 3x lebih cepat?</b>
+              <p class="mu" style="margin:2px 0 0;font-size:12.5px">Temperatur dinding tabung turun di bawah Cloud Point minyak mentah (48°C) akibat kekurangan suplai panas pemanas.</p>
+            </div>
+          </div>
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n8);color:#fff">W4</div>
+            <div class="inv-step-content">
+              <b>Mengapa suplai fluida pemanas berkurang drastis?</b>
+              <p class="mu" style="margin:2px 0 0;font-size:12.5px">Control valve TCV-201 mengalami kemacetan mekanis (stuck position 25%) sehingga gagal merespons sinyal kendali otomatis DCS.</p>
+            </div>
+          </div>
+          <div class="inv-timeline-step" style="border-left:3px solid var(--c6)">
+            <div class="inv-step-num" style="background:var(--c6);color:#fff">RC</div>
+            <div class="inv-step-content">
+              <b style="color:var(--c6)">Akar Masalah (Root Cause):</b>
+              <p style="margin:2px 0 0;font-size:13px;font-weight:700;color:var(--tx)">Erosi packing gland dan deformasi stem valve TCV-201 yang menyebabkan valve macet dan memicu pendinginan fluida proses di bawah titik kristalisasi lilin.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  // MODUL 5: RISK MATRIX
+  else if (INV_ACTIVE_MODULE == 'risk') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">5. Penilaian Risiko Matriks 5x5 (Risk Assessment)</h3>
+          <span class="mu" style="font-size:12.5px">Evaluasi Inherent vs Residual Risk</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Matriks risiko standar CCPS / ESDM untuk keselamatan proses minyak &amp; gas:</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <b style="font-size:14px">Risiko Awal (Inherent Risk)</b>
+              <span class="bd" style="background:var(--e);color:#fff">Tinggi (Skor 12)</span>
+            </div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+              <div><span class="mu">Keparahan (Severity):</span> <b>Level 4 (Kritis / Potensi Trip)</b></div>
+              <div><span class="mu">Kemungkinan (Likelihood):</span> <b>Level 3 (Mungkin Terjadi)</b></div>
+              <p class="mu" style="font-size:12px;margin:6px 0 0">Jika tidak ditangani, berpotensi menyebabkan plugging total pada crude preheat train dan penurunan kapasitas kilang 30%.</p>
+            </div>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <b style="font-size:14px">Risiko Sisa (Residual Risk)</b>
+              <span class="bd" style="background:var(--c4);color:var(--tx)">Rendah (Skor 2)</span>
+            </div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+              <div><span class="mu">Keparahan Terkendali:</span> <b>Level 2 (Minor)</b></div>
+              <div><span class="mu">Kemungkinan Terkendali:</span> <b>Level 1 (Sangat Jarang)</b></div>
+              <p class="mu" style="font-size:12px;margin:6px 0 0">Setelah perbaikan stem valve TCV-201, chemical flushing, dan rekalibrasi alarm high-high DCS terpasang.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  // MODUL 6: ACTIONS (CAPA)
+  else if (INV_ACTIVE_MODULE == 'actions') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">6. Rencana Tindakan Korektif &amp; Preventif (CAPA)</h3>
+          <span class="pillar-pill p-efficiency">3 Tindakan Ditetapkan</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Tindakan perbaikan terstruktur dengan PIC penanggung jawab dan tenggat waktu:</p>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <b style="font-size:13.5px">1. Overhaul &amp; Ganti Valve Trim TCV-201</b>
+              <span class="bd" style="background:var(--c6);color:#fff">In Progress</span>
+            </div>
+            <p class="mu" style="font-size:12.5px;margin:0 0 8px">Bongkar actuator dan ganti stem packing TCV-201 untuk memulihkan modulasi temperatur otomatis.</p>
+            <div style="display:flex;gap:16px;font-size:12px">
+              <span><b>PIC:</b> Budi Santoso (Inst. Maintenance)</span>
+              <span><b>Target:</b> 3 Hari (16 Nov 2026)</span>
+            </div>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <b style="font-size:13.5px">2. Chemical Flushing &amp; Mechanical Jet Cleaning E-202</b>
+              <span class="bd" style="background:var(--chip);color:var(--tx)">Scheduled</span>
+            </div>
+            <p class="mu" style="font-size:12.5px;margin:0 0 8px">Lakukan sirkulasi zat pelarut aromatik untuk melarutkan deposit wax pada celah tabung bundle.</p>
+            <div style="display:flex;gap:16px;font-size:12px">
+              <span><b>PIC:</b> Hendra Kurnia (Static Equipment Lead)</span>
+              <span><b>Target:</b> 7 Hari (20 Nov 2026)</span>
+            </div>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <b style="font-size:13.5px">3. Penyesuaian Setpoint Alarm Peringatan Dini DCS</b>
+              <span class="bd" style="background:var(--c4);color:var(--tx)">Completed</span>
+            </div>
+            <p class="mu" style="font-size:12.5px;margin:0 0 8px">Turunkan ambang alarm pre-warning ΔP dari 1,2 bar menjadi 0,75 bar untuk deteksi anomali lebih awal.</p>
+            <div style="display:flex;gap:16px;font-size:12px">
+              <span><b>PIC:</b> Siti Rahma (Process Automation Specialist)</span>
+              <span><b>Target:</b> Selesai (13 Nov 2026)</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="pill" onclick="tst('Form tambah tindakan korektif baru siap diisi.');">+ Tambah Butir Tindakan CAPA</button>
+      </div>
+    `;
+  }
+  // MODUL 7: REVIEW & APPROVAL
+  else if (INV_ACTIVE_MODULE == 'review') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">7. Tinjauan &amp; Otorisasi Investigasi (Review &amp; Approval)</h3>
+          <span class="pillar-pill p-authority">Otoritas Validasi</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Verifikasi kelengkapan berkas investigasi sebelum kasus diresmikan ke Knowledge Base:</p>
+
+        <div style="margin-bottom:18px">
+          <h4 style="font-size:14px;font-weight:700;margin:0 0 10px;color:var(--tx)">Checklist Kelengkapan Investigasi (Completion Checklist)</h4>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status kelengkapan entitas diperbarui.');">
+              <span>Semua 7 entitas kejadian dan bukti telemetri DCS terverifikasi oleh enjinir proses.</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status validasi 5-Why diperbarui.');">
+              <span>Akar masalah (5-Why) selaras dengan kajian HAZOP Node 04 dan data fisik lapangan.</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status PIC CAPA diperbarui.');">
+              <span>Tindakan korektif memiliki PIC jelas, alokasi anggaran, dan jadwal eksekusi terukur.</span>
+            </label>
+            <label class="inv-checklist-item">
+              <input type="checkbox" checked onchange="tst('Status residual risk diperbarui.');">
+              <span>Analisis risiko sisa (residual risk) memenuhi kriteria ALARP (As Low As Reasonably Practicable).</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <label class="form-label">Catatan &amp; Rekomendasi Resmi Pakar Validator</label>
+          <textarea class="form-textarea" rows="3">Investigasi telah memenuhi kaidah CCPS dan kaidah rekayasa proses. Akar masalah pada TCV-201 terbukti secara empiris melalui korelasi data suhu dan tekanan diferensial. Disetujui untuk dipublikasikan ke Knowledge Base dengan status Terverifikasi.</textarea>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+          <button class="pill" onclick="tst('Catatan revisi dikirim kembali ke tim investigator.');">Minta Klarifikasi / Revisi</button>
+          <button class="pill pr" onclick="tst('Investigasi diotorisasi! Data resmi tersimpan ke Knowledge Base Synqra.');location.hash='beranda';">
+            Otorisasi &amp; Publikasikan ke Knowledge Base ›
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  // MODUL 8: HISTORY
+  else if (INV_ACTIVE_MODULE == 'history') {
+    moduleContent = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--tx)">8. Riwayat &amp; Jejak Audit (History &amp; Traceability)</h3>
+          <span class="mu" style="font-size:12.5px">Immutable Audit Trail</span>
+        </div>
+        <p class="mu" style="font-size:13px;margin:0 0 16px">Semua perubahan parameter, unggahan dokumen, dan disposisi tercatat otomatis:</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n7);color:#fff">1</div>
+            <div class="inv-step-content">
+              <b>Laporan Awal (Preliminary Report) Diterima</b>
+              <div class="mu" style="font-size:12px">13 Nov 2026, 08:30 WIB · Oleh: Operator Shift Pagi (Ahmad Fauzi)</div>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Laporan suara berhasil ditranskrip &amp; 7 entitas awal diekstraksi dengan label Praduga Awal.</p>
+            </div>
+          </div>
+
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n7);color:#fff">2</div>
+            <div class="inv-step-content">
+              <b>Disposisi Triage Ditetapkan: Investigasi Lanjutan</b>
+              <div class="mu" style="font-size:12px">13 Nov 2026, 09:15 WIB · Oleh: Lead Process Engineer (Ir. Bambang)</div>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Berdasarkan data ΔP 1,35 bar, status dinaikkan dari monitoring biasa menjadi kasus investigasi formal.</p>
+            </div>
+          </div>
+
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n7);color:#fff">3</div>
+            <div class="inv-step-content">
+              <b>Dokumen P&amp;ID &amp; Log DCS Diunggah</b>
+              <div class="mu" style="font-size:12px">13 Nov 2026, 11:00 WIB · Oleh: Enjinir Instrumentasi (Budi S.)</div>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">File P&amp;ID-HE-202-Rev4.pdf dan data DCS resolusi 1 menit ditautkan ke investigasi.</p>
+            </div>
+          </div>
+
+          <div class="inv-timeline-step">
+            <div class="inv-step-num" style="background:var(--n7);color:#fff">4</div>
+            <div class="inv-step-content">
+              <b>Analisis Akar Masalah (5-Why RCA) Divalidasi</b>
+              <div class="mu" style="font-size:12px">13 Nov 2026, 14:20 WIB · Oleh: Tim Investigasi Lintas Disiplin</div>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Root cause dikonfirmasi: erosi dan kemacetan mekanis pada bypass valve TCV-201.</p>
+            </div>
+          </div>
+
+          <div class="inv-timeline-step" style="border-left:3px solid var(--c6)">
+            <div class="inv-step-num" style="background:var(--c6);color:#fff">5</div>
+            <div class="inv-step-content">
+              <b style="color:var(--c6)">3 Butir Tindakan CAPA Ditetapkan &amp; Dijadwalkan</b>
+              <div class="mu" style="font-size:12px">13 Nov 2026, 16:45 WIB · Oleh: Plant Maintenance Manager</div>
+              <p class="mu" style="margin:3px 0 0;font-size:12.5px">Alokasi teknisi dan suku cadang disetujui untuk overhaul TCV-201 dan jet cleaning E-202.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Wizard Footer controls
+  const prevMod = currentModIdx > 0 ? modules[currentModIdx - 1] : null;
+  const nextMod = currentModIdx < modules.length - 1 ? modules[currentModIdx + 1] : null;
+
+  return `
+    <div class="inv-workspace-shell">
+      <div class="inv-header-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="bd" style="background:var(--c6);color:#fff;font-weight:700">CASE #INV-2026-0042</span>
+              <span class="bd" style="background:var(--chip);color:var(--tx)">Status: Under Investigation</span>
+              <span class="pillar-pill p-security">CCPS Tier-3 Anomaly</span>
+            </div>
+            <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--tx)">Full Investigation Workspace: Heat Exchanger E-202</h2>
+            <p class="mu" style="margin:4px 0 0;font-size:13px">Ruang kerja investigasi kegagalan teknis berlandaskan 8 modul terstruktur dan bukti empiris.</p>
+          </div>
+          <button class="pill" onclick="REPORT_VIEW_MODE='triage';lp();">‹ Kembali ke Triage</button>
+        </div>
+      </div>
+
+      <div class="inv-module-nav">
+        ${modNav}
+      </div>
+
+      <div class="inv-module-body cd">
+        ${moduleContent}
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--bd)">
+          <div>
+            ${prevMod ? `
+              <button class="pill" onclick="INV_ACTIVE_MODULE='${prevMod.id}';lp();">
+                ‹ Modul Sebelumnya (${prevMod.name})
+              </button>
+            ` : '<span></span>'}
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="pill" onclick="tst('Draf investigasi modul ' + INV_ACTIVE_MODULE + ' disimpan.');">Simpan Draf Modul</button>
+            ${nextMod ? `
+              <button class="pill pr" onclick="INV_ACTIVE_MODULE='${nextMod.id}';lp();">
+                Lanjut ke ${nextMod.name} ›
+              </button>
+            ` : `
+              <button class="pill pr" onclick="tst('Seluruh 8 modul selesai! Melanjutkan ke finalisasi...');INV_ACTIVE_MODULE='review';lp();">
+                Finalisasi Investigasi ›
+              </button>
+            `}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function lp(){
   const bk='<div style="margin-bottom:16px"><button class="bk" data-go="beranda">‹ Kembali ke Beranda</button></div>';
+
+  const reportTabs = `
+    <div class="tabs" style="margin-bottom:18px">
+      <button class="${REPORT_VIEW_MODE == 'prelim' ? 'on' : ''}" onclick="REPORT_VIEW_MODE='prelim';lp();">
+        <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.lapor}</svg> 1. Preliminary Report (Laporan Awal)
+      </button>
+      <button class="${REPORT_VIEW_MODE == 'triage' ? 'on' : ''}" onclick="REPORT_VIEW_MODE='triage';lp();">
+        <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.valid}</svg> 2. Triage &amp; Assessment
+      </button>
+      <button class="${REPORT_VIEW_MODE == 'workspace' ? 'on' : ''}" onclick="REPORT_VIEW_MODE='workspace';INV_ACTIVE_MODULE='overview';lp();">
+        <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px">${IC.analysis}</svg> 3. Full Investigation Workspace (8 Modul)
+      </button>
+    </div>
+  `;
+
+  if (REPORT_VIEW_MODE == 'workspace') {
+    $('#mv').innerHTML = bk + reportTabs + renderInvestigationWorkspace();
+    return;
+  }
+  if (REPORT_VIEW_MODE == 'triage') {
+    $('#mv').innerHTML = bk + reportTabs + renderTriageView();
+    return;
+  }
+
+  // PRELIMINARY REPORT VIEW
   if(LS.step==2){
     const E=LS.ex,S=fs(E[1].v+' '+E[4].v,LS.asset);
-    $('#mv').innerHTML=bk+hv('Review Ekstraksi 7 Entitas',LS.asset)+`
+    $('#mv').innerHTML=bk+reportTabs+hv('Preliminary Report · Review 7 Entitas &amp; Bukti Awal',LS.asset)+`
       <div class="dg">
         <section>
-          <p style="margin:0 0 14px;font-size:15px"><b id="cnt">${E.filter(e=>e.v.trim()).length}</b> dari 7 entitas berhasil diekstraksi. Periksa dan sunting bila perlu:</p>
-          ${E.map((e,i)=>`<div class="ec"><div class="hh"><span>${i+1}. ${e.l} ${i==4?BG('dug'):''}</span>${e.c?cb(e.c):'<span class="mu">Belum terisi</span>'}</div><textarea data-ei="${i}" aria-label="${e.l}">${esc(e.v)}</textarea>${e.s?`<small class="mu" style="display:block;font-size:13px;margin-top:8px">Kutipan transkrip: "${esc(e.s.slice(0,85))}${e.s.length>85?'…':''}"</small>`:''}${e.c=='rendah'?`<button class="pill" data-a="ok" data-i="${i}" aria-pressed="false">✓ Konfirmasi nilai ini</button>`:''}</div>`).join('')}
-          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
-            <button class="pill" data-a="back">‹ Kembali ke transkrip</button>
-            <button class="pill" data-a="draft">Simpan draf</button>
-            <button class="pill pr" id="sd" data-a="send">Kirim laporan ke antrean ›</button>
+          <p style="margin:0 0 14px;font-size:15px"><b id="cnt">${E.filter(e=>e.v.trim()).length}</b> dari 7 entitas berhasil diekstraksi. Sesuai kaidah pelaporan cepat, seluruh nilai berstatus <b>Praduga Awal</b> tanpa vonis kepastian:</p>
+          ${E.map((e,i)=>`<div class="ec"><div class="hh"><span>${i+1}. ${e.l} ${i==4?BG('dug'):''}</span><span class="bd dug">Praduga</span></div><textarea data-ei="${i}" aria-label="${e.l}">${esc(e.v)}</textarea>${e.s?`<small class="mu" style="display:block;font-size:13px;margin-top:8px">Kutipan transkrip: "${esc(e.s.slice(0,85))}${e.s.length>85?'…':''}"</small>`:''}</div>`).join('')}
+
+          <!-- 3 FIELD TAMBAHAN DARI BRIEF DOSEN -->
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-top:20px;display:flex;flex-direction:column;gap:16px">
+            <h3 style="margin:0;font-size:15px;font-weight:800;color:var(--tx)">Data Tambahan Skrining Awal (Preliminary Screening)</h3>
+
+            <div>
+              <label class="form-label">1. Jenis Temuan Awal (Initial Finding Type)</label>
+              <select class="form-input" style="font-size:13.5px" onchange="PRELIM_DATA.findingType=this.value;">
+                ${['Abnormal Operating Condition', 'Suspected Equipment Failure', 'Potential Hazard / Unsafe Condition', 'Near Miss', 'Belum yakin / Butuh pemeriksaan lapangan'].map(opt => `
+                  <option value="${opt}" ${PRELIM_DATA.findingType==opt?'selected':''}>${opt}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label">2. Bukti Awal / Lampiran Pendukung (Initial Evidence)</label>
+              <div class="upload-dropzone" style="padding:16px" onclick="tst('Unggah bukti awal (foto, DCS log, atau dokumen lampiran)');">
+                <svg class="i" viewBox="0 0 24 24" style="width:28px;height:28px;color:var(--n7);margin-bottom:4px">${IC.upload}</svg>
+                <div style="font-size:13px;font-weight:700">Tarik berkas foto/log DCS ke sini atau klik untuk memilih file</div>
+                <span class="mu" style="font-size:12px">(Log sheet CSV, foto visual lapangan, rekaman alarm DCS)</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                ${PRELIM_DATA.evidenceFiles.map(f => `<span class="pill" style="font-size:11.5px;padding:4px 8px"><svg class="i" viewBox="0 0 24 24" style="width:12px;height:12px;margin-right:4px">${IC.evidence}</svg>${f}</span>`).join('')}
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label">3. Indikasi Bahaya Mendesak (Urgency Indicator)</label>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;margin-top:6px">
+                ${['Ya, ada risiko eskalasi mendesak (butuh tindakan segera)', 'Tidak ada indikasi bahaya mendesak langsung', 'Belum dapat dipastikan (perlu asesmen cepat)'].map(u => `
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                    <input type="radio" name="prelim-urgent" value="${u}" ${PRELIM_DATA.urgent==u?'checked':''} onchange="PRELIM_DATA.urgent=this.value;">
+                    <span>${u}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
           </div>
-          <p id="sn" class="mu" style="font-size:14px;margin-top:12px"></p>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px">
+            <button class="pill" onclick="LS.step=1;lp();">‹ Kembali ke transkrip</button>
+            <button class="pill" onclick="tst('Draf preliminary report disimpan di perangkat lokal.');">Simpan draf preliminary</button>
+            <button class="pill pr" id="sd" onclick="tst('Preliminary Report berhasil dikirim ke antrean Triage.');REPORT_VIEW_MODE='triage';lp();">
+              Kirim ke Triage &amp; Assessment ›
+            </button>
+          </div>
         </section>
+
         <aside class="cd">
           <h2 style="margin-bottom:12px">Kasus Serupa Terdeteksi</h2>
           ${S.map(r=>`<button class="it" data-go="kasus-${r.k.id.toLowerCase()}"><i>${r.k.a}</i><span>${r.k.id} · ${r.k.g}<small>${BG(r.k.st)}</small></span><b class="ch${r.s<50?' w':''}">${r.s}%</b></button>`).join('')||'<p class="mu">Belum ada kasus serupa.</p>'}
         </aside>
       </div>`;
-    sb();return;
+    return;
   }
+
   const v=LS.mode=='v';
-  $('#mv').innerHTML=bk+hv('Laporan Kejadian Baru','input suara atau teks (S-03)')+`
+  $('#mv').innerHTML=bk+reportTabs+hv('Laporan Kejadian Baru (Preliminary Report)','input suara atau teks (S-03)')+`
     <div class="dg">
       <section class="cd">
         <h2 style="margin-bottom:12px">1. Pilih Unit Aset</h2>
@@ -4124,10 +4849,11 @@ function lp(){
           ${v&&canNext()?'<button class="pill" data-a="edit">Sunting sebagai teks</button>':''}
         </div>
       </section>
+
       <aside class="cd">
-        <h2 style="margin-bottom:10px">Panduan Pelaporan</h2>
+        <h2 style="margin-bottom:10px">SOP Pelaporan Cepat (Preliminary)</h2>
         <p style="font-size:14.5px;margin:0 0 14px">Sebutkan secara singkat: <b>(1) tag aset</b>, <b>(2) gejala yang tampak</b>, <b>(3) angka parameter operasi</b>, <b>(4) temuan pemeriksaan</b>, serta <b>(5) dugaan awal penyebab</b>.</p>
-        <p class="nt">Catatan: Semua penyebab dari laporan baru otomatis diberi status <b>Dugaan</b> hingga diperiksa oleh Pakar Validator.</p>
+        <p class="nt">Catatan: Sesuai kaidah CCPS Triage, seluruh laporan awal berstatus <b>Praduga Awal</b> dan akan diverifikasi melalui alur Triage &amp; Assessment sebelum penetapan investigasi penuh.</p>
       </aside>
     </div>`;
   if(!v)$('#tx').value=LS.text;
@@ -4284,7 +5010,7 @@ function kf(){
           <div class="trc">${t.un.map(u=>{
             const on=KSEL.c==c.id&&KSEL.t==t.id&&KSEL.u==u.tag,kc=DB.filter(k=>k.tag==u.tag).length;
             return`<button class="trb ${on?'on':''}" data-ku="${c.id}|${t.id}|${u.tag}" style="padding:8px 12px">
-              <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px">${IC.tool}</svg><span style="flex:1">${esc(u.tag)} <small class="mu">(${u.cm.length} komp)</small></span>
+              <span style="flex:1"><b>${esc(u.tag)}</b> <small class="mu">(${u.cm.length} komponen)</small></span>
               ${kc?`<span class="ch" style="font-size:12px;padding:3px 9px">${kc} kasus</span>`:''}
             </button>`}).join('')}
           </div>
@@ -4303,7 +5029,7 @@ function kf(){
   <div class="dg">
     <section class="cd">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <h2>Pohon Spesifikasi Peralatan</h2>
+        <h2>Spesifikasi Peralatan (Equipment Specifications)</h2>
         <span class="mu" style="font-size:13px">4 tingkat: Kategori › Jenis › Unit › Komponen</span>
       </div>
       <input class="in2" id="kq" value="${esc(KQ)}" placeholder="Cari kategori, jenis, tag unit (mis. E-201), atau komponen…" aria-label="Cari di pohon peralatan" style="width:100%;margin-bottom:14px">
