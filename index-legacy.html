@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SYNQRA – Intelligence Connected by Evidence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Palette Biru Elektrik Persis Referensi Figma (CoinPay Mobile App) */
+      --primary: #304FFE;
+      --primary-dark: #1E3CD8;
+      --primary-light: #536DFE;
+      --primary-soft: #EBF1FF;
+      --primary-glow: rgba(48, 79, 254, 0.35);
+
+      /* Latar & Kartu */
+      --bg: #F6F8FD;
+      --bg-outer: #0F172A;
+      --panel: #FFFFFF;
+      --card: #F9FAFD;
+      --border: #EDF1F7;
+      --border-focus: #304FFE;
+
+      /* Tipografi */
+      --tx: #1A1F36;
+      --tx2: #697386;
+      --tx3: #A3ACB9;
+      --tx-white: #FFFFFF;
+
+      /* Aksen Pastel Referensi (Spending, Income, Bills, Savings) */
+      --c-spend: #4F46E5;
+      --c-spend-bg: #EEF2FF;
+      --c-income: #10B981;
+      --c-income-bg: #ECFDF5;
+      --c-bills: #F59E0B;
+      --c-bills-bg: #FFFBEB;
+      --c-save: #F97316;
+      --c-save-bg: #FFF7ED;
+
+      --c-yellow: #FFD84D;
+      --c-yellow-tx: #78350F;
+
+      --danger: #EF4444;
+      --danger-bg: #FEE2E2;
+
+      /* Shadows */
+      --sh-card: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+      --sh-float: 0 14px 36px rgba(48, 79, 254, 0.10), 0 2px 6px rgba(0, 0, 0, 0.04);
+      --sh-fab: 0 10px 24px rgba(48, 79, 254, 0.42);
+      --sh-bottom: 0 16px 40px rgba(48, 79, 254, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05);
+
+      /* Dimensi Bezel Device */
+      --radius-phone: 46px;
+      --radius-card: 22px;
+      --radius-pill: 9999px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0D111A;
+      --bg-outer: #05080E;
+      --panel: #161D2C;
+      --card: #1D2538;
+      --border: #28334A;
+      --tx: #F8FAFD;
+      --tx2: #94A3B8;
+      --tx3: #64748B;
+      --primary-soft: rgba(48, 79, 254, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-outer);
+      color: var(--tx);
+      font: 14px/1.5 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-feature-settings: 'tnum';
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 16px 12px 32px;
+    }
+
+    /* TOOLBAR ATAS: MODE TAMPILAN DEVICE vs FULLSCREEN */
+    .view-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .view-toolbar .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .view-toolbar .brand-badge svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .mode-switch-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 0;
+      color: #FFFFFF;
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    .mode-switch-btn:hover {
+      background: var(--primary);
+    }
+
+    /* BINGKAI SMARTPHONE (PERSIS FIGMA IPHONE FRAME) */
+    #phone-shell {
+      width: 100%;
+      max-width: 420px;
+      min-height: 880px;
+      background: var(--bg);
+      border-radius: var(--radius-phone);
+      box-shadow: 0 25px 65px -10px rgba(0, 0, 0, 0.5), 0 0 0 10px #1E2026, 0 0 0 12px rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Mode Wide/Fullscreen di Desktop */
+    body.is-wide {
+      background: var(--bg);
+      padding: 0;
+    }
+
+    body.is-wide .view-toolbar {
+      max-width: 860px;
+      margin: 12px auto;
+      background: #FFFFFF;
+      color: var(--tx);
+      border: 1px solid var(--border);
+      box-shadow: var(--sh-card);
+    }
+
+    body.is-wide .mode-switch-btn {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    body.is-wide #phone-shell {
+      max-width: 860px;
+      border-radius: 0;
+      box-shadow: none;
+      border: 0;
+      min-height: 100vh;
+    }
+
+    /* STATUS BAR & DYNAMIC ISLAND ALA IPHONE */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px 6px;
+      color: #FFFFFF;
+      font-size: 13.5px;
+      font-weight: 700;
+      position: relative;
+      z-index: 20;
+    }
+
+    .status-bar.dark-txt {
+      color: var(--tx);
+    }
+
+    .status-island {
+      width: 96px;
+      height: 27px;
+      background: #000000;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 10px;
+      gap: 6px;
+    }
+
+    .island-lens {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #0F172A;
+      box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.2);
+    }
+
+    .island-sensor {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #111827;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-icons svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* KONTEN APLIKASI DI DALAM SHELL */
+    #app-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 96px;
+      scroll-behavior: smooth;
+    }
+
+    /* HERO BANNER BIRU ELEKTRIK PERSIS FIGMA */
+    .hero-blue {
+      background: linear-gradient(180deg, #304FFE 0%, #1E3CD8 100%);
+      color: #FFFFFF;
+      padding: 4px 20px 48px;
+      border-radius: 0 0 32px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Ornamen Garis & Lingkaran Transparan di Hero */
+    .hero-pattern {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.12;
+    }
+
+    .hero-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+      margin-bottom: 18px;
+    }
+
+    .hero-icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255, 255, 255, 0.14);
+      color: #FFFFFF;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      position: relative;
+      transition: background .2s ease;
+    }
+
+    .hero-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .hero-icon-btn .badge-dot {
+      position: absolute;
+      top: 9px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #EF4444;
+      border: 1.5px solid #304FFE;
+    }
+
+    .hero-search-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: var(--radius-pill);
+      height: 40px;
+      padding: 0 14px;
+      color: #FFFFFF;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease;
+    }
+
+    .hero-search-bar:hover {
+      background: rgba(255, 255, 255, 0.24);
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .hero-search-bar input {
+      border: 0;
+      background: transparent;
+      outline: none;
+      width: 100%;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    .hero-search-bar input::placeholder {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    /* METRIK TENGAH HERO BANNER */
+    .hero-content {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: var(--radius-pill);
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #FFFFFF;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      margin-bottom: 6px;
+      transition: background .2s;
+    }
+
+    .hero-tag-pill:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .hero-balance {
+      font-size: clamp(34px, 7vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin: 4px 0 3px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .hero-sub-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 14px;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1.5px solid rgba(255, 255, 255, 0.38);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: var(--radius-pill);
+      padding: 8px 20px;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, background .2s ease;
+    }
+
+    .hero-cta-btn:hover {
+      background: #FFFFFF;
+      color: var(--primary);
+    }
+
+    .hero-cta-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* KARTU 3 AKSI FLOATING (SEND, REQUEST, BANK) */
+    .floating-action-card {
+      margin: -28px 16px 18px;
+      background: var(--panel);
+      border-radius: var(--radius-card);
+      box-shadow: var(--sh-float);
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 14px 6px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .fa-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: 0;
+      cursor: pointer;
+      padding: 4px;
+      position: relative;
+      transition: transform .15s ease;
+    }
+
+    .fa-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 15%;
+      height: 70%;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .fa-item:active {
+      transform: scale(0.95);
+    }
+
+    .fa-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      transition: transform .2s ease;
+    }
+
+    .fa-item:hover .fa-circle {
+      transform: translateY(-2px);
+    }
+
+    .fa-circle.blue {
+      background: #EEF2FF;
+      color: var(--primary);
+    }
+
+    .fa-circle.amber {
+      background: #FEF3C7;
+      color: #D97706;
+    }
+
+    .fa-circle.yellow {
+      background: #FEF9C3;
+      color: #CA8A04;
+    }
+
+    .fa-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--tx);
+      letter-spacing: -0.01em;
+    }
+
+    /* SECTION PADDING & HEADER */
+    .page-body {
+      padding: 0 16px 16px;
+    }
+
+    .section-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 14px 2px 10px;
+    }
+
+    .section-bar h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--tx);
+    }
+
+    .section-arrow-btn {
+      background: none;
+      border: 0;
+      color: var(--tx2);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 6px;
+      display: grid;
+      place-items: center;
+      transition: color .15s;
+    }
+
+    .section-arrow-btn:hover {
+      color: var(--primary);
+    }
+
+    /* KARTU TRANSAKSI (SQUIRCLE PASTEL PERSIS FIGMA) */
+    .txn-card-group {
+      background: var(--panel);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--sh-card);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .txn-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 16px;
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+      text-align: left;
+      transition: background-color .15s ease;
+    }
+
+    .txn-row:last-child {
+      border-bottom: 0;
+    }
+
+    .txn-row:hover {
+      background: var(--card);
+    }
+
+    .txn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .txn-icon.spending {
+      background: var(--c-spend-bg);
+      color: var(--c-spend);
+    }
+
+    .txn-icon.income {
+      background: var(--c-income-bg);
+      color: var(--c-income);
+    }
+
+    .txn-icon.bills {
+      background: var(--c-bills-bg);
+      color: var(--c-bills);
+    }
+
+    .txn-icon.savings {
+      background: var(--c-save-bg);
+      color: var(--c-save);
+    }
+
+    .txn-icon.blue {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .txn-mid {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .txn-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--tx);
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .txn-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--tx2);
+      display: block;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .txn-end {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .txn-val {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .txn-val.neg {
+      color: var(--danger);
+    }
+
+    .txn-val.pos {
+      color: var(--c-income);
+    }
+
+    .txn-val.warn {
+      color: var(--c-save);
+    }
+
+    .txn-chevron {
+      color: var(--tx3);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* DUAL KPI CARDS PERSIS LAYAR 7 FIGMA (SPENDING BLUE + BALANCE YELLOW) */
+    .dual-kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .kpi-card {
+      border-radius: 20px;
+      padding: 16px;
+      position: relative;
+      box-shadow: var(--sh-card);
+    }
+
+    .kpi-card.blue {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    .kpi-card.yellow {
+      background: var(--c-yellow);
+      color: var(--c-yellow-tx);
+    }
+
+    .kpi-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      opacity: 0.9;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .kpi-amount {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    /* VERTICAL BAR CHART PERSIS REFERENSI (HARI 2-8, 9-15, DST) */
+    .bar-chart-card {
+      background: var(--panel);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: var(--sh-card);
+      margin-bottom: 16px;
+    }
+
+    .chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .chart-head b {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--tx);
+    }
+
+    .chart-head .pill-badge {
+      background: var(--primary-soft);
+      color: var(--primary);
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .bar-track-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 130px;
+      gap: 10px;
+      padding-top: 10px;
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .bar-pill {
+      width: 100%;
+      max-width: 28px;
+      height: 100%;
+      background: #E8EEFB;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column-reverse;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      width: 100%;
+      background: var(--primary);
+      border-radius: 8px;
+      transition: height .4s ease;
+    }
+
+    .bar-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--tx2);
+    }
+
+    /* BOTTOM FLOATING NAVIGATION BAR PERSIS FIGMA */
+    #bottom-nav {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 388px;
+      background: #FFFFFF;
+      border-radius: 32px;
+      box-shadow: var(--sh-bottom);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 6px 10px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+
+    body.is-wide #bottom-nav {
+      position: fixed;
+      bottom: 20px;
+    }
+
+    [data-theme="dark"] #bottom-nav {
+      background: #182234;
+      border-color: #2D3A54;
+    }
+
+    .bn-item {
+      background: none;
+      border: 0;
+      color: var(--tx3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 0;
+      cursor: pointer;
+      position: relative;
+      transition: color .15s ease;
+    }
+
+    .bn-item.on {
+      color: var(--primary);
+    }
+
+    .bn-item svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .bn-item .bn-active-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin-top: 2px;
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+
+    .bn-item.on .bn-active-dot {
+      opacity: 1;
+    }
+
+    /* TOMBOL PERSEGI TENGAH SQUIRCLE MENGAMBANG (FAB BIRU FIGMA) */
+    .bn-center-fab {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: 3.5px solid #FFFFFF;
+      box-shadow: var(--sh-fab);
+      display: grid;
+      place-items: center;
+      margin: -22px auto 0;
+      cursor: pointer;
+      transition: transform .15s ease, background-color .15s ease;
+    }
+
+    [data-theme="dark"] .bn-center-fab {
+      border-color: #182234;
+    }
+
+    .bn-center-fab:hover {
+      transform: scale(1.06);
+      background: var(--primary-dark);
+    }
+
+    .bn-center-fab:active {
+      transform: scale(0.94);
+    }
+
+    .bn-center-fab svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* HOME INDICATOR ALA IPHONE */
+    .ios-home-indicator {
+      width: 134px;
+      height: 4.5px;
+      background: #1E293B;
+      border-radius: 999px;
+      margin: 10px auto 2px;
+      opacity: 0.3;
+    }
+
+    /* SUB-PAGES HEADER (< BACK + TITLE) */
+    .subpage-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 15;
+    }
+
+    .subpage-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-circle-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--tx);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: var(--sh-card);
+      transition: background .15s;
+    }
+
+    .back-circle-btn:hover {
+      background: var(--border);
+    }
+
+    .subpage-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--tx);
+      letter-spacing: -0.01em;
+    }
+
+    /* PILL TABS */
+    .pill-tabs-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+
+    .pill-tabs-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-pill {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--tx2);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 12.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .tab-pill.on {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(48, 79, 254, 0.25);
+    }
+
+    /* CARD GENERIC & FORM ELEMENTS */
+    .white-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 18px;
+      box-shadow: var(--sh-card);
+      margin-bottom: 14px;
+    }
+
+    .form-lbl {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--tx2);
+      margin: 12px 0 6px;
+    }
+
+    .form-inp,
+    select,
+    textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--tx);
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-size: 14px;
+      min-height: 46px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .form-inp:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      background: var(--panel);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    /* BUTTONS */
+    .btn-main {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 0;
+      background: var(--primary);
+      color: #FFFFFF;
+      padding: 12px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      min-height: 48px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: var(--sh-fab);
+      transition: transform .12s ease, opacity .15s ease;
+    }
+
+    .btn-main:active {
+      transform: scale(0.98);
+    }
+
+    .btn-sec {
+      background: var(--panel);
+      color: var(--tx);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--sh-card);
+    }
+
+    .btn-sm {
+      min-height: 36px;
+      padding: 6px 14px;
+      font-size: 12px;
+      width: auto;
+    }
+
+    /* TOGGLE SWITCH ALA IOS (PERSIS LAYAR PROFIL DI REFERENSI) */
+    .ios-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 28px;
+    }
+
+    .ios-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #E2E8F0;
+      transition: .3s;
+      border-radius: 99px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* BADGE PILLS */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-badge.ver {
+      background: #D1FAE5;
+      color: #047857;
+    }
+
+    .status-badge.dug {
+      background: #FEF3C7;
+      color: #B45309;
+    }
+
+    .status-badge.err {
+      background: #FEE2E2;
+      color: #B91C1C;
+    }
+
+    .status-badge.inf {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    /* TOAST & MODAL */
+    #toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 92px;
+      background: #111827;
+      color: #FFFFFF;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+      z-index: 1000;
+    }
+
+    #toast.on {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 900;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    #modal-overlay[hidden] {
+      display: none !important;
+    }
+
+    .modal-card {
+      background: var(--panel);
+      border-radius: 28px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 22px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Responsif saat dibuka di layar smartphone asli */
+    @media (max-width: 500px) {
+      body {
+        padding: 0;
+        background: var(--bg);
+      }
+
+      .view-toolbar {
+        display: none;
+      }
+
+      #phone-shell {
+        max-width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        border: 0;
+        min-height: 100vh;
+      }
+
+      #bottom-nav {
+        max-width: calc(100% - 24px);
+        bottom: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- BAR KONTROL DI ATAS BINGKAI SMARTPHONE -->
+  <header class="view-toolbar">
+    <div class="brand-badge">
+      <svg viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="46" fill="#304FFE"/>
+        <path d="M28 46 C32 30, 68 28, 72 46 C74 58, 62 70, 50 72 L42 80 L42 68 C32 64, 26 56, 28 46 Z" fill="#FFFFFF"/>
+      </svg>
+      <span>SYNQRA Mobile</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="mode-switch-btn" onclick="toggleWideMode()" id="btn-wide-toggle">📱 Device Frame</button>
+      <button class="mode-switch-btn" onclick="toggleTheme()" id="btn-theme-toggle">🌓 Tema</button>
+    </div>
+  </header>
+
+  <!-- BINGKAI SMARTPHONE ELEKTRIK FIGMA -->
+  <div id="phone-shell">
+    <!-- IPHONE STATUS BAR & DYNAMIC ISLAND -->
+    <div class="status-bar" id="top-status-bar">
+      <span>9:41</span>
+      <div class="status-island">
+        <div class="island-lens"></div>
+        <div class="island-sensor"></div>
+      </div>
+      <div class="status-icons">
+        <!-- Cellular Signal -->
+        <svg viewBox="0 0 24 24"><path d="M2 19h3v3H2v-3zm5-5h3v8H7v-8zm5-5h3v13h-3V9zm5-5h3v18h-3V4z"/></svg>
+        <!-- Wifi -->
+        <svg viewBox="0 0 24 24"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4zm0 3.5c3.75 0 7.15 1.5 9.65 3.96L12 19.3 2.35 11.46C4.85 9 8.25 7.5 12 7.5z"/></svg>
+        <!-- Battery -->
+        <svg viewBox="0 0 24 24"><path d="M17 5H3a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2zm-1 11H4V8h12v8zm5-7h1a1 1 0 011 1v4a1 1 0 01-1 1h-1V9z"/></svg>
+      </div>
+    </div>
+
+    <!-- MAIN VIEWPORT CONTENT -->
+    <main id="app-viewport">
+      <div id="view"></div>
+    </main>
+
+    <!-- FLOATING BOTTOM NAVIGATION BAR (PERSIS FIGMA) -->
+    <nav id="bottom-nav" aria-label="Navigasi Utama"></nav>
+  </div>
+
+  <!-- MODAL & NOTIFIKASI -->
+  <div id="modal-overlay" hidden>
+    <div class="modal-card" id="modal-content"></div>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    function toggleWideMode() {
+      document.body.classList.toggle('is-wide');
+      const isW = document.body.classList.contains('is-wide');
+      document.getElementById('btn-wide-toggle').textContent = isW ? '🖥️ Fullscreen' : '📱 Device Frame';
+    }
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const nxt = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nxt);
+    }
+  </script>
+  <script src="app.js"></script>
+</body>
+
+</html>
