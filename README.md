@@ -1,4 +1,4 @@
-# SYNQRA — UI/UX Prototype
+# SYNQRA — UI/UX Prototype (v2 Interactive Edition)
 
 Prototype antarmuka interaktif untuk platform industrial knowledge management pada industri Oil & Gas.
 
@@ -16,33 +16,12 @@ python -m http.server 8000
 
 Kemudian buka `http://localhost:8000` dari folder proyek.
 
-## Persona demo
+## Pembaruan Utama (v2)
 
-- Ahmad Fauzi — Teknisi Lapangan
-- Bambang Trihatmojo — Reviewer Departemen
-- Rina Suryani — Validator Ahli
-
-## Alur yang dapat dicoba
-
-- Teknisi: buat laporan, pilih equipment, simulasi rekaman suara/transkrip, ketik laporan, unggah foto lokal untuk preview, kirim, lihat status, dan lengkapi laporan yang dikembalikan.
-- Reviewer: buka antrean dalam lingkup departemen, periksa laporan, teruskan ke validator atau kembalikan ke teknisi.
-- Validator: periksa temuan, pilih valid/perlu bukti tambahan/tidak valid, masukkan alasan, dan konfirmasi.
-- Pengetahuan: cari contoh kasus, buka detail, lihat hubungan sederhana aset → gejala → penyebab → solusi.
-
-## Batasan prototype
-
-Ini murni prototype front-end untuk eksplorasi UI/UX. Tidak ada backend, database, autentikasi sungguhan, role permission server-side, penyimpanan permanen, integrasi kamera/mikrofon, speech-to-text, AI, atau integrasi sistem industri. Rekaman suara, transkripsi, keputusan, dan status adalah simulasi JavaScript di browser. Foto yang dipilih hanya digunakan untuk preview lokal.
-
-## Struktur proyek
-
-- `index.html` — kerangka halaman dan pemanggilan stylesheet/script.
-- `styles.css` — design system, layout, komponen, dan responsivitas.
-- `app.js` — data contoh, navigasi, dan interaksi simulasi.
-- `assets/` — logo Synqra asli untuk mode terang dan gelap.
-
-## Font
-
-- Poppins: heading, judul, dan angka utama.
-- Plus Jakarta Sans: body, label, kontrol, dan teks antarmuka.
-
-Font dimuat dari Google Fonts, sehingga koneksi internet diperlukan untuk mendapatkan font web; fallback system font tetap tersedia.
+- **Tipografi Poppins & Montserrat:** Seluruh heading, judul, dan angka menggunakan Poppins; seluruh body, label, dan kontrol menggunakan Montserrat dengan skala ukuran yang lebih besar dan mudah dibaca.
+- **Kontras Tinggi:** Menghilangkan teks abu-abu pudar di seluruh halaman (Login, Beranda Teknisi, Laporan Saya, Detail Pengetahuan KB-001, dan Navigasi Workspace).
+- **Mode Terang & Mode Gelap (Dark Mode):** Tombol Mode Tampilan aktif penuh di sidebar, topbar, dan halaman login dengan pergantian logo otomatis (`synqra-logo-light.png` / `synqra-logo-dark.png`) serta penyimpanan preferensi di browser.
+- **Badge Status Industrial:** Mengganti pil bulat lama dengan tag status bergaya arsitektural (sudut tegas, aksen garis kiri, dan ikon mikro) berkontras tinggi.
+- **Technical 2D Vector Diagrams:** Diagram teknis skematik peralatan industri berbasis SVG yang presisi dan ringan pada halaman Detail Laporan, Detail Pengetahuan (`KB-001` dst.), dan Hero Login.
+- **Interactive Animated Knowledge Graph:** Visualisasi hubungan Aset → Gejala → Penyebab → Solusi → Verifikasi dengan aliran partikel energi dan node yang dapat diklik.
+- **3D Tilt, Sheen & Micro-Interactions:** Efek perspektif 3D dinamis mengikuti kursor pada kartu utama, animasi angka KPI, kanvas jaringan interaktif pada halaman login, panel Notifikasi interaktif, dan Quick Persona Switcher.
