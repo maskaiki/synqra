@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-poppins: 'Poppins', sans-serif;
+  --font-montserrat: 'Montserrat', sans-serif;
+
+  --navy: #0B1F44;
+  --navy-2: #13315C;
+  --cyan: #00B8D9;
+  --cyan-dark: #007A94;
+  --cyan-pale: #E0F7FA;
+
+  --ink: #0A1833;
+  --ink-soft: #243754;
+  --muted: #4B6180;
+  --line: #CFDCE8;
+  --surface: #FFFFFF;
+  --surface-elevated: #F8FCFD;
+  --canvas: #F3F7FA;
+
+  --green: #059669;
+  --amber: #D97706;
+  --red: #DC2626;
+  --info: #0284C7;
+  --val: #7C3AED;
+}
+
+.dark {
+  --ink: #F8FAFC;
+  --ink-soft: #CBD5E1;
+  --muted: #94A3B8;
+  --line: #1E293B;
+  --surface: #0F172A;
+  --surface-elevated: #1E293B;
+  --canvas: #020617;
+  --cyan-dark: #38D6F0;
+  --cyan-pale: rgba(0, 184, 217, 0.18);
+}
+
+body {
+  margin: 0;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-montserrat);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-poppins);
+}
