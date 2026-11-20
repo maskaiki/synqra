@@ -1,0 +1,1 @@
+-- Refer to supabase/migrations/20261120_init_schema.sql for the complete schema and seed data.

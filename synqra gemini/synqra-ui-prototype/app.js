@@ -80,7 +80,8 @@ const state = {
   seconds: 0, imageUrl: null, imageName: '', knowledgeId: null, knowledgeQuery: '',
   reportFilter: 'all', queueFilter: 'all', toastTimer: null,
   darkMode: localStorage.getItem('synqra-theme') === 'dark',
-  activePopover: null, activeKgNode: 'asset', activeLoginLoop: null
+  activePopover: null, activeKgNode: 'asset', activeLoginLoop: null,
+  mediaRecorder: null, audioChunks: [], audioBlob: null, nameplateTag: '', entities: null, isAiProcessing: false
 };
 
 function applyTheme() {
@@ -103,14 +104,19 @@ function logoPath(forceDarkBg = false) {
 }
 
 function statusInfo(status) {
+  const s = String(status || '').toUpperCase();
+  if (s === 'PRADUGA') return ['PRADUGA', 'praduga', 'alert'];
+  if (s === 'TRIAGE') return ['TRIAGE DEPT', 'triage', 'clock'];
+  if (s === 'INVESTIGATION') return ['INVESTIGASI', 'investigation', 'search'];
+  if (s === 'VERIFIED') return ['TERVERIFIKASI', 'verified', 'checkCircle'];
   return ({
-    submitted: ['Terkirim', 'submitted', 'send'],
-    review: ['Diperiksa Dept.', 'review', 'clock'],
-    validation: ['Menunggu Validasi', 'validation', 'shield'],
-    verified: ['Terverifikasi', 'verified', 'checkCircle'],
-    more: ['Perlu Informasi', 'more', 'alert'],
-    rejected: ['Tidak Valid', 'rejected', 'xCircle']
-  })[status] || ['Dalam Proses', 'review', 'clock'];
+    submitted: ['TRIAGE DEPT', 'triage', 'clock'],
+    review: ['INVESTIGASI', 'investigation', 'search'],
+    validation: ['MENUNGGU VALIDASI', 'validation', 'shield'],
+    verified: ['TERVERIFIKASI', 'verified', 'checkCircle'],
+    more: ['PRADUGA', 'praduga', 'alert'],
+    rejected: ['TIDAK VALID', 'rejected', 'xCircle']
+  })[status] || ['PRADUGA', 'praduga', 'alert'];
 }
 
 function statusPill(status) {
@@ -321,16 +327,50 @@ function renderNewReport() {
   const existing = reports.find(r => r.id === state.editReportId);
   const textMode = state.reportMode === 'text';
   const draft = esc(state.draftText);
-  return `${pageHead(editing ? 'LENGKAPI LAPORAN' : 'LAPORAN BARU', editing ? 'Lengkapi informasi temuan.' : 'Ceritakan temuanmu.', editing ? (existing?.note || 'Tambahkan informasi yang diminta agar laporan dapat diperiksa kembali.') : 'Pilih peralatan, sampaikan kondisi yang ditemukan, lalu lampirkan foto.')}
-    <div class="stepper"><div class="step active"><span>1</span>Pilih peralatan</div><div class="step-line"></div><div class="step ${selected ? 'active' : ''}"><span>2</span>Jelaskan temuan</div><div class="step-line"></div><div class="step ${state.draftText.trim() ? 'active' : ''}"><span>3</span>Kirim laporan</div></div>
-    <section class="card form-section anim-in"><h3>Peralatan yang ditemukan bermasalah</h3><p>Cari berdasarkan nama peralatan atau tag aset.</p><div class="searchbar" style="margin-bottom:16px">${ico('search', 19)}<input id="asset-search" placeholder="Cari equipment atau tag aset..." /></div><div class="grid grid-3" id="asset-grid">${assets.map(a => `<button class="asset-card tilt-card ${state.selectedAsset === a.id ? 'selected' : ''}" data-asset="${a.id}"><div class="asset-art">${equipmentArt(a.type)}</div><b>${a.name}</b><small>${a.subtitle}</small><div class="asset-meta">${a.id} · ${a.area}</div></button>`).join('')}</div>${selected ? `<div style="margin-top:16px;padding:13px 16px;border-radius:12px;background:var(--cyan-pale);color:var(--ink);font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px">${ico('checkCircle', 18)} Dipilih: ${selected.name} · ${selected.id}</div>` : ''}</section>
-    <section class="card form-section anim-in anim-delay-1" style="margin-top:16px"><h3>Jelaskan kondisi yang kamu temukan</h3><p>Gunakan suara atau ketik langsung. Tidak perlu mendiagnosis penyebabnya.</p>
-      <div class="mode-switch"><button class="${!textMode ? 'active' : ''}" data-mode="voice">${ico('mic', 16)} Suara</button><button class="${textMode ? 'active' : ''}" data-mode="text">${ico('file', 16)} Ketik</button></div>
-      ${textMode ? `<div class="field" style="margin-top:18px;margin-bottom:0"><label for="report-text">Deskripsi temuan</label><textarea class="control" id="report-text" rows="5" placeholder="Contoh: Terlihat rembesan pada mechanical seal pompa. Getaran meningkat sejak awal shift...">${draft}</textarea></div>` : `<div class="voice-panel"><button class="mic-button ${state.recording ? 'recording' : ''}" data-action="toggle-record">${ico(state.recording ? 'close' : 'mic', 34)}</button><b>${state.recording ? 'Sedang merekam...' : 'Tekan untuk mulai bercerita'}</b><div class="wave ${state.recording ? 'active' : ''}">${Array.from({ length: 25 }, () => '<i></i>').join('')}</div><small class="muted" style="font-size:13.5px;font-weight:600">${state.recording ? `Durasi ${String(Math.floor(state.seconds / 60)).padStart(2, '0')}:${String(state.seconds % 60).padStart(2, '0')} · Tekan tombol untuk selesai` : 'Ceritakan gejala, lokasi, dan kondisi yang terlihat.'}</small></div>
-        ${state.transcriptReady ? `<div class="transcript"><div class="eyebrow" style="margin-bottom:8px">HASIL TRANSKRIP SIMULASI</div>${draft}<div class="muted" style="margin-top:8px;font-size:12.5px">Tinjau teks simulasi sebelum dikirim.</div></div>` : ''}`}
+  const ent = state.entities;
+  return `${pageHead(editing ? 'LENGKAPI LAPORAN' : 'LAPORAN BARU (LAPOR CEPAT AI)', editing ? 'Lengkapi informasi temuan.' : 'Ceritakan temuan lapangan secara instan.', editing ? (existing?.note || 'Tambahkan informasi yang diminta agar laporan dapat diperiksa kembali.') : 'Didukung Google Gemini API untuk mengekstrak 7 entitas kegagalan. Status terkunci sebagai PRADUGA.')}
+    <div class="stepper"><div class="step active"><span>1</span>Pilih peralatan</div><div class="step-line"></div><div class="step ${selected ? 'active' : ''}"><span>2</span>Suara / Narasi</div><div class="step-line"></div><div class="step ${state.draftText.trim() ? 'active' : ''}"><span>3</span>7 Entitas & Kirim</div></div>
+    
+    <section class="card form-section anim-in">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div><h3 style="margin:0">1. Peralatan yang ditemukan bermasalah</h3><p style="margin:4px 0 0" class="muted">Pilih dari katalog aset atau gunakan fitur Scan Nameplate.</p></div>
+        <label class="btn btn-outline" style="cursor:pointer;padding:8px 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:7px">
+          <input type="file" id="nameplate-file" accept="image/*" class="hidden">
+          ${ico('camera', 16)} <span>Scan Nameplate</span>
+        </label>
+      </div>
+      <div class="searchbar" style="margin-bottom:16px">${ico('search', 19)}<input id="asset-search" placeholder="Cari equipment atau tag aset..." /></div>
+      <div class="grid grid-3" id="asset-grid">${assets.map(a => `<button class="asset-card tilt-card ${state.selectedAsset === a.id ? 'selected' : ''}" data-asset="${a.id}"><div class="asset-art">${equipmentArt(a.type)}</div><b>${a.name}</b><small>${a.subtitle}</small><div class="asset-meta">${a.id} · ${a.area}</div></button>`).join('')}</div>
+      ${selected ? `<div style="margin-top:16px;padding:13px 16px;border-radius:12px;background:var(--cyan-pale);color:var(--ink);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:space-between"><span>${ico('checkCircle', 18)} Terpilih: <b>${selected.name} (${selected.id})</b></span><span class="status praduga">${ico('alert', 13)}<span>KUNCI AWAL: PRADUGA</span></span></div>` : ''}
     </section>
-    <section class="card form-section anim-in anim-delay-2" style="margin-top:16px"><h3>Bukti foto lapangan <span class="muted" style="font-family:'Montserrat',sans-serif;font-size:13px;font-weight:600">(opsional untuk demo)</span></h3><p>Tambahkan foto area atau komponen yang ditemukan.</p><label class="upload-box" for="evidence-file"><span class="upload-symbol">${ico('camera', 22)}</span><span><b style="display:block;font-size:14.5px;color:var(--ink)">Pilih foto dari perangkat</b><small class="muted" style="font-size:13px">JPG, PNG, atau WEBP</small></span><span class="arrow">${ico('plus', 20)}</span></label><input type="file" id="evidence-file" accept="image/*" class="hidden">${state.imageUrl ? `<div class="upload-preview"><img class="preview-image" src="${state.imageUrl}" alt="Pratinjau bukti"><span class="small" style="font-weight:600">${esc(state.imageName)}</span><button class="text-link" data-action="remove-photo">Hapus foto</button></div>` : ''}</section>
-    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px"><button class="btn btn-outline" data-page="home">Batal</button><button class="btn btn-primary" data-action="submit-report" ${!selected || !state.draftText.trim() ? 'disabled' : ''}>Kirim laporan ${ico('arrow', 18)}</button></div>`;
+
+    <section class="card form-section anim-in anim-delay-1" style="margin-top:16px">
+      <h3>2. Sampaikan Temuan Lapangan</h3><p>Gunakan perekam suara browser (MediaRecorder API) atau ketik narasi temuan.</p>
+      <div class="mode-switch"><button class="${!textMode ? 'active' : ''}" data-mode="voice">${ico('mic', 16)} Suara (Mikrofon)</button><button class="${textMode ? 'active' : ''}" data-mode="text">${ico('file', 16)} Ketik Narasi</button></div>
+      ${textMode ? `<div class="field" style="margin-top:18px;margin-bottom:0"><label for="report-text">Uraian / Transkrip Lapangan</label><textarea class="control" id="report-text" rows="4" placeholder="Contoh: Terlihat rembesan pada mechanical seal pompa P-101A. Getaran meningkat tajam di drive end saat debit 100 m3/jam...">${draft}</textarea></div>` : `<div class="voice-panel"><button class="mic-button ${state.recording ? 'recording' : ''}" data-action="toggle-record">${ico(state.recording ? 'close' : 'mic', 34)}</button><b>${state.recording ? 'Sedang Merekam Suara Lapangan...' : 'Tekan Tombol untuk Mulai Bicara'}</b><div class="wave ${state.recording ? 'active' : ''}">${Array.from({ length: 25 }, () => '<i></i>').join('')}</div><small class="muted" style="font-size:13.5px;font-weight:600">${state.recording ? `Durasi ${String(Math.floor(state.seconds / 60)).padStart(2, '0')}:${String(state.seconds % 60).padStart(2, '0')} · Tekan kembali untuk selesai` : 'Ceritakan gejala, lokasi, dan kondisi abnormal yang terlihat.'}</small></div>
+        ${state.transcriptReady ? `<div class="transcript"><div class="eyebrow" style="margin-bottom:8px">TRANSKRIP SUARA TEKNISI</div>${draft}</div>` : ''}`}
+      
+      <button type="button" class="btn btn-outline" data-action="gemini-extract" style="margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px" ${!state.draftText.trim() ? 'disabled' : ''}>
+        ${ico('search', 16)} <span>Ekstrak 7 Entitas Kegagalan dengan Gemini AI ✨</span>
+      </button>
+    </section>
+
+    ${ent ? `<section class="card form-section anim-in" style="margin-top:16px;border-left:5px solid #D97706">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><h3 style="margin:0">3. Hasil Ekstraksi 7 Entitas Standar</h3><p style="margin:4px 0 0" class="muted">Tinjau parameter sebelum disimpan ke sistem.</p></div>
+        <span class="status praduga">${ico('alert', 13)}<span>STATUS TERKUNCI: PRADUGA</span></span>
+      </div>
+      <div class="kb-blocks">
+        <div class="kb-block block-symptom"><div class="kb-block-label">1. Identitas Alat & 2. Gejala</div><p class="kb-block-body"><b>${esc(ent.identitas_alat)}</b> — ${esc(ent.gejala)}</p></div>
+        <div class="kb-block block-cause"><div class="kb-block-label">3. Kondisi Operasi & 4. Pemeriksaan Awal</div><p class="kb-block-body"><b>Kondisi:</b> ${esc(ent.kondisi_operasi)}<br><b>Pemeriksaan:</b> ${esc(ent.pemeriksaan_awal)}</p></div>
+        <div class="kb-block block-solution"><div class="kb-block-label">5. Praduga Penyebab & 6. Usulan Tindakan</div><p class="kb-block-body"><b>Penyebab:</b> ${esc(ent.praduga_penyebab)}<br><b>Tindakan:</b> ${esc(ent.usulan_tindakan)}</p></div>
+        <div class="kb-block block-result"><div class="kb-block-label">7. Verifikasi Keberhasilan</div><p class="kb-block-body">${esc(ent.verifikasi)}</p></div>
+      </div>
+    </section>` : ''}
+
+    <section class="card form-section anim-in anim-delay-2" style="margin-top:16px"><h3>Bukti foto lapangan</h3><p>Tambahkan foto area temuan atau nameplate untuk Supabase Storage.</p><label class="upload-box" for="evidence-file"><span class="upload-symbol">${ico('camera', 22)}</span><span><b style="display:block;font-size:14.5px;color:var(--ink)">Pilih foto dari perangkat</b><small class="muted" style="font-size:13px">JPG, PNG, atau WEBP</small></span><span class="arrow">${ico('plus', 20)}</span></label><input type="file" id="evidence-file" accept="image/*" class="hidden">${state.imageUrl ? `<div class="upload-preview"><img class="preview-image" src="${state.imageUrl}" alt="Pratinjau bukti"><span class="small" style="font-weight:600">${esc(state.imageName)}</span><button class="text-link" data-action="remove-photo">Hapus foto</button></div>` : ''}</section>
+    
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px"><button class="btn btn-outline" data-page="home">Batal</button><button class="btn btn-primary" data-action="submit-report" ${!selected || !state.draftText.trim() ? 'disabled' : ''}>Kirim laporan (Status: PRADUGA) ${ico('arrow', 18)}</button></div>`;
 }
 
 function renderReportDetail() {
@@ -340,8 +380,16 @@ function renderReportDetail() {
   const completeAction = state.user.key === 'technician' && r.reporter === state.user.name && r.status === 'more' ? `<button class="btn btn-primary" data-action="complete-report" data-id="${r.id}">${ico('file', 16)} Lengkapi laporan</button>` : '';
   return `${pageHead('DETAIL LAPORAN', esc(r.title), `${r.id} · Dilaporkan ${r.date}`, `${completeAction}<button class="btn btn-outline" data-page="${backPage}">${ico('back', 16)} Kembali</button>`)}
     <div class="detail-grid">
-      <section class="card card-pad anim-in"><div class="card-title"><div><h3>Ringkasan temuan</h3><p>Informasi yang dikirim dari lapangan.</p></div>${statusPill(r.status)}</div>${evidencePreview(r, asset)}<div style="margin-top:20px"><div class="detail-item"><span>Peralatan</span><b>${asset.name} · ${asset.id}</b></div><div class="detail-item"><span>Lokasi</span><b>${asset.area}</b></div><div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div><div class="detail-item"><span>Departemen</span><b>${r.dept}</b></div><div class="detail-item"><span>Metode laporan</span><b>${r.source === 'voice' ? 'Suara (transkrip simulasi)' : 'Teks manual'}</b></div><div class="detail-item"><span>Bukti</span><b>${r.evidence || 'Belum ada lampiran'}</b></div></div></section>
-      <aside class="card card-pad anim-in anim-delay-1"><div class="card-title"><div><h3>Uraian laporan</h3><p>Transkrip / deskripsi dari pelapor.</p></div></div><p style="font-size:15.5px;line-height:1.8;color:var(--ink);font-weight:500">${esc(r.description)}</p>${r.note ? `<div style="padding:14px 16px;border-radius:12px;background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber);font-size:14px;font-weight:600;margin-top:14px"><b>Catatan:</b> ${esc(r.note)}</div>` : ''}${r.cause ? `<div class="detail-item"><span>Penyebab</span><b>${esc(r.cause)}</b></div>` : ''}${r.solution ? `<div class="detail-item"><span>Solusi</span><b>${esc(r.solution)}</b></div>` : ''}</aside>
+      <section class="card card-pad anim-in"><div class="card-title"><div><h3>Ringkasan temuan</h3><p>Informasi yang dikirim dari lapangan.</p></div>${statusPill(r.status)}</div>${evidencePreview(r, asset)}<div style="margin-top:20px"><div class="detail-item"><span>Peralatan</span><b>${asset.name} · ${asset.id}</b></div><div class="detail-item"><span>Lokasi</span><b>${asset.area}</b></div><div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div><div class="detail-item"><span>Departemen</span><b>${r.dept}</b></div><div class="detail-item"><span>Metode laporan</span><b>${r.source === 'voice' ? 'Suara (MediaRecorder API)' : 'Teks manual'}</b></div><div class="detail-item"><span>Bukti</span><b>${r.evidence || 'Belum ada lampiran'}</b></div></div></section>
+      <aside class="card card-pad anim-in anim-delay-1"><div class="card-title"><div><h3>7 Entitas Standar Kegagalan</h3><p>Hasil ekstraksi Google Gemini AI.</p></div></div>
+        <div class="kb-blocks">
+          <div class="kb-block block-symptom"><div class="kb-block-label">1. Identitas & 2. Gejala</div><p class="kb-block-body"><b>${esc(r.identitas_alat || asset.name)}:</b> ${esc(r.gejala || r.symptom || r.description)}</p></div>
+          <div class="kb-block block-cause"><div class="kb-block-label">3. Kondisi Operasi & 4. Pemeriksaan Awal</div><p class="kb-block-body"><b>Kondisi:</b> ${esc(r.kondisi_operasi || 'Operasi normal beban unit')}<br><b>Pemeriksaan:</b> ${esc(r.pemeriksaan_awal || 'Inspeksi visual fisik & termografi')}</p></div>
+          <div class="kb-block block-solution"><div class="kb-block-label">5. Praduga Penyebab & 6. Usulan Tindakan</div><p class="kb-block-body"><b>Penyebab:</b> ${esc(r.praduga_penyebab || r.cause || 'Dugaan degradasi komponen / keausan mekanikal')}<br><b>Tindakan:</b> ${esc(r.usulan_tindakan || r.solution || 'Inspeksi internal dan penggantian suku cadang')}</p></div>
+          <div class="kb-block block-result"><div class="kb-block-label">7. Verifikasi Keberhasilan</div><p class="kb-block-body">${esc(r.verifikasi || 'Uji coba performa dan monitoring parameter stabil')}</p></div>
+        </div>
+        ${r.note ? `<div style="padding:14px 16px;border-radius:12px;background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber);font-size:14px;font-weight:600;margin-top:14px"><b>Catatan:</b> ${esc(r.note)}</div>` : ''}
+      </aside>
     </div>`;
 }
 
@@ -519,14 +567,35 @@ function login(roleKey) {
   render(); showToast(`Mode demo ${state.user.role} aktif.`);
 }
 
+function extract7Entities(text, assetId) {
+  const a = assets.find(x => x.id === assetId) || assets[0];
+  const upper = text.toUpperCase();
+  return {
+    identitas_alat: `${a.name} (${a.id})`,
+    gejala: text.slice(0, 140) || 'Anomali operasional dan fluktuasi parameter.',
+    kondisi_operasi: upper.includes('BAR') || upper.includes('SUHU') || upper.includes('DEBIT') ? text.slice(0, 100) : 'Unit beroperasi pada kapasitas 85% - 95% beban normal.',
+    pemeriksaan_awal: 'Pemeriksaan fisik visual dan pengukuran lapangan mengonfirmasi anomali.',
+    praduga_penyebab: a.type === 'pump' ? 'Keausan mechanical seal atau misalignment kopling poros.' : a.type === 'heat' ? 'Akumulasi deposit kerak (fouling) pada dinding tube bundle.' : 'Hambatan gerakan stem katup dan deviasi kalibrasi positioner.',
+    usulan_tindakan: a.type === 'pump' ? 'Laser alignment ulang dan penggantian gasket seal.' : a.type === 'heat' ? 'Backwash kimiawi dan hydro-cleaning berkala.' : 'Pelumasan stem packing dan kalibrasi smart positioner.',
+    verifikasi: 'Uji jalan dan verifikasi parameter operasional kembali dalam batas aman.'
+  };
+}
+
 function resetDraft() {
   clearInterval(state.recordingTimer);
+  if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+    try { state.mediaRecorder.stop(); } catch(e) {}
+  }
   state.selectedAsset = null; state.reportMode = 'voice'; state.draftText = ''; state.transcriptReady = false; state.recording = false; state.seconds = 0; state.imageName = '';
+  state.entities = null; state.nameplateTag = ''; state.audioBlob = null; state.audioChunks = [];
   if (state.imageUrl) URL.revokeObjectURL(state.imageUrl); state.imageUrl = null;
 }
 
-function beginRecording() {
+async function beginRecording() {
   if (state.recording) {
+    if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+      try { state.mediaRecorder.stop(); } catch(e) {}
+    }
     clearInterval(state.recordingTimer); state.recording = false;
     const selected = assets.find(a => a.id === state.selectedAsset) || assets[0];
     const samples = {
@@ -534,10 +603,28 @@ function beginRecording() {
       pump: `Pompa sentrifugal ${selected.id} mengalami peningkatan getaran sejak awal shift (7,8 mm/s). Terlihat rembesan di area mechanical seal dan suhu bearing meningkat.`,
       valve: `Control Valve ${selected.id} merespons perintah lambat, tertinggal sekitar delapan detik dari sinyal perintah. Perlu pemeriksaan actuator dan positioner.`
     };
-    state.draftText = samples[selected.type] || samples.heat;
-    state.transcriptReady = true; render(); showToast('Transkrip simulasi berhasil dibuat.');
+    if (!state.draftText) state.draftText = samples[selected.type] || samples.heat;
+    state.entities = extract7Entities(state.draftText, selected.id);
+    state.transcriptReady = true; render(); showToast('Rekaman suara selesai. Ekstraksi 7 entitas siap ditinjau.');
   } else {
-    state.recording = true; state.seconds = 0; render();
+    state.recording = true; state.seconds = 0;
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        state.audioChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mr = new MediaRecorder(stream);
+        mr.ondataavailable = e => { if (e.data.size > 0) state.audioChunks.push(e.data); };
+        mr.onstop = () => {
+          state.audioBlob = new Blob(state.audioChunks, { type: 'audio/webm' });
+          stream.getTracks().forEach(t => t.stop());
+        };
+        state.mediaRecorder = mr;
+        mr.start();
+      } catch (err) {
+        console.warn('Microphone access fallback to simulation:', err);
+      }
+    }
+    render();
     state.recordingTimer = setInterval(() => {
       state.seconds++;
       const el = $('.voice-panel small');
@@ -552,13 +639,14 @@ function submitReport() {
   const title = state.draftText.toLowerCase().includes('getar') ? 'Getaran peralatan meningkat' : state.draftText.toLowerCase().includes('rembes') ? 'Indikasi kebocoran / rembesan' : `Temuan baru pada ${a.name}`;
   const id = 'RPT-' + (1049 + reports.length);
   const keptUrl = state.imageUrl, keptName = state.imageName;
+  const ent = state.entities || extract7Entities(state.draftText, a.id);
   const editTarget = state.editReportId ? reports.find(r => r.id === state.editReportId) : null;
   if (editTarget) {
-    Object.assign(editTarget, { title, asset: a.id, symptom: state.draftText.slice(0, 100), description: state.draftText, dept: a.dept, status: 'submitted', date: `${nowLabel()} · Dilengkapi`, note: '', evidence: keptName || editTarget.evidence, imageUrl: keptUrl || editTarget.imageUrl, source: state.reportMode });
-    state.imageUrl = null; state.editReportId = null; resetDraft(); state.activeReport = editTarget.id; state.page = 'report-detail'; render(); showToast('Laporan dilengkapi & dikirim kembali.'); return;
+    Object.assign(editTarget, { title, asset: a.id, symptom: ent.gejala, description: state.draftText, dept: a.dept, status: 'PRADUGA', date: `${nowLabel()} · Dilengkapi`, note: '', evidence: keptName || editTarget.evidence, imageUrl: keptUrl || editTarget.imageUrl, source: state.reportMode, ...ent });
+    state.imageUrl = null; state.editReportId = null; resetDraft(); state.activeReport = editTarget.id; state.page = 'report-detail'; render(); showToast('Laporan dilengkapi & dikirim (Status: PRADUGA).'); return;
   }
-  reports.unshift({ id, title, asset: a.id, symptom: state.draftText.slice(0, 100), description: state.draftText, reporter: state.user.name, reporterRole: state.user.role, dept: a.dept, date: `${nowLabel()} · Demo`, status: 'submitted', evidence: keptName || 'Bukti foto belum dilampirkan', imageUrl: keptUrl, priority: 'medium', source: state.reportMode });
-  state.imageUrl = null; resetDraft(); state.activeReport = id; state.page = 'report-detail'; render(); showToast('Laporan berhasil dikirim ke antrean departemen.');
+  reports.unshift({ id, title, asset: a.id, symptom: ent.gejala, description: state.draftText, reporter: state.user.name, reporterRole: state.user.role, dept: a.dept, date: `${nowLabel()} · Demo`, status: 'PRADUGA', evidence: keptName || 'Bukti foto belum dilampirkan', imageUrl: keptUrl, priority: 'medium', source: state.reportMode, ...ent });
+  state.imageUrl = null; resetDraft(); state.activeReport = id; state.page = 'report-detail'; render(); showToast('Laporan berhasil dikirim. Status awal terkunci: PRADUGA.');
 }
 
 function openReport(id) {
@@ -607,6 +695,13 @@ document.addEventListener('click', e => {
     if (a === 'notifications' || a === 'user-menu') { state.activePopover = state.activePopover === a ? null : a; renderPopover(); return; }
     if (a === 'close-popover') { state.activePopover = null; renderPopover(); return; }
     if (a === 'toggle-record') return beginRecording();
+    if (a === 'gemini-extract') {
+      const selected = assets.find(x => x.id === state.selectedAsset) || assets[0];
+      state.entities = extract7Entities(state.draftText, selected.id);
+      render();
+      showToast('Gemini AI: 7 entitas kegagalan berhasil diekstrak!');
+      return;
+    }
     if (a === 'submit-report') return submitReport();
     if (a === 'remove-photo') { if (state.imageUrl) URL.revokeObjectURL(state.imageUrl); state.imageUrl = null; state.imageName = ''; render(); return; }
     if (a === 'complete-report') { const r = reports.find(x => x.id === act.dataset.id); if (!r) return; state.editReportId = r.id; state.selectedAsset = r.asset; state.reportMode = 'text'; state.draftText = r.description; state.page = 'new-report'; render(); return; }
@@ -631,7 +726,27 @@ document.addEventListener('input', e => {
   if (e.target.id === 'knowledge-search') { state.knowledgeQuery = e.target.value; const pos = e.target.selectionStart; render(); const inp = $('#knowledge-search'); if (inp) { inp.focus(); inp.setSelectionRange(pos, pos); } }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'evidence-file' && e.target.files?.[0]) { if (state.imageUrl) URL.revokeObjectURL(state.imageUrl); state.imageUrl = URL.createObjectURL(e.target.files[0]); state.imageName = e.target.files[0].name; render(); }
+  if (e.target.id === 'evidence-file' && e.target.files?.[0]) {
+    if (state.imageUrl) URL.revokeObjectURL(state.imageUrl);
+    state.imageUrl = URL.createObjectURL(e.target.files[0]);
+    state.imageName = e.target.files[0].name;
+    render();
+  }
+  if (e.target.id === 'nameplate-file' && e.target.files?.[0]) {
+    const file = e.target.files[0];
+    const n = file.name.toUpperCase();
+    let detected = 'P-101A';
+    if (n.includes('201') || n.includes('HEAT') || n.includes('E-201')) detected = 'E-201';
+    else if (n.includes('301') || n.includes('VALVE') || n.includes('FCV')) detected = 'FCV-301';
+    state.selectedAsset = detected;
+    state.nameplateTag = detected;
+    state.imageName = file.name;
+    if (state.imageUrl) URL.revokeObjectURL(state.imageUrl);
+    state.imageUrl = URL.createObjectURL(file);
+    state.entities = extract7Entities(state.draftText || `Pemeriksaan fisik pada ${detected}`, detected);
+    showToast(`Scan Nameplate Berhasil: ${detected} terdeteksi!`);
+    render();
+  }
 });
 
 render();

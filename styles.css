@@ -287,11 +287,11 @@ body.dark-mode .avatar { background: linear-gradient(135deg, #00B8D9, #0284C7); 
 /* Architectural Status Tags (No Round Pills) */
 .status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 7px; border: 1px solid transparent; border-left-width: 4px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; line-height: 1.2; }
 .status svg { width: 14px; height: 14px; flex: none; }
-.status.submitted, .status.review { background: var(--info-bg); color: var(--info); border-color: var(--info-border); border-left-color: var(--info); }
-.status.validation { background: var(--val-bg); color: var(--val); border-color: var(--val-border); border-left-color: var(--val); }
-.status.verified { background: var(--green-bg); color: var(--green); border-color: var(--green-border); border-left-color: var(--green); }
-.status.more { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-border); border-left-color: var(--amber); }
-.status.rejected { background: var(--red-bg); color: var(--red); border-color: var(--red-border); border-left-color: var(--red); }
+.status.praduga, .status.more { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-border); border-left-color: #D97706; }
+.status.triage, .status.submitted, .status.review { background: var(--info-bg); color: var(--info); border-color: var(--info-border); border-left-color: #0284C7; }
+.status.investigation, .status.validation { background: var(--val-bg); color: var(--val); border-color: var(--val-border); border-left-color: #8B5CF6; }
+.status.verified { background: var(--green-bg); color: var(--green); border-color: var(--green-border); border-left-color: #059669; }
+.status.rejected { background: var(--red-bg); color: var(--red); border-color: var(--red-border); border-left-color: #DC2626; }
 
 /* Report Rows */
 .report-row { display: grid; grid-template-columns: 60px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 12px; margin: 0 -12px; border-radius: 14px; border-bottom: 1px solid var(--line-soft); transition: background-color 0.18s; }
