@@ -169,12 +169,40 @@ INSERT INTO public.reports (
     NOW() - INTERVAL '36 hours', NOW() - INTERVAL '36 hours' -- SLA: YELLOW (24–48 jam)
 ),
 (
+    -- KASUS 7: Pompa P-101A (TRIAGE, YELLOW SLA)
     'REP-007', 'Suara Kavitasi Suction Pompa P-101A', 'P-101A', 'TRIAGE',
-    'Pompa P-101A (Tag: P-101A)', 'Suara berderak kerikil khas kavitasi pada sisi suction impeller', 'Level tangki suction 2.1 m (ambang minimum operasi)', 'Pengukuran tekanan suction turun mendekati tekanan uap jenuh fluida', 'Net Positive Suction Head Available (NPSHa) kritis akibat level tangki', 'Kenaikan setpoint level tangki suction dan buka penuh suction valve', 'Verifikasi hilangnya kebisingan akustik kavitasi',
-    'HIGH', 'Major', 'Likely', 'Erosi pitting pada impeler pompa yang dapat menghancurkan sudu.',
-    'Penyesuaian interlock level tangki hisap minimal 3.0 meter.', 'Pemeriksaan ketebalan dinding suction pipe dengan Ultrasonic Thickness Gauge.', '2026-11-26', 'Dedi Kusnadi (Mekanik)',
-    'Terdengar suara dentuman kerikil saat laju alir diturunkan ke 65% beban nominal.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Audio rekaman mikrofon akustik industri.', 'assets/synqra-logo-dark.png',
+    'Pompa Sentrifugal P-101A (Tag: P-101A)', 'Suara berderak kerikil khas kavitasi pada sisi suction impeller saat laju alir diturunkan.', 'Level tangki suction 2.1 m (ambang minimum operasi), debit 65% beban nominal.', 'Pengukuran tekanan suction turun mendekati tekanan uap jenuh fluida.', 'Net Positive Suction Head Available (NPSHa) kritis akibat level tangki hisap terlalu rendah.', 'Kenaikan setpoint level tangki suction ke 3.0 m dan buka penuh suction line throttle valve.', 'Verifikasi spektrum akustik kavitasi hilang saat margin NPSHa naik melampaui 2 meter.',
+    'HIGH', 'Major', 'Likely', 'Erosi pitting pada impeler pompa yang dapat menghancurkan sudu sudu dalam jangka menengah.',
+    'Penyesuaian batas interlock level tangki hisap minimal 3.0 meter di DCS.', 'Pemeriksaan ketebalan dinding pipa hisap menggunakan Ultrasonic Thickness Gauge.', '2026-11-26', 'Dedi Kusnadi (Mekanik)',
+    'Terdengar suara dentuman kerikil saat laju alir diturunkan ke 65% beban nominal.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Audio rekaman mikrofon akustik industri.', '/assets/synqra-logo-dark.png',
     NOW() - INTERVAL '26 hours', NOW() - INTERVAL '26 hours' -- SLA: YELLOW (24–48 jam)
+),
+(
+    -- KASUS 8: Heat Exchanger E-201 (VERIFIED, GREEN SLA)
+    'REP-008', 'Kebocoran Gasket Channel Head Heat Exchanger E-201', 'E-201', 'VERIFIED',
+    'Heat Exchanger Pre-Heat Train E-201 (Tag: E-201)', 'Rembesan cairan minyak mentah di sekeliling sambungan channel cover flange saat start-up dingin.', 'Unit start-up pasca-turnaround, tekanan uji 4.5 bar, temperatur 38°C.', 'Gasket spiral wound terkompresi tidak seragam akibat deviasi torsi baut flange.', 'Torsi baut channel cover tidak merata dan gasket terpasang miring 1.5 mm.', 'Penggantian gasket spiral wound 316L/graphite baru dan pengencangan baut menyilang sesuai ASME PCC-1.', 'Uji hidrostatik 1.5x tekanan kerja desain (9.0 bar) selama 2 jam tanpa penurunan tekanan dan nol rembesan.',
+    'MEDIUM', 'Moderate', 'Possible', 'Risiko kontaminasi lingkungan area paving dan bahaya slip-trip bagi operator lapangan.',
+    'Penggantian gasket spiral wound baru dengan pemandu torsi bertahap (star pattern).', 'Penerapan checklist verifikasi kalibrasi torque wrench sebelum setiap pekerjaan flange joint.', '2026-11-27', 'Ir. Agus Wijaya (Supervisor)',
+    'Rembesan minyak mentah terlihat menetes pada flange channel cover sisi produk.', 'Siti Nurhaliza', 'frontline_omi', 'Proses & Operasi', 'Foto pemeriksaan channel head flange dan sertifikat uji tekan hidrolik.', '/assets/synqra-logo-light.png',
+    NOW() - INTERVAL '8 hours', NOW() - INTERVAL '1 hours' -- SLA: GREEN (< 24 jam)
+),
+(
+    -- KASUS 9: Control Valve FCV-301 (PRADUGA, GREEN SLA)
+    'REP-009', 'Kebocoran Udara Diafragma Actuator FCV-301', 'FCV-301', 'PRADUGA',
+    'Pneumatic Flow Control Valve FCV-301 (Tag: FCV-301)', 'Terdengar desisan udara instrumen kontinu di sekitar casing pneumatic diaphragm actuator.', 'Tekanan udara suplai 4.2 bar, valve beroperasi di modulasi 45% - 55%.', 'Deteksi kebocoran ultrasonik mendeteksi kebocoran udara sebesar 14 liter/menit pada sambungan casing atas.', 'Robekan mikro atau keausan elastisitas pada diafragma karet neoprene akibat penuaan siklus kerja.', 'Isolasi bypass valve, de-pressurisasi chamber, dan ganti diafragma actuator kit.', 'Tes kedap udara 4.5 bar selama 30 menit dengan gelembung sabun (Snoop) tanpa kebocoran.',
+    'MEDIUM', 'Moderate', 'Possible', 'Penurunan tekanan udara kontrol yang dapat menyebabkan fail-safe position valve tertutup mendadak.',
+    'Overhaul assembly diaphragm actuator dan penggantian internal rubber kit.', 'Penggantian berkala diafragma pneumatic setiap 24 bulan dalam program PM terjadwal.', '2026-12-01', 'Budi Santoso (Instrumen)',
+    'Desisan suplai udara instrumen terdeteksi di casing actuator bagian atas saat valve modulasi.', 'Budi Santoso', 'frontline_omi', 'Instrumentasi & Kontrol', 'Spektrogram detektor kebocoran ultrasonik SDT270.', '/assets/synqra-logo-dark.png',
+    NOW() - INTERVAL '15 hours', NOW() - INTERVAL '15 hours' -- SLA: GREEN (< 24 jam)
+),
+(
+    -- KASUS 10: Pompa P-101A (VERIFIED, YELLOW SLA)
+    'REP-010', 'Resonansi Frekuensi Sudu Impeller Pompa P-101A', 'P-101A', 'VERIFIED',
+    'Pompa Sentrifugal P-101A (Tag: P-101A)', 'Puncak vibrasi 1X dan 5X Blade Pass Frequency (BPF) mencapai 6.4 mm/s pada putaran 2980 RPM.', 'Operasi continuous pada beban penuh 125 m³/jam, tekanan discharge 4.6 bar.', 'Analisis spektrum FFT menunjukkan fenomena resonansi struktur baseplate dengan frekuensi sudu pompa.', 'Kelonggaran baut angkur fondasi baseplate pompa dan deviasi massa dinamis sudu.', 'Grouting ulang fondasi epoxy baseplate dan dynamic balance rotor pompa di workshop.', 'Hasil balancing ISO 1940 Grade G2.5 terverifikasi, vibrasi operasional turun menjadi 1.8 mm/s.',
+    'HIGH', 'Major', 'Possible', 'Kelelahan material struktural (fatigue cracking) pada impeler dan poros pompa transfer.',
+    'Grouting baseplate dengan Chockfast Red epoxy dan pengencangan baut fondasi 600 Nm.', 'Inspeksi visual kekencangan angkur fondasi dan torque check rutin per 6 bulan.', '2026-11-20', 'Dedi Kusnadi (Mekanik)',
+    'Vibrasi terukur tinggi pada spektrum FFT 1X dan 5X blade pass saat pompa mencapai debit maksimal.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Laporan spektrum FFT waterfall & sertifikat dynamic balancing ISO G2.5.', '/assets/synqra-logo-light.png',
+    NOW() - INTERVAL '42 hours', NOW() - INTERVAL '4 hours' -- SLA: YELLOW (24–48 jam)
 )
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
@@ -193,17 +221,37 @@ ON CONFLICT (id) DO UPDATE SET
 -- 9. CASE_COMMENTS SEED (2-Way Feedback Thread Demo)
 INSERT INTO public.case_comments (report_id, author_name, author_role, comment, is_revision_request, requested_evidence)
 VALUES
+('REP-001', 'Ir. Agus Wijaya', 'dept_reviewer', 'Mohon tim mekanik melampirkan data log vibrasi 3 hari terakhir sebelum intervensi overhaul dimulai.', FALSE, NULL),
+('REP-001', 'Dedi Kusnadi', 'frontline_omi', 'Data spektrum FFT vibration logger sudah kami upload di lampiran evidence tambahan.', FALSE, NULL),
 ('REP-005', 'Ir. Agus Wijaya', 'dept_reviewer', 'Laporan dikembalikan ke status PRADUGA. Mohon lampirkan foto area sambungan flange dan hasil log kalibrasi gas detector MSA Altair sebelum diteruskan ke investigasi.', TRUE, 'Foto flange & kalibrasi gas detector'),
-('REP-005', 'Hadi Purnomo', 'frontline_omi', 'Siap Pak Agus, foto nameplate dan hasil pengetesan LEL sedang disiapkan oleh tim shift pagi dan akan segera diunggah.', FALSE, NULL)
+('REP-005', 'Hadi Purnomo', 'frontline_omi', 'Siap Pak Agus, foto nameplate dan hasil pengetesan LEL sedang disiapkan oleh tim shift pagi dan akan segera diunggah.', FALSE, NULL),
+('REP-006', 'Dr. Rina Suryani', 'hse_validator', 'Catatan validator: Deviasi sinyal transmitter ini berulang setiap 3 bulan, investigasi perlu mengecek apakah getaran pipa beresonansi dengan arm positioner.', FALSE, NULL),
+('REP-008', 'Ir. Agus Wijaya', 'dept_reviewer', 'Sertifikat kalibrasi torque wrench dan laporan uji hidrolik 9 bar sudah divalidasi tim QC.', FALSE, NULL),
+('REP-010', 'Dr. Rina Suryani', 'hse_validator', 'Kasus disahkan: Hasil dynamic balancing rotor pompa memenuhi standar ISO 1940 G2.5.', FALSE, NULL)
 ON CONFLICT DO NOTHING;
 
--- 10. STORAGE BUCKET CONFIGURATION
+-- 10. EVIDENCES SEED (Catatan file bukti fisik di Supabase Storage)
+-- PERHATIAN: REP-005 SENGAJA TIDAK MEMILIKI RECORD DI SINI AGAR KUNCI VALIDASI TERKUNCI!
+INSERT INTO public.evidences (report_id, file_name, storage_path, mime_type, file_size_bytes, caption, uploaded_by)
+VALUES
+('REP-001', 'fft-vibration-spectrum-p101a.png', 'p-101a/fft-vibration-spectrum-p101a.png', 'image/png', 245000, 'Spektrum getaran FFT bantalan DE 7.8 mm/s', 'Dedi Kusnadi'),
+('REP-002', 'thermal-profile-curve-e201.png', 'e-201/thermal-profile-curve-e201.png', 'image/png', 312000, 'Kurva penurunan efisiensi termal preheat train', 'Siti Nurhaliza'),
+('REP-003', 'step-response-chart-fcv301.png', 'fcv-301/step-response-chart-fcv301.png', 'image/png', 198000, 'Grafik respon stroke step delay 8 detik', 'Budi Santoso'),
+('REP-004', 'flir-thermography-nde-bearing.jpg', 'p-101a/flir-thermography-nde-bearing.jpg', 'image/jpeg', 420000, 'Citra inframerah hot spot temperatur 74C NDE', 'Dedi Kusnadi'),
+('REP-006', 'analog-signal-logger-4-20ma.png', 'fcv-301/analog-signal-logger-4-20ma.png', 'image/png', 185000, 'Log sinyal transmitter Yokogawa deviasi 6.5%', 'Dr. Rina Suryani'),
+('REP-007', 'cavitation-acoustic-spectrogram.png', 'p-101a/cavitation-acoustic-spectrogram.png', 'image/png', 276000, 'Spektrogram audio kavitasi suction impeller', 'Dedi Kusnadi'),
+('REP-008', 'flange-channel-cover-hydrotest.jpg', 'e-201/flange-channel-cover-hydrotest.jpg', 'image/jpeg', 389000, 'Hasil uji tekan hidrolik 9 bar channel head', 'Ir. Agus Wijaya'),
+('REP-009', 'ultrasonic-leak-sdt270.png', 'fcv-301/ultrasonic-leak-sdt270.png', 'image/png', 215000, 'Data detektor kebocoran ultrasonik diafragma', 'Budi Santoso'),
+('REP-010', 'dynamic-balancing-certificate-g25.pdf', 'p-101a/dynamic-balancing-certificate-g25.pdf', 'application/pdf', 540000, 'Sertifikat balancing rotor ISO 1940 Grade G2.5', 'Dedi Kusnadi')
+ON CONFLICT DO NOTHING;
+
+-- 11. STORAGE BUCKET CONFIGURATION
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
     'synqra-evidences',
     'synqra-evidences',
     true,
     10485760,
-    ARRAY['image/jpeg', 'image/png', 'image/webp', 'audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/ogg']
+    ARRAY['image/jpeg', 'image/png', 'image/webp', 'audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'application/pdf']
 )
 ON CONFLICT (id) DO UPDATE SET public = true;
