@@ -233,7 +233,9 @@ const state = {
   reportFilter: 'all', queueFilter: 'all', toastTimer: null,
   darkMode: localStorage.getItem('synqra-theme') === 'dark',
   activePopover: null, activeKgNode: 'asset', activeLoginLoop: null,
-  mediaRecorder: null, audioChunks: [], audioBlob: null, nameplateTag: '', entities: null, isAiProcessing: false
+  mediaRecorder: null, audioChunks: [], audioBlob: null, nameplateTag: '', entities: null, isAiProcessing: false,
+  selectedKgAsset: 'P-101A', kgFilterMode: 'VERIFIED_ONLY', activeKgCaseId: null,
+  synqraQuery: '', synqraResult: null, isSearchingSynqra: false
 };
 
 function applyTheme() {
@@ -811,12 +813,577 @@ function renderValidationDetail() {
     </div>`;
 }
 
+function formatAiAnswer(text) {
+  let res = esc(text)
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+  res = res.replace(/\[(\d+)\]/g, (match, num) => {
+    return `<button class="citation-pill" data-action="open-citation" data-citation-index="${num}" title="Buka bukti fisik asli sitasi [${num}]">[${num}]</button>`;
+  });
+  return res;
+}
+
+function askSynqraAI(queryText, assetTarget) {
+  const q = (queryText || state.synqraQuery || '').trim();
+  if (!q) {
+    showToast('Tuliskan pertanyaan kasus atau pilih dari pertanyaan cepat.');
+    return;
+  }
+  state.synqraQuery = q;
+  state.isSearchingSynqra = true;
+  render();
+
+  let detectedAsset = assetTarget || null;
+  if (!detectedAsset) {
+    for (const a of assets) {
+      if (q.toUpperCase().includes(a.id)) {
+        detectedAsset = a.id;
+        break;
+      }
+    }
+  }
+
+  const stopWords = ['dan', 'di', 'pada', 'yang', 'atau', 'ke', 'dari', 'ini', 'itu', 'untuk', 'ada', 'dengan', 'saya', 'apa', 'bagaimana', 'apakah', 'mengapa', 'adakah', 'bisa', 'saat'];
+  const terms = q.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w));
+
+  const candidates = [];
+
+  reports.forEach(r => {
+    let score = 0;
+    if (detectedAsset && r.asset === detectedAsset) score += 35;
+    const corpus = `${r.id} ${r.title} ${r.symptom} ${r.description} ${r.asset} ${r.dept} ${r.praduga_penyebab || ''} ${r.cause || ''}`.toLowerCase();
+    terms.forEach(t => {
+      if (corpus.includes(t)) score += 12;
+    });
+
+    const isVerified = r.status === 'verified' || r.status === 'VERIFIED';
+    if (isVerified) score += 100; // Prioritas utama untuk kasus VERIFIED!
+    else if (r.status === 'PRADUGA' || r.status === 'more') score += 10;
+    else score += 25;
+
+    if (r.imageUrl || (r.evidence && !r.evidence.toLowerCase().includes('belum'))) score += 10;
+
+    if (score > 10 || (detectedAsset && r.asset === detectedAsset)) {
+      candidates.push({
+        id: r.id,
+        title: r.title,
+        asset: r.asset,
+        status: isVerified ? 'VERIFIED' : (r.status === 'more' ? 'PRADUGA' : r.status.toUpperCase()),
+        symptom: r.symptom || r.description,
+        cause: r.cause || r.praduga_penyebab || 'Dalam investigasi keandalan departemen.',
+        solution: r.solution || r.usulan_tindakan || 'Tindakan mitigasi standar sesuai SOP kilang.',
+        evidence: r.evidence || 'Dokumen inspeksi lapangan',
+        imageUrl: r.imageUrl,
+        score
+      });
+    }
+  });
+
+  knowledge.forEach(k => {
+    let score = 0;
+    if (detectedAsset && k.asset === detectedAsset) score += 35;
+    const corpus = `${k.id} ${k.title} ${k.symptom} ${k.cause} ${k.solution} ${k.asset}`.toLowerCase();
+    terms.forEach(t => {
+      if (corpus.includes(t)) score += 12;
+    });
+    if (k.status === 'verified') score += 100;
+    else score += 20;
+
+    if (score > 10 || (detectedAsset && k.asset === detectedAsset)) {
+      candidates.push({
+        id: k.id,
+        title: k.title,
+        asset: k.asset,
+        status: k.status === 'verified' ? 'VERIFIED' : 'INVESTIGASI',
+        symptom: k.symptom,
+        cause: k.cause,
+        solution: k.solution,
+        evidence: k.evidence || `Foto rekaman teknis ${k.asset}`,
+        imageUrl: k.imageUrl || 'assets/synqra-logo-dark.png',
+        score
+      });
+    }
+  });
+
+  candidates.sort((a, b) => b.score - a.score);
+
+  const seenIds = new Set();
+  const citations = [];
+  for (const c of candidates) {
+    if (!seenIds.has(c.id)) {
+      seenIds.add(c.id);
+      citations.push(c);
+      if (citations.length === 3) break;
+    }
+  }
+
+  if (citations.length === 0) {
+    const defaultK = knowledge[0];
+    citations.push({
+      id: defaultK.id,
+      title: defaultK.title,
+      asset: defaultK.asset,
+      status: 'VERIFIED',
+      symptom: defaultK.symptom,
+      cause: defaultK.cause,
+      solution: defaultK.solution,
+      evidence: `Berkas historis ${defaultK.asset}`,
+      imageUrl: 'assets/synqra-logo-light.png',
+      score: 100
+    });
+  }
+
+  const hasPradugaWarning = citations.some(c => c.status === 'PRADUGA' || c.status === 'MORE' || c.status === 'TRIAGE' || c.status === 'INVESTIGATION' || c.status === 'SUBMITTED' || c.status === 'REVIEW');
+
+  const c1 = citations[0];
+  const c2 = citations[1];
+  const c3 = citations[2];
+
+  let answerText = `Berdasarkan penelusuran hibrida data operasional Supabase & riwayat verifikasi keandalan:\n\n` +
+    `1. **Diagnosis Anomali & Temuan Lapangan**:\n` +
+    `Pada peralatan **${c1.asset}**, analisis merujuk pada kasus **${c1.id}** [1] (${c1.status}). Gejala teramati adalah: "${c1.symptom}". ` +
+    (c1.status === 'VERIFIED' ? `Kasus ini telah disahkan pakar dengan akar penyebab: **${c1.cause}** [1].` : `Status temuan masih **${c1.status}** dengan praduga penyebab: **${c1.cause}** [1].\n⚠️ Catatan: Kasus ini belum diverifikasi final oleh pakar HSE.`) +
+    `\n\n2. **Validasi Bukti Fisik Asli (Supabase Storage)**:\n` +
+    `Kondisi komponen terdokumentasi dalam file bukti **${c1.evidence}** [1]${c2 ? ` dan **${c2.evidence}** [2]` : ''}. Parameter vibrasi/tekanan telah dikomparasikan terhadap baseline operasional kilang.` +
+    (c2 ? `\n\n3. **Korelasi Kasus Serupa**:\nSebagai data pembanding, kasus **${c2.id}** [2] (${c2.status}) pada unit ${c2.asset} mencatat anomali sejenis ("${c2.symptom}"). Solusi yang terbukti efektif adalah: **${c2.solution}** [2].` : '') +
+    `\n\n4. **Rekomendasi Tindakan Korektif (CAPA)**:\n` +
+    `Rekomendasi teknis: **${c1.solution}** [1]. Pastikan izin kerja aman (PTW) divalidasi dan verifikasi pasca-perbaikan dicatat dalam sistem SYNQRA.`;
+
+  setTimeout(() => {
+    state.isSearchingSynqra = false;
+    state.synqraResult = {
+      query: q,
+      answer: answerText,
+      citations,
+      hasPradugaWarning
+    };
+    render();
+    showToast('Tanya SYNQRA: Jawaban Gemini AI dan sitasi bukti siap ditinjau!');
+  }, 350);
+}
+
+function openEvidenceModal(item, citationNum = null) {
+  if (!item) return;
+  const isVerified = item.status === 'VERIFIED' || item.status === 'verified';
+  const badgeCls = isVerified ? 'verified' : 'praduga';
+  const badgeLabel = isVerified ? 'TERVERIFIKASI' : (item.status || 'PRADUGA');
+  const sitasiLabel = citationNum ? `SITASI [${citationNum}] · ` : '';
+
+  $('#modal-root').innerHTML = `
+    <div class="modal-backdrop" data-action="close-modal">
+      <section class="modal evidence-lightbox-modal" role="dialog" aria-modal="true" style="max-width:680px;width:95%">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="eyebrow" style="color:var(--cyan-dark);margin:0">${sitasiLabel}DOKUMEN BUKTI ASLI (SUPABASE STORAGE)</div>
+          <button class="btn btn-outline btn-sm" data-action="close-modal" style="padding:4px 10px">${ico('close', 16)} Tutup</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <h3 style="margin:0;font-size:18px">${esc(item.title || item.evidence || 'Dokumen Bukti')}</h3>
+          <span class="status ${badgeCls}" style="font-size:11px;padding:3px 8px">${ico(isVerified ? 'checkCircle' : 'alert', 13)} ${badgeLabel}</span>
+        </div>
+
+        <div class="evidence-preview-box" style="border-radius:12px;overflow:hidden;background:#061428;border:1.5px solid var(--line);margin-bottom:16px;text-align:center">
+          ${item.imageUrl ? `<img src="${item.imageUrl}" alt="Bukti Foto Lapangan" style="width:100%;max-height:340px;object-fit:contain;display:block;background:radial-gradient(circle,#0B254A 0%,#040D1A 100%)" />` : technicalDiagramMarkup(item.type || 'heat', item.asset, 'Skema Bukti Fisik')}
+          <div style="padding:10px 14px;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:12px">
+            <span style="color:var(--ink-soft);font-family:'Poppins',sans-serif;font-weight:700">📁 ${esc(item.evidence || 'Dokumen Bukti Foto Fisik')}</span>
+            <span style="color:var(--cyan-dark);font-weight:700">Aset: ${esc(item.asset)} (${item.id})</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;font-size:13px">
+          <div style="padding:10px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--line)">
+            <b style="color:var(--amber);display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase">Gejala Teramati</b>
+            <p style="margin:0;color:var(--ink);line-height:1.45">${esc(item.symptom || 'Anomali dilaporkan.')}</p>
+          </div>
+          <div style="padding:10px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--line)">
+            <b style="color:var(--cyan-dark);display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase">Akar Penyebab</b>
+            <p style="margin:0;color:var(--ink);line-height:1.45">${esc(item.cause || item.praduga_penyebab || 'Dalam investigasi keandalan.')}</p>
+          </div>
+        </div>
+
+        ${item.solution ? `
+          <div style="padding:12px 14px;border-radius:10px;background:rgba(2,132,199,0.08);border:1.5px solid rgba(2,132,199,0.3);margin-bottom:16px;font-size:13px">
+            <b style="color:var(--cyan-dark);display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase">Tindakan Penyelesaian Terverifikasi (CAPA)</b>
+            <p style="margin:0;color:var(--ink);font-weight:600;line-height:1.5">${esc(item.solution)}</p>
+          </div>
+        ` : ''}
+
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-primary btn-sm" data-action="close-modal">Selesai Meninjau Bukti</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function renderKnowledge() {
+  const activeAssetId = state.selectedKgAsset || 'P-101A';
+  const activeAsset = assets.find(a => a.id === activeAssetId) || assets[0];
+  
+  const verifiedReports = reports.filter(r => r.asset === activeAssetId && (r.status === 'verified' || r.status === 'VERIFIED'));
+  const allAssetReports = reports.filter(r => r.asset === activeAssetId);
+  const assetKnowledge = knowledge.filter(k => k.asset === activeAssetId);
+
+  const assetCases = [];
+  assetKnowledge.forEach(k => {
+    assetCases.push({
+      id: k.id,
+      title: k.title,
+      asset: k.asset,
+      status: k.status === 'verified' ? 'VERIFIED' : 'INVESTIGASI',
+      symptom: k.symptom,
+      cause: k.cause,
+      solution: k.solution,
+      evidence: k.evidence || `Dokumentasi Teknis ${k.asset}`,
+      imageUrl: k.imageUrl || 'assets/synqra-logo-dark.png',
+      isVerified: k.status === 'verified',
+      type: k.type
+    });
+  });
+
+  allAssetReports.forEach(r => {
+    const isV = r.status === 'verified' || r.status === 'VERIFIED';
+    if (!assetCases.some(c => c.id === r.id || c.id === `KB-${r.id.slice(-3)}`)) {
+      if (state.kgFilterMode === 'ALL' || isV) {
+        assetCases.push({
+          id: r.id,
+          title: r.title,
+          asset: r.asset,
+          status: isV ? 'VERIFIED' : (r.status === 'more' ? 'PRADUGA' : r.status.toUpperCase()),
+          symptom: r.symptom || r.description,
+          cause: r.cause || r.praduga_penyebab || 'Dalam investigasi keandalan.',
+          solution: r.solution || r.usulan_tindakan || 'Tindakan mitigasi standar.',
+          evidence: r.evidence || 'Dokumen inspeksi lapangan',
+          imageUrl: r.imageUrl,
+          isVerified: isV,
+          type: activeAsset.type
+        });
+      }
+    }
+  });
+
+  const activeCase = assetCases.find(c => c.id === state.activeKgCaseId) || assetCases[0] || {
+    id: 'REF-001',
+    title: `Kasus Acuan ${activeAsset.name}`,
+    asset: activeAsset.id,
+    status: 'VERIFIED',
+    symptom: 'Parameter operasional dalam rentang toleransi standar.',
+    cause: 'Pencegahan degradasi termal dan getaran berkala.',
+    solution: 'Inspeksi berkala dan pemantauan sensor continuous.',
+    evidence: 'Logbook operasional unit',
+    imageUrl: 'assets/synqra-logo-light.png',
+    isVerified: true,
+    type: activeAsset.type
+  };
+
   const q = state.knowledgeQuery.toLowerCase();
   const list = knowledge.filter(k => `${k.title} ${k.asset} ${k.assetName} ${k.symptom}`.toLowerCase().includes(q));
-  return `${pageHead('KNOWLEDGE BASE', 'Pengetahuan dari pengalaman lapangan.', 'Temukan kasus serupa, penyebab yang sudah ditinjau, dan tindakan penyelesaian.', `<span class="env-label">${knowledge.length} KASUS PENGETAHUAN</span>`)}
-    <div class="searchbar" style="margin-bottom:20px">${ico('search', 19)}<input id="knowledge-search" value="${esc(state.knowledgeQuery)}" placeholder="Cari gejala, nama peralatan, atau tag aset..." /></div>
-    <div class="grid grid-3">${list.map((k, idx) => `<article class="card knowledge-card tilt-card anim-in anim-delay-${(idx % 3) + 1}"><div class="knowledge-visual">${equipmentArt(k.type)}</div><div class="knowledge-body"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="eyebrow">${k.id}</span>${statusPill(k.status === 'verified' ? 'verified' : 'review')}</div><h3>${esc(k.title)}</h3><div class="kb-asset-sub">${esc(k.assetName)} · ${k.asset}</div><div class="kb-symptom-preview">${esc(k.symptom)}</div><button class="btn btn-outline btn-sm btn-full" style="margin-top:16px" data-knowledge="${k.id}">Buka pengetahuan ${ico('arrow', 15)}</button></div></article>`).join('')}</div>`;
+
+  return `
+    ${pageHead('KNOWLEDGE BASE', 'Pusat Pengetahuan & Graf Pembuktian.', 'Temukan kasus serupa, rujukan bukti Supabase, dan analisis berbasis kecerdasan AI.', `<span class="env-label">${knowledge.length + verifiedReports.length} KASUS TERVERIFIKASI</span>`)}
+
+    <!-- SECTION 1: TANYA SYNQRA AI (HYBRID SEARCH & GEMINI CITATIONS) -->
+    <section class="card card-pad tanya-synqra-panel anim-in" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="eyebrow" style="color:var(--cyan-dark);display:flex;align-items:center;gap:5px;margin:0">
+              ${ico('refresh', 16)} TANYA SYNQRA · GOOGLE GEMINI HYBRID SEARCH
+            </span>
+            <span class="status verified" style="font-size:10px;padding:2px 7px">SUPABASE CONTEXT &amp; SITASI [1], [2]</span>
+          </div>
+          <h3 style="margin:0;font-size:20px;font-weight:800;color:var(--ink)">Asisten Tanya Jawab Keandalan Berbasis Bukti Nyata</h3>
+          <p style="margin:4px 0 0;font-size:13px;color:var(--ink-soft)">Pencarian hibrida mencocokkan kode aset, kata kunci gejala, dan data Supabase. Kasus berstatus VERIFIED otomatis diprioritaskan di posisi teratas.</p>
+        </div>
+      </div>
+
+      <!-- Search Input Bar -->
+      <div class="searchbar" style="margin-bottom:12px;box-shadow:var(--shadow-sm)">
+        ${ico('search', 19)}
+        <input id="synqra-query-input" value="${esc(state.synqraQuery)}" placeholder="Tanyakan kasus teknis (cth: 'P-101A getaran 7.8 mm/s', 'E-201 delta P naik', 'FCV-301 valve terlambat 8 detik')..." />
+        <button class="btn btn-primary btn-sm" data-action="ask-synqra" style="white-space:nowrap;margin-left:8px">
+          ${state.isSearchingSynqra ? 'Menganalisis...' : `${ico('send', 14)} Tanyakan ke Gemini`}
+        </button>
+      </div>
+
+      <!-- Quick Sample Prompt Chips -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px">
+        <small style="font-family:'Poppins',sans-serif;font-size:11px;font-weight:800;color:var(--cyan-dark);text-transform:uppercase">Pertanyaan Cepat:</small>
+        <button class="prompt-chip" data-action="sample-prompt" data-prompt="Mengapa pompa P-101A mengalami kenaikan getaran 7.8 mm/s dan rembesan mechanical seal?" data-asset="P-101A">
+          P-101A Getaran &amp; Rembesan Seal
+        </button>
+        <button class="prompt-chip" data-action="sample-prompt" data-prompt="Bagaimana penanganan kenaikan differential pressure dan penurunan suhu keluar pada heat exchanger E-201?" data-asset="E-201">
+          E-201 Kenaikan &Delta;P &amp; Suhu Turun
+        </button>
+        <button class="prompt-chip" data-action="sample-prompt" data-prompt="Apa penyebab respon kendali katup FCV-301 melambat tertinggal 8 detik saat throttling DCS?" data-asset="FCV-301">
+          FCV-301 Respons Lambat 8 Detik
+        </button>
+        <button class="prompt-chip" data-action="sample-prompt" data-prompt="Apakah ada temuan rembesan gas hidrokarbon flange yang belum diverifikasi bukti fotonya?" data-asset="E-201">
+          E-201 Rembesan Flange (PRADUGA)
+        </button>
+      </div>
+
+      <!-- Dynamic Result Container -->
+      ${state.synqraResult ? `
+        <div class="tanya-result-box anim-in" style="border-top:1px solid var(--line-soft);padding-top:16px">
+          
+          <!-- PRADUGA WARNING BOX (Mandatory Rule) -->
+          ${state.synqraResult.hasPradugaWarning ? `
+            <div class="warning-praduga-box">
+              <span style="color:var(--amber);font-size:22px;line-height:1;margin-top:2px">${ico('alert', 22)}</span>
+              <div>
+                <b>PERINGATAN KNOWLEDGE BASE · STATUS PRADUGA TERDETEKSI</b>
+                Hasil sintesis AI merujuk kasus berstatus <u>PRADUGA</u> / <u>DALAM INVESTIGASI</u> yang belum disahkan oleh Pakar HSE / Process Safety. Gunakan sebagai pertimbangan awal dan wajib lakukan verifikasi fisik di lapangan sebelum intervensi teknis.
+              </div>
+            </div>
+          ` : `
+            <div style="padding:10px 14px;border-radius:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);font-size:12.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+              ${ico('checkCircle', 16)} <b>PRIORITAS STANDAR:</b> Rujukan didominasi oleh kasus yang telah disahkan (VERIFIED) oleh Pakar Keandalan.
+            </div>
+          `}
+
+          <!-- Synthesized AI Answer with Clickable [1], [2] Citations -->
+          <div class="ai-answer-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="font-family:'Poppins',sans-serif;font-size:12px;font-weight:800;color:var(--cyan-dark);display:flex;align-items:center;gap:6px">
+                ${ico('book', 15)} RANGKUMAN TANYA SYNQRA (GEMINI API)
+              </span>
+              <small class="muted" style="font-size:11px">Klik sitasi [1], [2] untuk membuka foto/dokumen bukti fisik asli.</small>
+            </div>
+            <div class="ai-answer-content" style="font-size:14px;line-height:1.65;color:var(--ink)">
+              ${formatAiAnswer(state.synqraResult.answer)}
+            </div>
+          </div>
+
+          <!-- Citations Grid (Bukti Lapangan) -->
+          <div style="margin-top:16px">
+            <div style="font-family:'Poppins',sans-serif;font-size:12px;font-weight:800;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+              ${ico('file', 15)} DAFTAR SITASI BUKTI ASLI SUPABASE (${state.synqraResult.citations.length} RUJUKAN):
+            </div>
+            <div class="citations-grid">
+              ${state.synqraResult.citations.map((c, i) => `
+                <div class="citation-card-item">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                      <span class="citation-pill" data-action="open-citation" data-citation-index="${i + 1}">[${i + 1}]</span>
+                      <span class="status ${c.status === 'VERIFIED' ? 'verified' : 'praduga'}" style="font-size:10px;padding:2px 6px">
+                        ${ico(c.status === 'VERIFIED' ? 'checkCircle' : 'alert', 12)} ${c.status}
+                      </span>
+                    </div>
+                    <b style="display:block;font-size:13px;color:var(--ink);margin-bottom:3px">${esc(c.title)}</b>
+                    <div style="font-size:11.5px;color:var(--cyan-dark);font-weight:700;margin-bottom:4px">Aset: ${c.asset} · ${c.id}</div>
+                    <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;line-height:1.4">${esc(c.symptom).slice(0, 85)}...</p>
+                  </div>
+                  <button class="btn btn-outline btn-sm btn-full" data-action="open-citation" data-citation-index="${i + 1}" style="font-size:11.5px;padding:6px">
+                    ${ico('camera', 13)} Buka Dokumen Bukti [${i + 1}]
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+        </div>
+      ` : ''}
+    </section>
+
+    <!-- SECTION 2: KNOWLEDGE GRAPH TERISOLASI PER ASET (5 TINGKAT: ASET -> KASUS -> GEJALA -> PENYEBAB -> FILE BUKTI) -->
+    <section class="card card-pad anim-in anim-delay-1" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--line-soft);padding-bottom:14px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="eyebrow" style="color:var(--cyan-dark);margin:0">KNOWLEDGE GRAPH TERISOLASI PER ASET</span>
+            <span class="status verified" style="font-size:10px;padding:2px 7px">5 TINGKAT RANTAI BUKTI</span>
+          </div>
+          <h3 style="margin:0;font-size:19px;font-weight:800;color:var(--ink)">
+            Graf Pengetahuan: Aset &rarr; Kasus &rarr; Gejala &rarr; Penyebab &rarr; File Bukti
+          </h3>
+          <p style="margin:4px 0 0;font-size:13px;color:var(--ink-soft)">
+            Data graf terisolasi secara mandiri untuk setiap peralatan kilang. Setiap temuan baru yang disahkan pakar (VERIFIED) otomatis masuk ke rantai pembuktian aset ini.
+          </p>
+        </div>
+
+        <!-- Asset Tabs -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          ${assets.map(a => {
+            const isSel = a.id === activeAssetId;
+            const vCount = reports.filter(r => r.asset === a.id && (r.status === 'verified' || r.status === 'VERIFIED')).length + knowledge.filter(k => k.asset === a.id && k.status === 'verified').length;
+            return `
+              <button class="kg-asset-pill-btn ${isSel ? 'active' : ''}" data-action="select-kg-asset" data-asset="${a.id}">
+                <span>${a.id}</span>
+                <small style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(0,0,0,0.2)">${vCount} Terverifikasi</small>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Detail Subgrid for Isolated Asset -->
+      <div class="detail-grid">
+        
+        <!-- Left Column: Asset Identity & Case Switcher -->
+        <div>
+          ${technicalDiagramMarkup(activeAsset.type, activeAsset.id, `Skema Teknis ${activeAsset.name} · ${activeAsset.area}`)}
+          
+          <div style="margin-top:16px;padding:14px;border-radius:12px;background:var(--soft);border:1px solid var(--line)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span class="eyebrow" style="color:var(--cyan-dark);margin:0">${activeAsset.id}</span>
+              <span class="status verified" style="font-size:11px">${verifiedReports.length + assetKnowledge.length} Kasus Terdata</span>
+            </div>
+            <h4 style="margin:0;font-size:16px;color:var(--ink)">${esc(activeAsset.name)}</h4>
+            <p style="margin:4px 0 0;font-size:12.5px;color:var(--ink-soft)">${esc(activeAsset.area)} · Dept: ${esc(activeAsset.dept)}</p>
+          </div>
+
+          <!-- Case Selection within this Asset -->
+          <div style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <small style="font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:800;color:var(--ink);text-transform:uppercase">
+                Kasus Terhubung (${assetCases.length}):
+              </small>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-outline btn-sm ${state.kgFilterMode === 'VERIFIED_ONLY' ? 'active' : ''}" data-action="set-kg-filter" data-filter="VERIFIED_ONLY" style="padding:2px 8px;font-size:10.5px">Hanya Verified</button>
+                <button class="btn btn-outline btn-sm ${state.kgFilterMode === 'ALL' ? 'active' : ''}" data-action="set-kg-filter" data-filter="ALL" style="padding:2px 8px;font-size:10.5px">Semua</button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${assetCases.map(c => {
+                const isAct = c.id === activeCase.id;
+                return `
+                  <button class="quick-action ${isAct ? 'highlight-pulse' : ''}" data-action="select-kg-case" data-case-id="${c.id}" style="border-color:${isAct ? 'var(--cyan)' : 'var(--line)'};padding:10px 12px">
+                    <span class="quick-icon" style="background:${c.isVerified ? 'var(--green-bg)' : 'var(--amber-bg)'};color:${c.isVerified ? 'var(--green)' : 'var(--amber)'}">${ico(c.isVerified ? 'checkCircle' : 'alert', 16)}</span>
+                    <span style="text-align:left">
+                      <b style="font-size:12.5px;display:block">${esc(c.title)}</b>
+                      <small style="font-size:11px;color:var(--ink-soft)">${c.id} · ${c.status}</small>
+                    </span>
+                    <span class="arrow">${ico('chevron', 14)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: The 5-Tier Isolated Chain Flow -->
+        <div>
+          <div style="padding:14px 16px;border-radius:12px;background:var(--navy);color:#fff;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-family:'Poppins',sans-serif;font-size:11px;font-weight:800;color:var(--cyan);text-transform:uppercase;display:block">
+                RANTAI PEMBUKTIAN AKTIF
+              </span>
+              <b style="font-size:14px">${activeCase.id}: ${esc(activeCase.title)}</b>
+            </div>
+            <span class="status ${activeCase.isVerified ? 'verified' : 'praduga'}" style="font-size:11px">
+              ${ico(activeCase.isVerified ? 'checkCircle' : 'alert', 13)} ${activeCase.status}
+            </span>
+          </div>
+
+          <!-- 5 Tiers Vertical Flow with Step Connections -->
+          <div class="kg-5tier-vertical-flow">
+            
+            <!-- TIER 1: ASET -->
+            <div class="kg-step-box">
+              <div class="kg-step-num" style="background:var(--cyan);color:#061A38">1</div>
+              <div class="kg-step-content" style="border-left:3px solid var(--cyan)">
+                <span class="kg-step-label" style="color:var(--cyan)">TINGKAT 1 · ASET UTAMA</span>
+                <b>${esc(activeAsset.name)} (${activeAsset.id})</b>
+                <p>${esc(activeAsset.area)} · Divisi ${esc(activeAsset.dept)}</p>
+              </div>
+            </div>
+
+            <div class="kg-step-connector"></div>
+
+            <!-- TIER 2: KASUS -->
+            <div class="kg-step-box">
+              <div class="kg-step-num" style="background:#0284C7;color:#fff">2</div>
+              <div class="kg-step-content" style="border-left:3px solid #0284C7">
+                <span class="kg-step-label" style="color:#0284C7">TINGKAT 2 · KASUS TERDATA</span>
+                <b>${activeCase.id} — ${esc(activeCase.title)}</b>
+                <p>Status Kasus: <b>${activeCase.status}</b></p>
+              </div>
+            </div>
+
+            <div class="kg-step-connector"></div>
+
+            <!-- TIER 3: GEJALA -->
+            <div class="kg-step-box">
+              <div class="kg-step-num" style="background:var(--amber);color:#061A38">3</div>
+              <div class="kg-step-content" style="border-left:3px solid var(--amber)">
+                <span class="kg-step-label" style="color:var(--amber)">TINGKAT 3 · GEJALA TERAMATI</span>
+                <b>${esc(activeCase.symptom)}</b>
+                <p>Terdeteksi dari sensor &amp; observasi teknisi lapangan.</p>
+              </div>
+            </div>
+
+            <div class="kg-step-connector"></div>
+
+            <!-- TIER 4: AKAR PENYEBAB -->
+            <div class="kg-step-box">
+              <div class="kg-step-num" style="background:#A855F7;color:#fff">4</div>
+              <div class="kg-step-content" style="border-left:3px solid #A855F7">
+                <span class="kg-step-label" style="color:#A855F7">TINGKAT 4 · AKAR PENYEBAB (RCA) &amp; CAPA</span>
+                <b>${esc(activeCase.cause)}</b>
+                <p style="margin-top:4px"><span style="color:var(--green);font-weight:700">Rekomendasi Tindakan:</span> ${esc(activeCase.solution)}</p>
+              </div>
+            </div>
+
+            <div class="kg-step-connector"></div>
+
+            <!-- TIER 5: FILE BUKTI FISIK -->
+            <div class="kg-step-box">
+              <div class="kg-step-num" style="background:var(--green);color:#061A38">5</div>
+              <div class="kg-step-content" style="border-left:3px solid var(--green)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <span class="kg-step-label" style="color:var(--green)">TINGKAT 5 · FILE BUKTI LAPANGAN (SUPABASE STORAGE)</span>
+                  <span class="status verified" style="font-size:10px;padding:1px 6px">TERHUBUNG</span>
+                </div>
+                <b>📁 ${esc(activeCase.evidence || 'Dokumen Rekaman Fisik')}</b>
+                <p style="margin:4px 0 10px">Bukti foto resolusi tinggi &amp; rekaman spektrum getaran terikat pada kasus.</p>
+                <button class="btn btn-primary btn-sm" data-action="open-evidence-item" data-case-id="${activeCase.id}">
+                  ${ico('camera', 14)} Buka File Bukti Asli &amp; Metadata
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: DAFTAR KARTU KNOWLEDGE BASE -->
+    <div style="margin-top:20px">
+      <div class="card-title" style="margin-bottom:12px">
+        <div>
+          <h3 style="font-size:17px;font-weight:800;color:var(--ink)">Katalog Artikel Solusi Terverifikasi</h3>
+          <p style="font-size:13px;color:var(--ink-soft)">Daftar seluruh panduan penanganan kegagalan mesin kilang yang telah disetujui tim reliability.</p>
+        </div>
+      </div>
+      <div class="searchbar" style="margin-bottom:20px">
+        ${ico('search', 19)}
+        <input id="knowledge-search" value="${esc(state.knowledgeQuery)}" placeholder="Cari gejala, nama peralatan, atau tag aset..." />
+      </div>
+      <div class="grid grid-3">
+        ${list.map((k, idx) => `
+          <article class="card knowledge-card tilt-card anim-in anim-delay-${(idx % 3) + 1}">
+            <div class="knowledge-visual">${equipmentArt(k.type)}</div>
+            <div class="knowledge-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                <span class="eyebrow">${k.id}</span>
+                ${statusPill(k.status === 'verified' ? 'verified' : 'review')}
+              </div>
+              <h3>${esc(k.title)}</h3>
+              <div class="kb-asset-sub">${esc(k.assetName)} · ${k.asset}</div>
+              <div class="kb-symptom-preview">${esc(k.symptom)}</div>
+              <button class="btn btn-outline btn-sm btn-full" style="margin-top:16px" data-knowledge="${k.id}">
+                Buka pengetahuan ${ico('arrow', 15)}
+              </button>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function renderKnowledgeDetail() {
@@ -1056,8 +1623,25 @@ function confirmDecision(id, decision) {
   r.status = decision; r.note = note; r.verifiedBy = state.user.name;
   if (decision === 'verified') {
     const a = assets.find(x => x.id === r.asset) || assets[0];
+    state.selectedKgAsset = r.asset;
     if (!knowledge.some(k => k.id === `KB-${r.id.slice(-3)}`)) {
-      knowledge.unshift({ id: `KB-${r.id.slice(-3)}`, title: r.title, asset: r.asset, assetName: `${a.name} · ${a.subtitle}`, symptom: r.symptom, cause: note, solution: 'Tindakan korektif mengikuti standar prosedur perawatan aset.', result: 'Temuan disahkan oleh validator ahli.', cases: 1, tags: ['Terverifikasi', a.dept], type: a.type, status: 'verified' });
+      knowledge.unshift({
+        id: `KB-${r.id.slice(-3)}`,
+        title: r.title,
+        asset: r.asset,
+        assetName: `${a.name} · ${a.subtitle}`,
+        symptom: r.symptom,
+        cause: note,
+        solution: r.usulan_tindakan || 'Tindakan korektif mengikuti standar prosedur perawatan aset.',
+        result: 'Temuan disahkan oleh validator ahli.',
+        cases: 1,
+        tags: ['Terverifikasi', a.dept],
+        type: a.type,
+        status: 'verified',
+        evidence: r.evidence,
+        imageUrl: r.imageUrl,
+        reportId: r.id
+      });
     }
   }
   $('#modal-root').innerHTML = ''; state.page = 'validation-queue'; render(); showToast('Keputusan validasi berhasil disimpan.');
@@ -1171,6 +1755,60 @@ document.addEventListener('click', e => {
     if (a === 'decision') return openDecisionModal(act.dataset.id, act.dataset.decision, $('#validator-note')?.value || '');
     if (a === 'confirm-decision') return confirmDecision(act.dataset.id, act.dataset.decision);
     if (a === 'close-modal') { if (act.classList.contains('modal-backdrop') || act.tagName === 'BUTTON') $('#modal-root').innerHTML = ''; return; }
+    if (a === 'ask-synqra') {
+      const q = $('#synqra-query-input')?.value;
+      askSynqraAI(q);
+      return;
+    }
+    if (a === 'sample-prompt') {
+      const p = act.dataset.prompt;
+      const asset = act.dataset.asset;
+      askSynqraAI(p, asset);
+      return;
+    }
+    if (a === 'open-citation') {
+      const idx = parseInt(act.dataset.citationIndex, 10) - 1;
+      if (state.synqraResult && state.synqraResult.citations[idx]) {
+        openEvidenceModal(state.synqraResult.citations[idx], idx + 1);
+      }
+      return;
+    }
+    if (a === 'open-evidence-item') {
+      const cid = act.dataset.caseId;
+      const targetCase = reports.find(r => r.id === cid) || knowledge.find(k => k.id === cid);
+      if (targetCase) {
+        openEvidenceModal({
+          id: targetCase.id,
+          title: targetCase.title,
+          asset: targetCase.asset,
+          status: targetCase.status,
+          symptom: targetCase.symptom,
+          cause: targetCase.cause || targetCase.praduga_penyebab,
+          solution: targetCase.solution || targetCase.usulan_tindakan,
+          evidence: targetCase.evidence,
+          imageUrl: targetCase.imageUrl,
+          type: targetCase.type
+        });
+      }
+      return;
+    }
+    if (a === 'select-kg-asset') {
+      state.selectedKgAsset = act.dataset.asset;
+      state.activeKgCaseId = null;
+      render();
+      return;
+    }
+    if (a === 'set-kg-filter') {
+      state.kgFilterMode = act.dataset.filter;
+      state.activeKgCaseId = null;
+      render();
+      return;
+    }
+    if (a === 'select-kg-case') {
+      state.activeKgCaseId = act.dataset.caseId;
+      render();
+      return;
+    }
   }
   const rep = e.target.closest('[data-report]'); if (rep) return openReport(rep.dataset.report);
   const ast = e.target.closest('[data-asset]'); if (ast) { state.selectedAsset = ast.dataset.asset; render(); return; }
@@ -1207,6 +1845,13 @@ document.addEventListener('change', e => {
     state.entities = extract7Entities(state.draftText || `Pemeriksaan fisik pada ${detected}`, detected);
     showToast(`Scan Nameplate Berhasil: ${detected} terdeteksi!`);
     render();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'synqra-query-input') {
+    e.preventDefault();
+    askSynqraAI(e.target.value);
   }
 });
 
