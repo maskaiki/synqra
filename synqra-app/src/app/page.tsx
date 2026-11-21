@@ -1,658 +1,336 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Asset, Report, UserRole } from '@/types/synqra';
-import { ROLES, INITIAL_ASSETS, INITIAL_REPORTS, calculateSla } from '@/lib/constants';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { TechnicalArt } from '@/components/ui/TechnicalArt';
-import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
-import { LaporCepatModal } from '@/components/reports/LaporCepatModal';
-import { ReportDetailModal } from '@/components/reports/ReportDetailModal';
-import { SlaReminderBanner } from '@/components/sla/SlaReminderBanner';
+import React, { useEffect, useState } from 'react';
+import {
+  Asset,
+  CaseComment,
+  CitationItem,
+  Evidence,
+  MainPage,
+  Report,
+  UserRole,
+} from '@/types/synqra';
+import {
+  calculateSla,
+  INITIAL_ASSETS,
+  INITIAL_COMMENTS,
+  INITIAL_EVIDENCES,
+  INITIAL_REPORTS,
+  ROLES,
+} from '@/lib/constants';
+import {
+  loadWorkspaceData,
+  persistComment,
+  persistNewReport,
+  persistReportUpdate,
+  resetLocalWorkspace,
+  saveLocalWorkspace,
+} from '@/lib/dataService';
+import { LoginView } from '@/components/auth/LoginView';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Topbar } from '@/components/layout/Topbar';
+import { HomeView } from '@/components/dashboard/HomeView';
+import { LaporCepatView } from '@/components/reports/LaporCepatView';
+import { CasesListView } from '@/components/reports/CasesListView';
+import { CaseDetailView } from '@/components/reports/CaseDetailView';
 import { KnowledgeGraphView } from '@/components/knowledge/KnowledgeGraphView';
 import { TanyaSynqraView } from '@/components/knowledge/TanyaSynqraView';
-import { EvidenceLightboxModal, EvidenceCitationData } from '@/components/knowledge/EvidenceLightboxModal';
-import {
-  Mic,
-  Scan,
-  Search,
-  CheckCircle2,
-  AlertTriangle,
-  FileText,
-  Activity,
-  Sparkles,
-  ArrowRight,
-  Sun,
-  Moon,
-  ChevronRight,
-  Clock,
-  Inbox,
-  Filter,
-  Check,
-  Layers,
-} from 'lucide-react';
+import { EvidenceLightboxModal } from '@/components/knowledge/EvidenceLightboxModal';
+import { Check } from 'lucide-react';
 
-export default function Home() {
-  const [currentRole, setCurrentRole] = useState<UserRole>('dept_reviewer'); // Default to reviewer to show Triage & SLA immediately
+export default function SynqraApp() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentRole, setCurrentRole] = useState<UserRole>('frontline_omi');
+  const [activePage, setActivePage] = useState<MainPage>('home');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
   const [reports, setReports] = useState<Report[]>(INITIAL_REPORTS);
-  const [assets] = useState<Asset[]>(INITIAL_ASSETS);
+  const [comments, setComments] = useState<CaseComment[]>(INITIAL_COMMENTS);
+  const [evidences, setEvidences] = useState<Evidence[]>(INITIAL_EVIDENCES);
+  const [dataSource, setDataSource] = useState<'supabase' | 'local'>('local');
+  const [hydrated, setHydrated] = useState(false);
 
-  // Top View Navigation
-  const [activeMainTab, setActiveMainTab] = useState<'operations' | 'knowledge_graph' | 'tanya_synqra'>('operations');
-
-  // Filters
-  const [selectedAssetFilter, setSelectedAssetFilter] = useState<string>('ALL');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
-  const [slaFilter, setSlaFilter] = useState<'ALL' | 'OVERDUE' | 'URGENT'>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Modals
-  const [isLaporCepatOpen, setIsLaporCepatOpen] = useState(false);
-  const [activeReportDetail, setActiveReportDetail] = useState<Report | null>(null);
-  const [activeEvidenceCitation, setActiveEvidenceCitation] = useState<EvidenceCitationData | null>(null);
-
-  // Toast Notification
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Dark mode toggle
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [activeCitation, setActiveCitation] = useState<CitationItem | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
-    setToastMessage(msg);
+    setToastMsg(msg);
     setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
+      setToastMsg((prev) => (prev === msg ? null : prev));
+    }, 3800);
   };
+
+  // Load saved theme & workspace data on mount
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem('synqra-theme');
+    const shouldDark = savedTheme === 'dark';
+    setIsDarkMode(shouldDark);
+    document.documentElement.classList.toggle('dark', shouldDark);
+
+    loadWorkspaceData().then((snap) => {
+      setAssets(snap.assets);
+      setReports(snap.reports);
+      setComments(snap.comments);
+      setEvidences(snap.evidences);
+      setDataSource(snap.source);
+      setHydrated(true);
+    });
+  }, []);
+
+  // Auto-persist local state changes
+  useEffect(() => {
+    if (hydrated && dataSource === 'local') {
+      saveLocalWorkspace(reports, comments, evidences);
+    }
+  }, [reports, comments, evidences, hydrated, dataSource]);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (!isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle('dark', next);
+      window.localStorage.setItem('synqra-theme', next ? 'dark' : 'light');
+      return next;
+    });
+  };
+
+  const handleLogin = (role: UserRole) => {
+    setCurrentRole(role);
+    setIsLoggedIn(true);
+    setActivePage('home');
+    showToast(`Masuk sebagai ${ROLES[role].name} (${ROLES[role].shortRole}).`);
+  };
+
+  const handleRoleChange = (role: UserRole) => {
+    setCurrentRole(role);
+    showToast(`Peran aktif diganti ke ${ROLES[role].name} (${ROLES[role].shortRole}).`);
+  };
+
+  const handleResetDemo = () => {
+    const snap = resetLocalWorkspace();
+    setAssets(snap.assets);
+    setReports(snap.reports);
+    setComments(snap.comments);
+    setEvidences(snap.evidences);
+    showToast('Data demo berhasil dikembalikan ke kondisi awal.');
+  };
+
+  const handleOpenReport = (report: Report) => {
+    setSelectedReportId(report.id);
+    setActivePage('case-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleReportCreated = async (newReport: Report, initialEvidence?: Evidence) => {
+    setReports((prev) => [newReport, ...prev]);
+    if (initialEvidence) {
+      setEvidences((prev) => [...prev, initialEvidence]);
     }
+    await persistNewReport(newReport);
+    setSelectedReportId(newReport.id);
+    setActivePage('case-detail');
+    showToast(`Laporan ${newReport.id} berhasil disimpan dengan status awal PRADUGA.`);
   };
 
-  const activeRoleInfo = ROLES[currentRole];
-
-  // Filtered reports
-  const filteredReports = reports.filter((r) => {
-    const matchesAsset = selectedAssetFilter === 'ALL' || r.asset_id === selectedAssetFilter;
-    const matchesStatus = selectedStatusFilter === 'ALL' || r.status === selectedStatusFilter;
-    
-    // SLA filter
-    const sla = calculateSla(r.updated_at || r.created_at);
-    let matchesSla = true;
-    if (slaFilter === 'OVERDUE') matchesSla = sla.level === 'red';
-    if (slaFilter === 'URGENT') matchesSla = sla.level === 'red' || sla.level === 'yellow';
-
-    const matchesQuery =
-      searchQuery === '' ||
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.identitas_alat.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.gejala.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.id.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesAsset && matchesStatus && matchesSla && matchesQuery;
-  });
-
-  // KPI counts
-  const countPraduga = reports.filter((r) => r.status === 'PRADUGA').length;
-  const countTriage = reports.filter((r) => r.status === 'TRIAGE').length;
-  const countInvestigation = reports.filter((r) => r.status === 'INVESTIGATION').length;
-  const countVerified = reports.filter((r) => r.status === 'VERIFIED').length;
-
-  const countOverdue = reports.filter((r) => {
-    if (r.status === 'VERIFIED') return false;
-    return calculateSla(r.updated_at || r.created_at).level === 'red';
-  }).length;
-
-  const handleReportCreated = (newReport: Report) => {
-    setReports([newReport, ...reports]);
-    setActiveReportDetail(newReport);
-    showToast(`✅ Laporan ${newReport.id} berhasil dibuat dengan status awal terkunci PRADUGA.`);
-  };
-
-  const handleStatusUpdate = (
+  const handleUpdateReport = async (
     reportId: string,
-    newStatus: Report['status'],
-    revisionComment?: string,
-    requestedEvidence?: string
+    patch: Partial<Report>,
+    toastText: string
   ) => {
+    const updatedAt = new Date().toISOString();
     setReports((prev) =>
-      prev.map((r) => {
-        if (r.id === reportId) {
-          return {
-            ...r,
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-          };
-        }
-        return r;
-      })
+      prev.map((r) => (r.id === reportId ? { ...r, ...patch, updated_at: updatedAt } : r))
     );
+    await persistReportUpdate(reportId, { ...patch, updated_at: updatedAt });
+    showToast(toastText);
+  };
 
-    if (activeReportDetail && activeReportDetail.id === reportId) {
-      setActiveReportDetail({
-        ...activeReportDetail,
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      });
-    }
+  const handleAddEvidence = (ev: Evidence) => {
+    setEvidences((prev) => [...prev, ev]);
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === ev.report_id
+          ? {
+              ...r,
+              evidence_note: `${ev.file_name} (${ev.caption || 'Terlampir'})`,
+              image_url: ev.public_url || r.image_url,
+              updated_at: new Date().toISOString(),
+            }
+          : r
+      )
+    );
+    showToast(`Bukti "${ev.file_name}" berhasil ditambahkan ke Evidence Vault.`);
+  };
 
-    if (newStatus === 'VERIFIED') {
-      showToast(`🛡️ Kasus ${reportId} disahkan TERVERIFIKASI & otomatis masuk ke Knowledge Graph!`);
-    } else if (newStatus === 'PRADUGA' && revisionComment) {
-      showToast(`↩️ Kasus ${reportId} dikembalikan ke PRADUGA untuk revisi bukti: "${requestedEvidence || revisionComment}"`);
-    } else {
-      showToast(`🔄 Status kasus ${reportId} diperbarui menjadi ${newStatus}.`);
-    }
+  const handleAddComment = async (newComment: CaseComment) => {
+    setComments((prev) => [...prev, newComment]);
+    await persistComment(newComment);
+    showToast('Catatan kasus berhasil disimpan ke jejak audit.');
   };
 
   const handleSendSlaReminder = (targetReports: Report[]) => {
-    const targetIds = new Set(targetReports.map((t) => t.id));
+    const ids = new Set(targetReports.map((t) => t.id));
     const nowIso = new Date().toISOString();
-
     setReports((prev) =>
-      prev.map((r) => {
-        if (targetIds.has(r.id)) {
-          return {
-            ...r,
-            sla_reminder_count: (r.sla_reminder_count || 0) + 1,
-            sla_last_reminder_at: nowIso,
-          };
-        }
-        return r;
-      })
+      prev.map((r) =>
+        ids.has(r.id)
+          ? {
+              ...r,
+              sla_reminder_count: (r.sla_reminder_count || 0) + 1,
+              sla_last_reminder_at: nowIso,
+            }
+          : r
+      )
     );
-
     showToast(
-      `🔔 Pengingat SLA otomatis berhasil dikirimkan ke Teknisi Pelapor & Supervisor untuk ${targetReports.length} kasus prioritas!`
+      `Pengingat SLA terkirim ke pelapor & supervisor untuk ${targetReports.length} kasus tertunda.`
     );
   };
 
+  if (!isLoggedIn) {
+    return (
+      <LoginView
+        selectedRole={currentRole}
+        isDarkMode={isDarkMode}
+        onToggleTheme={toggleTheme}
+        onLogin={handleLogin}
+      />
+    );
+  }
+
+  const roleInfo = ROLES[currentRole];
+  const overdueCount = reports.filter(
+    (r) => r.status !== 'VERIFIED' && calculateSla(r.updated_at || r.created_at).isOverdue
+  ).length;
+  const verifiedCount = reports.filter((r) => r.status === 'VERIFIED').length;
+
+  const activeReport =
+    reports.find((r) => r.id === selectedReportId) || reports[0] || INITIAL_REPORTS[0];
+  const activeReportAsset =
+    assets.find((a) => a.id === activeReport.asset_id) || assets[0];
+
   return (
-    <div className="min-h-screen bg-slate-900/95 dark:bg-slate-950 text-slate-100 font-['Montserrat',sans-serif]">
-      
-      {/* TOAST NOTIFICATION */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-cyan-950 border border-cyan-500/50 text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
-            <Check className="w-4 h-4" />
-          </div>
-          <p className="text-xs font-semibold leading-relaxed font-['Montserrat',sans-serif]">
-            {toastMessage}
-          </p>
-        </div>
-      )}
+    <div className="min-h-screen flex bg-[var(--canvas)] text-[var(--ink)]">
+      {/* Left Sidebar + Mobile Bottom Nav */}
+      <Sidebar
+        activePage={activePage}
+        onNavigate={(page) => {
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        roleInfo={roleInfo}
+        isDarkMode={isDarkMode}
+        onToggleTheme={toggleTheme}
+        onLogout={() => setIsLoggedIn(false)}
+        overdueCount={overdueCount}
+        verifiedCount={verifiedCount}
+      />
 
-      {/* 1. TOPBAR */}
-      <header className="sticky top-0 z-30 h-20 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-sky-700 flex items-center justify-center font-['Poppins',sans-serif] font-black text-xl text-white shadow-lg shadow-cyan-500/25">
-              S
-            </div>
-            <div>
-              <div className="font-['Poppins',sans-serif] font-extrabold text-lg tracking-wider text-white">
-                SYNQRA
-              </div>
-              <div className="text-[10px] font-semibold tracking-wider text-cyan-400 uppercase">
-                Intelligence Connected by Evidence
-              </div>
-            </div>
-          </div>
-          <span className="hidden md:inline-flex items-center px-2.5 py-1 rounded-md text-[10.5px] font-['Poppins',sans-serif] font-bold tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-            OIL & GAS v2.0
-          </span>
-        </div>
+      {/* Right Content Column */}
+      <div className="flex-1 min-w-0 flex flex-col pb-20 lg:pb-0">
+        <Topbar
+          activePage={activePage}
+          currentRole={currentRole}
+          onRoleChange={handleRoleChange}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+          dataSource={dataSource}
+          onResetDemo={handleResetDemo}
+        />
 
-        {/* Topbar Right Actions */}
-        <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="w-10 h-10 rounded-xl border border-slate-700 bg-slate-800/80 hover:border-cyan-500 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
-            title="Ubah Mode Tampilan"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />}
-          </button>
+        <main className="w-full max-w-[1380px] mx-auto px-4 sm:px-8 py-7">
+          {activePage === 'home' && (
+            <HomeView
+              roleInfo={roleInfo}
+              assets={assets}
+              reports={reports}
+              isDarkMode={isDarkMode}
+              onNavigate={setActivePage}
+              onOpenReport={handleOpenReport}
+              onSendSlaReminder={handleSendSlaReminder}
+            />
+          )}
 
-          {/* Role Switcher Demo */}
-          <RoleSwitcher currentRole={currentRole} onRoleChange={setCurrentRole} />
-        </div>
-      </header>
+          {activePage === 'lapor' && (
+            <LaporCepatView
+              assets={assets}
+              roleInfo={roleInfo}
+              isDarkMode={isDarkMode}
+              onReportCreated={handleReportCreated}
+              onCancel={() => setActivePage('home')}
+            />
+          )}
 
-      {/* MAIN NAVIGATION BAR (OPERASI vs KNOWLEDGE GRAPH vs TANYA SYNQRA) */}
-      <div className="border-b border-slate-800 bg-slate-900/60 px-4 sm:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('operations')}
-              className={`px-4 py-2 rounded-xl text-xs font-['Poppins',sans-serif] font-bold transition-all flex items-center gap-2 ${
-                activeMainTab === 'operations'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Inbox className="w-4 h-4" />
-              <span>Operasi & Triage Kasus</span>
-            </button>
+          {activePage === 'cases' && (
+            <CasesListView
+              roleInfo={roleInfo}
+              assets={assets}
+              reports={reports}
+              evidences={evidences}
+              isDarkMode={isDarkMode}
+              onSelectReport={handleOpenReport}
+              onCreateNew={() => setActivePage('lapor')}
+              onSendSlaReminder={handleSendSlaReminder}
+            />
+          )}
 
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('knowledge_graph')}
-              className={`px-4 py-2 rounded-xl text-xs font-['Poppins',sans-serif] font-bold transition-all flex items-center gap-2 ${
-                activeMainTab === 'knowledge_graph'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Knowledge Graph Terisolasi</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-black">
-                {countVerified}
-              </span>
-            </button>
+          {activePage === 'case-detail' && activeReport && (
+            <CaseDetailView
+              report={activeReport}
+              asset={activeReportAsset}
+              roleInfo={roleInfo}
+              evidences={evidences.filter((e) => e.report_id === activeReport.id)}
+              comments={comments.filter((c) => c.report_id === activeReport.id)}
+              isDarkMode={isDarkMode}
+              onBack={() => setActivePage('cases')}
+              onUpdateReport={handleUpdateReport}
+              onAddEvidence={handleAddEvidence}
+              onAddComment={handleAddComment}
+              onPreviewEvidence={setActiveCitation}
+            />
+          )}
 
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('tanya_synqra')}
-              className={`px-4 py-2 rounded-xl text-xs font-['Poppins',sans-serif] font-bold transition-all flex items-center gap-2 ${
-                activeMainTab === 'tanya_synqra'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span>Tanya SYNQRA AI (Sitasi [1], [2])</span>
-            </button>
-          </div>
+          {activePage === 'graph' && (
+            <KnowledgeGraphView
+              assets={assets}
+              reports={reports}
+              evidences={evidences}
+              isDarkMode={isDarkMode}
+              onOpenEvidence={setActiveCitation}
+              onOpenReport={handleOpenReport}
+            />
+          )}
 
-          <div className="text-xs text-slate-400 font-medium hidden sm:flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Mode Aktif: <b className="text-slate-200">{activeRoleInfo.roleTitle}</b></span>
-          </div>
-
-        </div>
+          {activePage === 'tanya' && (
+            <TanyaSynqraView
+              assets={assets}
+              reports={reports}
+              evidences={evidences}
+              onOpenEvidence={setActiveCitation}
+            />
+          )}
+        </main>
       </div>
 
-      {/* MAIN CONTAINER */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-7">
-        
-        {/* VIEW 1: OPERASI & TRIAGE KASUS */}
-        {activeMainTab === 'operations' && (
-          <>
-            {/* SISTEM PENGINGAT SLA OTOMATIS (BANNER PRIORITAS TERATAS) */}
-            <SlaReminderBanner
-              reports={reports}
-              currentUserRole={currentRole}
-              onSendReminder={handleSendSlaReminder}
-              onSelectReport={(report) => setActiveReportDetail(report)}
-            />
-
-            {/* WELCOME HERO CARD */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 border border-slate-800 p-6 sm:p-8 shadow-xl">
-              <div className="relative z-10 max-w-2xl space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-['Poppins',sans-serif] font-bold tracking-wider uppercase">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Peran Aktif: {activeRoleInfo.roleTitle}
-                </div>
-                <h1 className="font-['Poppins',sans-serif] text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                  {currentRole === 'dept_reviewer' && 'Halaman Triage Departemen & Analisis Risiko'}
-                  {currentRole === 'hse_validator' && 'Gerbang Validasi Pakar (Hard Gate Protection)'}
-                  {currentRole === 'frontline_omi' && 'Dari Temuan Lapangan ke Pengetahuan Terstruktur'}
-                </h1>
-                <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                  {currentRole === 'frontline_omi' &&
-                    'Gunakan fitur Lapor Cepat AI untuk merekam suara teknisi, scan nameplate aset, dan mengekstrak 7 entitas kegagalan dengan status awal terkunci sebagai PRADUGA.'}
-                  {currentRole === 'dept_reviewer' &&
-                    'Tinjau kelengkapan laporan dari Frontline OMI, evaluasi SLA waktu respons, tetapkan Risk Report & CAPA, lalu teruskan ke status TRIAGE atau INVESTIGASI.'}
-                  {currentRole === 'hse_validator' &&
-                    'Sahkan temuan ke Knowledge Base dengan Aturan Keras (Hard Gate): tombol pengesahan otomatis terkunci jika bukti foto kosong atau pelapor adalah pengguna yang sama (no self-approval).'}
-                </p>
-
-                {/* Quick Actions */}
-                <div className="pt-4 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsLaporCepatOpen(true)}
-                    className="px-5 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-['Poppins',sans-serif] font-bold text-xs uppercase tracking-wider flex items-center gap-2.5 shadow-lg shadow-cyan-500/25 transition-all transform hover:scale-[1.02]"
-                  >
-                    <Mic className="w-4 h-4" />
-                    <span>Lapor Cepat AI (Suara & Scan)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsLaporCepatOpen(true)}
-                    className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-['Poppins',sans-serif] font-semibold text-xs flex items-center gap-2 transition-all"
-                  >
-                    <Scan className="w-4 h-4 text-cyan-400" />
-                    <span>Scan Nameplate</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Decorative background glow */}
-              <div className="absolute right-0 top-0 bottom-0 w-96 bg-cyan-500/5 blur-3xl rounded-full pointer-events-none" />
-            </div>
-
-            {/* KPI STAT METRICS */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-              <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 flex-shrink-0">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-['Poppins',sans-serif] text-xl font-black text-white">{reports.length}</div>
-                  <div className="text-[11px] text-slate-400 font-semibold">Total Temuan</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-['Poppins',sans-serif] text-xl font-black text-amber-400">{countPraduga}</div>
-                  <div className="text-[11px] text-slate-400 font-semibold">PRADUGA</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 flex-shrink-0">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-['Poppins',sans-serif] text-xl font-black text-sky-400">{countTriage + countInvestigation}</div>
-                  <div className="text-[11px] text-slate-400 font-semibold">Triage & Investigasi</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-['Poppins',sans-serif] text-xl font-black text-emerald-400">{countVerified}</div>
-                  <div className="text-[11px] text-slate-400 font-semibold">Terverifikasi</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 flex items-center gap-3 col-span-2 md:col-span-1">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 flex-shrink-0">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-['Poppins',sans-serif] text-xl font-black text-rose-400">{countOverdue}</div>
-                  <div className="text-[11px] text-rose-300 font-semibold">SLA Overdue (&gt;48j)</div>
-                </div>
-              </div>
-            </div>
-
-            {/* THREE INDUSTRIAL ASSETS SHOWCASE */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-['Poppins',sans-serif] text-base font-bold text-white">
-                    Peralatan Terdaftar ({assets.length})
-                  </h2>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Peralatan industri utama dengan visualisasi skematik 2D vektor.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {assets.map((asset) => {
-                  const isSelected = selectedAssetFilter === asset.id;
-                  const assetReportsCount = reports.filter((r) => r.asset_id === asset.id).length;
-
-                  return (
-                    <div
-                      key={asset.id}
-                      onClick={() => setSelectedAssetFilter(isSelected ? 'ALL' : asset.id)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected
-                          ? 'border-cyan-500 bg-cyan-950/20 shadow-lg shadow-cyan-500/10'
-                          : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-['Poppins',sans-serif] font-bold text-xs tracking-wider text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
-                            {asset.id}
-                          </span>
-                          <span className="text-xs font-semibold text-slate-400">
-                            {assetReportsCount} Kasus
-                          </span>
-                        </div>
-                        <div className="py-2">
-                          <TechnicalArt type={asset.type} darkMode={true} className="w-full h-24 mx-auto" />
-                        </div>
-                        <h3 className="font-['Poppins',sans-serif] font-bold text-sm text-white mt-1">
-                          {asset.name}
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                          {asset.area}
-                        </p>
-                      </div>
-                      <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-cyan-400 font-semibold">
-                        <span>{isSelected ? 'Menampilkan Kasus Terfilter' : 'Filter Kasus'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* REPORTS FEED WITH SLA BADGES & ARCHITECTURAL TAGS */}
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="font-['Poppins',sans-serif] text-base font-bold text-white flex items-center gap-2">
-                    <Inbox className="w-4 h-4 text-cyan-400" />
-                    Daftar Temuan Lapangan & Evaluasi Kasus ({filteredReports.length})
-                  </h2>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Dilengkapi indikator durasi SLA otomatis (Hijau &lt;24j, Kuning 24-48j, Merah &gt;48j).
-                  </p>
-                </div>
-
-                {/* Filter Group */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* SLA Filter Preset */}
-                  <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                    <span className="px-2 text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1">
-                      <Filter className="w-3 h-3" /> SLA:
-                    </span>
-                    {[
-                      { key: 'ALL', label: 'Semua SLA' },
-                      { key: 'OVERDUE', label: '🔴 Overdue' },
-                      { key: 'URGENT', label: '⚠️ Urgent' },
-                    ].map((s) => (
-                      <button
-                        key={s.key}
-                        type="button"
-                        onClick={() => setSlaFilter(s.key as typeof slaFilter)}
-                        className={`px-2.5 py-1 rounded-lg font-['Poppins',sans-serif] text-xs font-semibold transition-all ${
-                          slaFilter === s.key ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Status Filter Chips */}
-                  <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                    {[
-                      { key: 'ALL', label: 'Semua Status' },
-                      { key: 'PRADUGA', label: 'Praduga' },
-                      { key: 'TRIAGE', label: 'Triage' },
-                      { key: 'INVESTIGATION', label: 'Investigasi' },
-                      { key: 'VERIFIED', label: 'Terverifikasi' },
-                    ].map((tab) => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setSelectedStatusFilter(tab.key)}
-                        className={`px-3 py-1 rounded-lg font-['Poppins',sans-serif] text-xs font-semibold transition-all ${
-                          selectedStatusFilter === tab.key
-                            ? 'bg-cyan-500 text-slate-950 font-bold'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari berdasarkan kode tag, nama alat, gejala, atau nomor laporan..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/70 text-slate-100 placeholder:text-slate-500 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500"
-                />
-              </div>
-
-              {/* Reports List */}
-              <div className="space-y-3">
-                {filteredReports.map((report) => {
-                  const sla = calculateSla(report.updated_at || report.created_at);
-                  const isOverdue = sla.level === 'red' && report.status !== 'VERIFIED';
-
-                  return (
-                    <div
-                      key={report.id}
-                      className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                        isOverdue
-                          ? 'border-rose-500/40 bg-rose-950/20 hover:border-rose-500/70'
-                          : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="font-['Poppins',sans-serif] font-bold text-xs text-cyan-400">
-                            {report.id}
-                          </span>
-                          <span className="text-xs text-slate-500">·</span>
-                          <span className="text-xs text-slate-300 font-bold">{report.identitas_alat}</span>
-                          
-                          {/* Status Architectural Badge */}
-                          <StatusBadge status={report.status} size="sm" />
-
-                          {/* SLA Automatic Indicator */}
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-['Poppins',sans-serif] font-bold border ${sla.badgeClass}`}
-                          >
-                            <Clock className="w-3 h-3" />
-                            <span>{sla.label}</span>
-                          </span>
-
-                          {/* Hard Gate Indicator Flag for Empty Evidence */}
-                          {(!report.image_url || report.evidence_note?.includes('belum')) && (
-                            <span className="inline-flex items-center text-[10px] font-bold text-rose-400 bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 rounded">
-                              Bukti Belum Lengkap
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="font-['Poppins',sans-serif] font-bold text-base text-white truncate">
-                          {report.title}
-                        </h3>
-
-                        <p className="text-xs text-slate-400 line-clamp-2 font-medium">
-                          <b className="text-slate-300">Gejala:</b> {report.gejala}
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 pt-0.5">
-                          <span>Pelapor: <b className="text-slate-300">{report.reporter_name}</b> ({report.dept})</span>
-                          <span>Target CAPA: <b className="text-slate-300">{report.capa_target_date || '-'}</b></span>
-                          {report.sla_reminder_count ? (
-                            <span className="text-rose-400 font-semibold">Pengingat dikirim: {report.sla_reminder_count}x</span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setActiveReportDetail(report)}
-                          className="px-4 py-2.5 rounded-xl border border-slate-700 hover:border-cyan-500 bg-slate-800/80 hover:bg-slate-800 text-xs font-['Poppins',sans-serif] font-bold text-cyan-400 flex items-center gap-1.5 transition-colors whitespace-nowrap"
-                        >
-                          <span>Periksa Detail & Investigasi</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {filteredReports.length === 0 && (
-                  <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl">
-                    <p className="text-sm text-slate-400 font-medium">Tidak ada temuan yang cocok dengan kriteria filter.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* VIEW 2: KNOWLEDGE GRAPH TERISOLASI PER ASET */}
-        {activeMainTab === 'knowledge_graph' && (
-          <KnowledgeGraphView
-            assets={assets}
-            reports={reports}
-            onOpenEvidence={(citation) => setActiveEvidenceCitation(citation)}
-          />
-        )}
-
-        {/* VIEW 3: TANYA SYNQRA AI (PENCARIAN HIBRIDA + SITASI + PERINGATAN PRADUGA) */}
-        {activeMainTab === 'tanya_synqra' && (
-          <TanyaSynqraView
-            reports={reports}
-            onOpenEvidence={(citation) => setActiveEvidenceCitation(citation)}
-          />
-        )}
-
-      </main>
-
-      {/* MODAL 1: LAPOR CEPAT (GEMINI AI + MEDIARECORDER + SCAN NAMEPLATE) */}
-      <LaporCepatModal
-        isOpen={isLaporCepatOpen}
-        onClose={() => setIsLaporCepatOpen(false)}
-        onReportCreated={handleReportCreated}
-        currentUserRole={currentRole}
-        currentUserName={activeRoleInfo.name}
-        currentUserDept={activeRoleInfo.department}
-      />
-
-      {/* MODAL 2: REPORT DETAIL, RISK REPORT, CAPA, CASE COMMENTS & HARD GATE VALIDATION */}
-      <ReportDetailModal
-        report={activeReportDetail}
-        onClose={() => setActiveReportDetail(null)}
-        onStatusUpdate={handleStatusUpdate}
-        currentUserRole={currentRole}
-        currentUserName={activeRoleInfo.name}
-      />
-
-      {/* MODAL 3: EVIDENCE LIGHTBOX (MEMBUKA FOTO/DOKUMEN DARI SITASI [1], [2]) */}
+      {/* Evidence Preview Modal (from Citations [1], [2] & Evidence Vault) */}
       <EvidenceLightboxModal
-        citation={activeEvidenceCitation}
-        onClose={() => setActiveEvidenceCitation(null)}
+        citation={activeCitation}
+        onClose={() => setActiveCitation(null)}
       />
 
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div
+          role="status"
+          className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 max-w-md px-4 py-3.5 rounded-xl bg-[#0B1F44] dark:bg-[#0F284E] text-white border border-cyan-400/50 shadow-xl flex items-center gap-3 animate-fade-in"
+        >
+          <span className="w-7 h-7 rounded-lg bg-[#00B8D9]/20 text-[#38D6F0] flex items-center justify-center shrink-0">
+            <Check className="w-4 h-4 stroke-[2.5]" />
+          </span>
+          <p className="text-sm font-heading font-semibold m-0 leading-snug">{toastMsg}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,330 +1,556 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Report } from '@/types/synqra';
+import React, { useState, useRef, useEffect } from 'react';
+import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
-  Sparkles,
-  Search,
   AlertTriangle,
-  FileText,
-  Image as ImageIcon,
+  CheckCircle2,
+  Eye,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Send,
+  User,
+  Bot,
   HelpCircle,
 } from 'lucide-react';
-import { EvidenceCitationData } from './EvidenceLightboxModal';
 
-interface TanyaSynqraViewProps {
-  reports: Report[];
-  onOpenEvidence: (citation: EvidenceCitationData) => void;
+export interface CitationItemWithHybrid extends CitationItem {
+  matchReasons?: string[];
+  relevanceScore?: number;
 }
 
-export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({ reports, onOpenEvidence }) => {
+export interface ChatMessageItem {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  engine?: 'gemini-live' | 'local-fallback';
+  errorReason?: string;
+  citations?: CitationItemWithHybrid[];
+  detectedAsset?: string | null;
+  verifiedCount?: number;
+  hasUnverified?: boolean;
+}
+
+interface TanyaSynqraViewProps {
+  assets: Asset[];
+  reports: Report[];
+  evidences: Evidence[];
+  onOpenEvidence: (citation: CitationItem) => void;
+}
+
+const SUGGESTED_QUESTIONS = [
+  'Kenapa pompa P-101A bergetar tinggi dan mechanical seal rembes?',
+  'Apa penyebab penurunan delta-T dan fouling pada Heat Exchanger E-201?',
+  'Kenapa respons stroke Control Valve FCV-301 melambat?',
+  'Bagaimana penanganan kebocoran gasket channel pada E-201?',
+];
+
+export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
+  assets,
+  reports,
+  evidences,
+  onOpenEvidence,
+}) => {
+  const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [question, setQuestion] = useState('');
-  const [selectedAssetFilter, setSelectedAssetFilter] = useState<string>('ALL');
+  const [assetFilter, setAssetFilter] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Results State
-  const [resultAnswer, setResultAnswer] = useState<string | null>(null);
-  const [citations, setCitations] = useState<EvidenceCitationData[]>([]);
-  const [hasPradugaWarning, setHasPradugaWarning] = useState(false);
-  const [pradugaReports, setPradugaReports] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const sampleQuestions = [
-    {
-      q: 'Mengapa pompa P-101A mengalami getaran abnormal 7.8 mm/s dan bagaimana rekomendasinya?',
-      asset: 'P-101A',
-    },
-    {
-      q: 'Bagaimana penanganan penurunan delta temperatur 14°C pada heat exchanger E-201?',
-      asset: 'E-201',
-    },
-    {
-      q: 'Apa penyebab katup kendali FCV-301 mengalami keterlambatan respon 8 detik?',
-      asset: 'FCV-301',
-    },
-    {
-      q: 'Apakah ada temuan rembesan gas hidrokarbon yang belum terverifikasi bukti fotonya?',
-      asset: 'E-201',
-    },
-  ];
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleAsk = async (queryText?: string, assetTarget?: string) => {
-    const q = (queryText || question).trim();
-    if (!q) return;
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-    const targetAsset = assetTarget !== undefined ? assetTarget : selectedAssetFilter;
+  useEffect(() => {
+    if (messages.length > 0 || isLoading) {
+      scrollToBottom();
+    }
+  }, [messages, isLoading]);
 
+  const handleResetSession = () => {
+    setMessages([]);
+    setQuestion('');
+    setErrorMsg(null);
+  };
+
+  const runQuery = async (qText: string) => {
+    const trimmed = qText.trim();
+    if (!trimmed || isLoading) return;
+
+    const timeString = new Date().toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const userMessage: ChatMessageItem = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: trimmed,
+      timestamp: timeString,
+    };
+
+    // Ambil maksimal 6 pesan riwayat terakhir sebelum pesan baru ini
+    const historyPayload = messages.slice(-6).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    setMessages((prev) => [...prev, userMessage]);
+    setQuestion('');
     setIsLoading(true);
-    setResultAnswer(null);
-    setCitations([]);
-    setHasPradugaWarning(false);
+    setErrorMsg(null);
 
     try {
       const res = await fetch('/api/tanya-synqra', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: q,
-          assetFilter: targetAsset === 'ALL' ? undefined : targetAsset,
+          question: trimmed,
+          assetFilter,
           customReports: reports,
+          customEvidences: evidences,
+          history: historyPayload,
         }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        setResultAnswer(data.answer);
-        setCitations(data.citations || []);
-        setHasPradugaWarning(data.hasPradugaWarning || false);
-        setPradugaReports(data.pradugaReports || []);
-      } else {
-        setResultAnswer('Gagal memproses pertanyaan: ' + (data.error || 'Server error'));
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal mencari pengetahuan.');
       }
+
+      const assistantMessage: ChatMessageItem = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: json.answer,
+        timestamp: new Date().toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        engine: json.engine,
+        errorReason: json.errorReason,
+        citations: json.citations,
+        detectedAsset: json.detectedAsset,
+        verifiedCount: json.verifiedCount,
+        hasUnverified: json.hasUnverified,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err: unknown) {
-      console.error('Tanya SYNQRA error:', err);
-      setResultAnswer('Terjadi kendala jaringan saat menghubungi server Gemini API.');
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : 'Gagal menghubungi layanan Tanya SYNQRA.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  /**
-   * Helper untuk merender teks AI dengan sitasi [1], [2] yang interaktif dan dapat diklik
-   * untuk membuka dokumen/foto bukti aslinya langsung di Lightbox Modal.
-   */
-  const renderAnswerWithClickableCitations = (text: string) => {
-    // Regex matches [1], [2], [3], etc.
-    const parts = text.split(/(\[\d+\])/g);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runQuery(question);
+  };
 
-    return parts.map((part, index) => {
-      const match = part.match(/\[(\d+)\]/);
-      if (match) {
-        const citationNum = parseInt(match[1], 10);
-        const targetCitation = citations.find((c) => c.index === citationNum);
-
-        return (
-          <button
-            key={`cite-${index}`}
-            type="button"
-            onClick={() => {
-              if (targetCitation) {
-                onOpenEvidence(targetCitation);
+  // Render teks jawaban dengan tombol sitasi [1], [2] yang dapat diklik
+  const renderAnswerWithCitations = (
+    text: string,
+    citations: CitationItemWithHybrid[] = []
+  ) => {
+    const lines = text.split('\n');
+    return lines.map((line, lineIdx) => {
+      if (!line.trim()) return <div key={lineIdx} className="h-2" />;
+      const tokens = line.split(/(\[\d+\])/g);
+      return (
+        <p
+          key={lineIdx}
+          className="text-[15px] leading-relaxed text-[var(--ink)] font-medium m-0"
+        >
+          {tokens.map((tok, tIdx) => {
+            const match = tok.match(/^\[(\d+)\]$/);
+            if (match) {
+              const num = Number(match[1]);
+              const cit = citations.find((c) => c.index === num);
+              if (cit) {
+                return (
+                  <button
+                    key={tIdx}
+                    type="button"
+                    onClick={() => onOpenEvidence(cit)}
+                    title={`Buka bukti sumber ${cit.reportId}: ${cit.evidenceName}`}
+                    className="inline-flex items-center justify-center px-2 py-0.5 mx-1 rounded-[6px] bg-[#0B1F44] hover:bg-[#00B8D9] dark:bg-[#00B8D9] text-white hover:text-[#061A38] dark:text-[#061830] font-heading text-xs font-extrabold transition-colors align-baseline"
+                  >
+                    [{num}]
+                  </button>
+                );
               }
-            }}
-            className="inline-flex items-center px-1.5 py-0.2 mx-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-500/40 text-cyan-300 font-['Poppins',sans-serif] font-black text-xs transition-all hover:scale-105 cursor-pointer shadow-sm"
-            title={`Klik untuk membuka file bukti fisik temuan ${targetCitation ? targetCitation.reportId : ''}`}
-          >
-            [{citationNum}]
-          </button>
-        );
-      }
-      return <span key={`text-${index}`}>{part}</span>;
+            }
+            // Dukungan teks tebal **bold**
+            const boldParts = tok.split(/(\*\*[^*]+\*\*)/g);
+            return (
+              <React.Fragment key={tIdx}>
+                {boldParts.map((bp, bIdx) =>
+                  bp.startsWith('**') && bp.endsWith('**') ? (
+                    <strong
+                      key={bIdx}
+                      className="font-bold text-[var(--ink)]"
+                    >
+                      {bp.slice(2, -2)}
+                    </strong>
+                  ) : (
+                    <span key={bIdx}>{bp}</span>
+                  )
+                )}
+              </React.Fragment>
+            );
+          })}
+        </p>
+      );
     });
   };
 
   return (
-    <div className="space-y-6">
-      
-      {/* 1. Header Box */}
-      <div className="p-6 rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-900 via-sky-950/80 to-slate-900 shadow-xl space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="font-['Poppins',sans-serif] text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 px-2.5 py-1 rounded bg-cyan-500/10 border border-cyan-500/30">
-            <Sparkles className="w-3.5 h-3.5" /> TANYA SYNQRA · GOOGLE GEMINI HYBRID SEARCH
-          </span>
-          <span className="text-xs text-slate-400 font-semibold">
-            Didukung Rujukan Bukti Nyata dari Supabase
-          </span>
-        </div>
-
-        <h2 className="font-['Poppins',sans-serif] text-2xl font-extrabold text-white">
-          Asisten Tanya Jawab Keandalan & Investigasi Berbasis Bukti
-        </h2>
-
-        <p className="text-xs text-slate-300 font-medium max-w-3xl leading-relaxed">
-          Pencarian hibrida memadukan pencocokan kode aset, kata kunci gejala, dan konteks laporan Supabase. 
-          Kasus berstatus <b>VERIFIED</b> diprioritaskan di paling atas, peringatan kuning otomatis muncul jika temuan berstatus <b>PRADUGA</b>, dan setiap rekomendasi wajib menyertakan sitasi interaktif <b>[1]</b>, <b>[2]</b> yang terhubung langsung ke file foto/dokumen bukti fisik.
-        </p>
-
-        {/* Asset Filter Selector */}
-        <div className="pt-3 flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-slate-400 font-semibold">Fokus Aset:</span>
-          {['ALL', 'P-101A', 'E-201', 'FCV-301'].map((assetKey) => (
-            <button
-              key={assetKey}
-              type="button"
-              onClick={() => setSelectedAssetFilter(assetKey)}
-              className={`px-3 py-1 rounded-lg font-['Poppins',sans-serif] font-bold transition-all ${
-                selectedAssetFilter === assetKey
-                  ? 'bg-cyan-500 text-slate-950 shadow-md'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white'
-              }`}
-            >
-              {assetKey === 'ALL' ? 'Semua Peralatan' : assetKey}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 2. Search Bar Input Form */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleAsk();
-        }}
-        className="p-3 rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl flex flex-col sm:flex-row items-center gap-2"
-      >
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
-          <input
-            type="text"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Tanyakan gejala kegagalan, penyebab kerusakan, atau tindakan korektif peralatan..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-medium"
-          />
+    <div className="space-y-6 max-w-5xl animate-fade-in pb-12">
+      {/* Header dengan Tombol Mulai Sesi Baru */}
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--line)]">
+        <div>
+          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
+            TAHAP 5 · EVIDENCE-GROUNDED HYBRID RAG
+          </div>
+          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1">
+            Tanya SYNQRA AI
+          </h1>
+          <p className="text-[15px] text-[var(--ink-soft)] mt-1">
+            Cari riwayat kasus serupa dengan sitasi sumber bukti{' '}
+            <b className="text-[var(--ink)]">[1] [2]</b> yang bisa diklik. Kasus
+            terverifikasi selalu diprioritaskan.
+          </p>
         </div>
 
         <button
-          type="submit"
-          disabled={isLoading || !question.trim()}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-['Poppins',sans-serif] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all"
+          type="button"
+          onClick={handleResetSession}
+          disabled={messages.length === 0 && !question}
+          className="self-start sm:self-auto px-4 py-2.5 rounded-[7px] border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-heading font-bold text-[var(--ink)] inline-flex items-center gap-2 transition-all shadow-sm shrink-0"
+          title="Bersihkan percakapan dan mulai sesi tanya jawab baru"
         >
-          {isLoading ? (
-            <>
-              <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-              <span>Menganalisis Kasus...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              <span>Tanya SYNQRA</span>
-            </>
-          )}
+          <RotateCcw className="w-4 h-4 text-[var(--cyan-dark)]" />
+          <span>Mulai Sesi Baru</span>
         </button>
-      </form>
+      </header>
 
-      {/* Sample Quick Questions */}
-      <div className="space-y-2">
-        <div className="text-[11px] font-['Poppins',sans-serif] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <HelpCircle className="w-3.5 h-3.5 text-cyan-400" /> Contoh Pertanyaan Cepat Teknisi Lapangan:
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {sampleQuestions.map((sq, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => {
-                setQuestion(sq.q);
-                handleAsk(sq.q, sq.asset);
-              }}
-              className="p-2.5 rounded-xl border border-slate-800 hover:border-cyan-500/50 bg-slate-900/60 hover:bg-slate-800/80 text-left transition-all group flex items-start gap-2 text-xs"
-            >
-              <span className="font-['Poppins',sans-serif] font-bold text-cyan-400 flex-shrink-0 mt-0.5">
-                [{sq.asset}]
-              </span>
-              <span className="text-slate-300 group-hover:text-white font-medium">
-                {sq.q}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. AI Results Section */}
-      {resultAnswer && (
-        <div className="p-6 rounded-2xl border border-cyan-500/30 bg-slate-900/90 shadow-2xl space-y-5 animate-in fade-in duration-300">
-          
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <span className="font-['Poppins',sans-serif] text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> Jawaban Terpadu (Gemini Hybrid Retrieval)
-            </span>
-            <span className="text-[11px] text-slate-400 font-semibold">
-              {citations.length} Rujukan Kasus Database
-            </span>
+      {/* Suggested Quick Questions jika percakapan masih kosong */}
+      {messages.length === 0 && (
+        <section className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-xs font-heading font-bold text-[var(--ink-soft)] uppercase tracking-wider">
+            <HelpCircle className="w-4 h-4 text-[var(--cyan-dark)]" />
+            <span>Pertanyaan Lapangan Populer</span>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            {SUGGESTED_QUESTIONS.map((sq, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => runQuery(sq)}
+                className="p-3 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] text-sm font-semibold text-[var(--ink)] text-left transition-colors flex items-center justify-between group"
+              >
+                <span>{sq}</span>
+                <span className="text-[var(--cyan-dark)] font-heading text-xs font-bold shrink-0 ml-2 group-hover:translate-x-1 transition-transform">
+                  Tanya →
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
-          {/* ATURAN WAJIB: Kotak Peringatan Kuning jika ada hasil berstatus PRADUGA */}
-          {hasPradugaWarning && (
-            <div className="p-4 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-200 animate-in fade-in">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                <div className="space-y-1">
-                  <h4 className="font-['Poppins',sans-serif] font-bold text-xs uppercase tracking-wider text-amber-300">
-                    Peringatan Status PRADUGA Terdeteksi (Unverified Case In Citations)
-                  </h4>
-                  <p className="text-xs text-amber-100 leading-relaxed">
-                    Salah satu rujukan temuan (<b>{pradugaReports.join(', ')}</b>) masih berstatus <b>PRADUGA</b> dan belum diverifikasi secara independen oleh Tim HSE / Pakar Keandalan. Gunakan rekomendasi yang bersumber dari laporan tersebut sebagai petunjuk awal dengan kewaspadaan operasional.
-                  </p>
+      {/* Chat Thread (Alur Percakapan Multi-Giliran) */}
+      {messages.length > 0 && (
+        <div className="space-y-6">
+          {messages.map((msg) => (
+            <div key={msg.id} className="space-y-3">
+              {msg.role === 'user' ? (
+                /* Kartu Pertanyaan Pengguna */
+                <div className="flex justify-end">
+                  <div className="max-w-2xl w-full p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] shadow-sm space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 pb-1 border-b border-[var(--line-soft)] text-xs text-[var(--ink-soft)] font-heading font-bold">
+                      <span className="inline-flex items-center gap-1.5 text-[var(--cyan-dark)]">
+                        <User className="w-3.5 h-3.5" />
+                        Pertanyaan Pengguna
+                      </span>
+                      <span>{msg.timestamp}</span>
+                    </div>
+                    <p className="text-[15px] font-medium text-[var(--ink)] m-0 leading-relaxed">
+                      {msg.content}
+                    </p>
+                  </div>
                 </div>
+              ) : (
+                /* Kartu Jawaban AI SYNQRA */
+                <div className="space-y-4">
+                  {/* Banner Peringatan jika ada kasus PRADUGA / belum verifikasi */}
+                  {msg.hasUnverified && (
+                    <div
+                      style={{
+                        backgroundColor: 'var(--amber-bg)',
+                        borderColor: 'var(--amber-border)',
+                        borderLeftColor: 'var(--amber)',
+                      }}
+                      className="p-4 rounded-xl border border-l-[4px] flex items-start gap-3 shadow-sm"
+                    >
+                      <AlertTriangle
+                        className="w-5 h-5 shrink-0 mt-0.5"
+                        style={{ color: 'var(--amber)' }}
+                      />
+                      <div className="text-sm font-semibold text-[var(--ink)]">
+                        <b style={{ color: 'var(--amber)' }}>
+                          Peringatan Guardrail Bukti:{' '}
+                        </b>
+                        Sebagian sumber referensi di bawah masih berstatus
+                        PRADUGA / Investigasi dan belum disahkan pakar. Utamakan
+                        sumber berstatus TERVERIFIKASI.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Kontainer Sintesis Jawaban AI */}
+                  <article className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] border-l-[4px] border-l-[var(--cyan)] shadow-sm space-y-4">
+                    {/* Header Kartu Jawaban dengan Badge Status Mesin */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--line-soft)]">
+                      <div className="flex items-center gap-2 font-heading font-bold text-base text-[var(--ink)]">
+                        <Sparkles className="w-5 h-5 text-[var(--cyan-dark)]" />
+                        <span>Sintesis Berbasis Bukti SYNQRA</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-heading font-bold">
+                        {/* BADGE STATUS MESIN: GEMINI 2.5 FLASH LIVE vs LOCAL FALLBACK */}
+                        {msg.engine === 'gemini-live' ? (
+                          <span
+                            style={{
+                              backgroundColor: 'var(--green-bg)',
+                              borderColor: 'var(--green-border)',
+                              color: 'var(--green)',
+                            }}
+                            className="px-2.5 py-1 rounded-[7px] border border-l-[3.5px] border-l-emerald-600 font-heading text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap"
+                            title="Didukung langsung oleh Google Gemini 2.5 Flash live API"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                            <span>GEMINI 2.5 FLASH LIVE</span>
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              backgroundColor: 'var(--amber-bg)',
+                              borderColor: 'var(--amber-border)',
+                              color: 'var(--amber)',
+                            }}
+                            className="px-2.5 py-1 rounded-[7px] border border-l-[3.5px] border-l-amber-600 font-heading text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap"
+                            title={
+                              msg.errorReason
+                                ? `Fallback lokal aktif: ${msg.errorReason}`
+                                : 'Mode fallback lokal aktif'
+                            }
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            <span>LOCAL FALLBACK</span>
+                          </span>
+                        )}
+
+                        {/* Konteks Aset jika terdeteksi */}
+                        {msg.detectedAsset && (
+                          <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)]">
+                            Konteks Aset: {msg.detectedAsset}
+                          </span>
+                        )}
+
+                        {/* Jumlah Kasus Terverifikasi */}
+                        {typeof msg.verifiedCount === 'number' && (
+                          <span
+                            style={{
+                              backgroundColor: 'var(--green-bg)',
+                              color: 'var(--green)',
+                            }}
+                            className="px-2.5 py-1 rounded-[7px] inline-flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            {msg.verifiedCount} Terverifikasi
+                          </span>
+                        )}
+
+                        <span className="text-[var(--ink-soft)] font-normal text-xs ml-1">
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Teks Isi Jawaban AI */}
+                    <div className="space-y-2.5">
+                      {renderAnswerWithCitations(
+                        msg.content,
+                        msg.citations || []
+                      )}
+                    </div>
+
+                    {/* Daftar Sumber Sitasi Bukti dengan Chip matchReasons */}
+                    {msg.citations && msg.citations.length > 0 && (
+                      <div className="pt-4 border-t border-[var(--line-soft)] space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-heading text-sm font-bold text-[var(--ink)] uppercase tracking-wider">
+                            Sumber Sitasi Bukti ({msg.citations.length}) — Klik
+                            untuk Pratinjau
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                          {msg.citations.map((cit) => (
+                            <article
+                              key={cit.reportId}
+                              onClick={() => onOpenEvidence(cit)}
+                              className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] hover:border-[var(--cyan)] shadow-sm cursor-pointer transition-all flex flex-col justify-between gap-3 group"
+                            >
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded-[6px] bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] font-heading text-xs font-extrabold">
+                                      [{cit.index}]
+                                    </span>
+                                    <span className="font-heading font-bold text-sm text-[var(--cyan-dark)]">
+                                      {cit.reportId} · {cit.assetId}
+                                    </span>
+                                  </div>
+                                  <StatusBadge status={cit.status} size="sm" />
+                                </div>
+
+                                <h4 className="font-heading font-bold text-[15px] text-[var(--ink)] group-hover:text-[var(--cyan-dark)] transition-colors leading-snug">
+                                  {cit.title}
+                                </h4>
+
+                                {/* CHIP MATCH REASONS DI BAWAH JUDUL KARTU SUMBER SITASI */}
+                                {cit.matchReasons &&
+                                  cit.matchReasons.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                      {cit.matchReasons.map((reason, rIdx) => (
+                                        <span
+                                          key={rIdx}
+                                          className="px-2 py-0.5 rounded-[5px] text-[11.5px] font-heading font-semibold bg-[var(--surface)] text-[var(--ink-soft)] border border-[var(--line)]"
+                                        >
+                                          {reason}
+                                        </span>
+                                      ))}
+                                      {typeof cit.relevanceScore ===
+                                        'number' && (
+                                        <span className="px-2 py-0.5 rounded-[5px] text-[11.5px] font-heading font-bold bg-[var(--cyan-pale)] text-[var(--cyan-dark)] border border-[var(--cyan-border,var(--line))]">
+                                          Skor: {cit.relevanceScore}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                <p className="text-sm text-[var(--ink-soft)] line-clamp-2 m-0">
+                                  {cit.praduga_penyebab}
+                                </p>
+                              </div>
+
+                              <div className="pt-2.5 border-t border-[var(--line-soft)] flex items-center justify-between gap-2 text-xs font-bold text-[var(--cyan-dark)]">
+                                <span className="truncate">
+                                  {cit.evidenceName}
+                                </span>
+                                <span className="inline-flex items-center gap-1 shrink-0 group-hover:translate-x-0.5 transition-transform">
+                                  <Eye className="w-3.5 h-3.5" />
+                                  Buka
+                                </span>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Indikator Loading Saat AI Berpikir */}
+          {isLoading && (
+            <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] border-l-[4px] border-l-[var(--cyan)] shadow-sm flex items-center gap-3 animate-pulse">
+              <Bot className="w-5 h-5 text-[var(--cyan-dark)] animate-spin" />
+              <div className="text-sm font-semibold text-[var(--ink)]">
+                Mencocokkan arsip pengetahuan & menyusun jawaban berbasis bukti...
               </div>
             </div>
           )}
 
-          {/* AI Synthesized Answer with Clickable Citations */}
-          <div className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line font-medium p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            {renderAnswerWithClickableCitations(resultAnswer)}
-          </div>
-
-          {/* Citations List & Direct Evidence Openers */}
-          <div className="space-y-3 pt-2">
-            <div className="text-xs font-['Poppins',sans-serif] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-cyan-400" />
-              Daftar Sitasi Rujukan (Klik untuk Membuka Bukti Fisik Asli):
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {citations.map((c) => (
-                <div
-                  key={c.index}
-                  onClick={() => onOpenEvidence(c)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between group ${
-                    c.status === 'VERIFIED'
-                      ? 'border-emerald-500/40 bg-emerald-950/15 hover:border-emerald-400'
-                      : c.status === 'PRADUGA'
-                      ? 'border-amber-500/40 bg-amber-950/15 hover:border-amber-400'
-                      : 'border-slate-800 bg-slate-800/40 hover:border-cyan-500/50'
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 text-[11px] font-['Poppins',sans-serif] font-black flex items-center justify-center">
-                          [{c.index}]
-                        </span>
-                        <span className="font-['Poppins',sans-serif] text-xs font-bold text-white">
-                          {c.reportId} ({c.assetId})
-                        </span>
-                      </div>
-                      <StatusBadge status={c.status} size="sm" />
-                    </div>
-
-                    <h4 className="font-['Poppins',sans-serif] text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-                      {c.title}
-                    </h4>
-
-                    <p className="text-[11px] text-slate-400 line-clamp-1">
-                      {c.gejala}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] font-bold text-cyan-400">
-                    <span className="flex items-center gap-1">
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      {c.evidenceName}
-                    </span>
-                    <span className="flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-                      Buka Dokumen Bukti &rarr;
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <div ref={messagesEndRef} />
         </div>
       )}
 
+      {/* Pesan Kesalahan jika ada */}
+      {errorMsg && (
+        <div
+          style={{
+            backgroundColor: 'var(--red-bg)',
+            borderColor: 'var(--red-border)',
+            color: 'var(--red)',
+          }}
+          className="p-4 rounded-xl border text-sm font-bold shadow-sm"
+        >
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Input Box Sticky / Card Form */}
+      <section className="p-4 sm:p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-3 sticky bottom-4 z-10 backdrop-blur-md">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-5 h-5 text-[var(--cyan-dark)] absolute left-4 top-3.5" />
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Tulis pertanyaan teknis lanjutan atau anomali baru..."
+              disabled={isLoading}
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-[15px] font-medium focus:outline-none focus:border-[var(--cyan)] transition-colors"
+            />
+          </div>
+
+          <select
+            value={assetFilter}
+            onChange={(e) => setAssetFilter(e.target.value)}
+            disabled={isLoading}
+            className="px-4 py-3 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
+          >
+            <option value="ALL">Semua Aset</option>
+            {assets.map((a) => (
+              <option key={a.id} value={a.id}>
+                Khusus {a.id}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="submit"
+            disabled={isLoading || !question.trim()}
+            className="px-6 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            {isLoading ? (
+              <>
+                <Sparkles className="w-4 h-4 animate-spin" />
+                <span>Memproses...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Kirim</span>
+              </>
+            )}
+          </button>
+        </form>
+      </section>
     </div>
   );
 };

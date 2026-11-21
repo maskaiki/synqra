@@ -3,7 +3,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'SYNQRA — Industrial Knowledge Platform',
-  description: 'Intelligence connected by evidence. Oil & Gas industrial asset failure reporting & knowledge platform.',
+  description:
+    'Intelligence, Connected by Evidence. Platform manajemen pengetahuan kegagalan peralatan industri minyak dan gas berbasis AI.',
 };
 
 export default function RootLayout({
@@ -12,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="dark">
-      <body className="antialiased bg-slate-950 text-slate-100">
+    <html lang="id" suppressHydrationWarning>
+      <body className="antialiased bg-[var(--canvas)] text-[var(--ink)]">
         {children}
       </body>
     </html>

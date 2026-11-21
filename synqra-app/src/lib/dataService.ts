@@ -1,0 +1,225 @@
+import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
+import {
+  INITIAL_ASSETS,
+  INITIAL_COMMENTS,
+  INITIAL_EVIDENCES,
+  INITIAL_REPORTS,
+} from '@/lib/constants';
+import { Asset, CaseComment, Evidence, Report } from '@/types/synqra';
+
+const STORAGE_KEYS = {
+  reports: 'synqra_v3_reports',
+  comments: 'synqra_v3_comments',
+  evidences: 'synqra_v3_evidences',
+};
+
+export interface WorkspaceSnapshot {
+  assets: Asset[];
+  reports: Report[];
+  comments: CaseComment[];
+  evidences: Evidence[];
+  source: 'supabase' | 'local';
+}
+
+function readLocal<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLocal<T>(key: string, data: T): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(data));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export async function loadWorkspaceData(): Promise<WorkspaceSnapshot> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const [assetsRes, reportsRes, commentsRes, evidencesRes] = await Promise.all([
+        supabase.from('assets').select('*').order('id', { ascending: true }),
+        supabase.from('reports').select('*').order('created_at', { ascending: false }),
+        supabase.from('case_comments').select('*').order('created_at', { ascending: true }),
+        supabase.from('evidences').select('*').order('created_at', { ascending: true }),
+      ]);
+
+      if (!reportsRes.error && reportsRes.data && reportsRes.data.length > 0) {
+        const mappedAssets =
+          assetsRes.data && assetsRes.data.length > 0
+            ? (assetsRes.data as Asset[]).map((a) => ({
+                ...a,
+                subtitle: a.subtitle || a.type.toUpperCase(),
+                dept: a.dept || a.area,
+              }))
+            : INITIAL_ASSETS;
+
+        return {
+          assets: mappedAssets,
+          reports: reportsRes.data as Report[],
+          comments: (commentsRes.data as CaseComment[]) || [],
+          evidences: (evidencesRes.data as Evidence[]) || [],
+          source: 'supabase',
+        };
+      }
+    } catch (err) {
+      console.warn('Supabase fetch failed, using local persistence:', err);
+    }
+  }
+
+  return {
+    assets: INITIAL_ASSETS,
+    reports: readLocal<Report[]>(STORAGE_KEYS.reports, INITIAL_REPORTS),
+    comments: readLocal<CaseComment[]>(STORAGE_KEYS.comments, INITIAL_COMMENTS),
+    evidences: readLocal<Evidence[]>(STORAGE_KEYS.evidences, INITIAL_EVIDENCES),
+    source: 'local',
+  };
+}
+
+export function saveLocalWorkspace(
+  reports: Report[],
+  comments: CaseComment[],
+  evidences: Evidence[]
+): void {
+  writeLocal(STORAGE_KEYS.reports, reports);
+  writeLocal(STORAGE_KEYS.comments, comments);
+  writeLocal(STORAGE_KEYS.evidences, evidences);
+}
+
+export function resetLocalWorkspace(): WorkspaceSnapshot {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(STORAGE_KEYS.reports);
+    window.localStorage.removeItem(STORAGE_KEYS.comments);
+    window.localStorage.removeItem(STORAGE_KEYS.evidences);
+  }
+  return {
+    assets: INITIAL_ASSETS,
+    reports: INITIAL_REPORTS,
+    comments: INITIAL_COMMENTS,
+    evidences: INITIAL_EVIDENCES,
+    source: 'local',
+  };
+}
+
+export async function persistNewReport(report: Report): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    const { error } = await supabase.from('reports').insert({
+      id: report.id,
+      title: report.title,
+      asset_id: report.asset_id,
+      status: report.status,
+      identitas_alat: report.identitas_alat,
+      gejala: report.gejala,
+      kondisi_operasi: report.kondisi_operasi,
+      pemeriksaan_awal: report.pemeriksaan_awal,
+      praduga_penyebab: report.praduga_penyebab,
+      usulan_tindakan: report.usulan_tindakan,
+      verifikasi: report.verifikasi,
+      risk_level: report.risk_level || 'MEDIUM',
+      risk_consequence: report.risk_consequence || 'Moderate',
+      risk_likelihood: report.risk_likelihood || 'Possible',
+      risk_summary: report.risk_summary || '',
+      capa_corrective: report.capa_corrective || '',
+      capa_preventive: report.capa_preventive || '',
+      capa_target_date: report.capa_target_date || null,
+      capa_pic: report.capa_pic || '',
+      description: report.description,
+      reporter_name: report.reporter_name,
+      reporter_role: report.reporter_role,
+      dept: report.dept,
+      evidence_note: report.evidence_note || '',
+      image_url: report.image_url || null,
+      created_at: report.created_at,
+      updated_at: report.updated_at,
+    });
+    if (error) console.warn('Supabase insert report warning:', error.message);
+  }
+}
+
+export async function persistReportUpdate(
+  reportId: string,
+  patch: Partial<Report>
+): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    const { error } = await supabase
+      .from('reports')
+      .update({
+        ...patch,
+        updated_at: patch.updated_at || new Date().toISOString(),
+      })
+      .eq('id', reportId);
+    if (error) console.warn('Supabase update report warning:', error.message);
+  }
+}
+
+export async function persistComment(comment: CaseComment): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    const { error } = await supabase.from('case_comments').insert({
+      report_id: comment.report_id,
+      author_name: comment.author_name,
+      author_role: comment.author_role,
+      comment: comment.comment,
+      is_revision_request: Boolean(comment.is_revision_request),
+      requested_evidence: comment.requested_evidence || null,
+    });
+    if (error) console.warn('Supabase insert comment warning:', error.message);
+  }
+}
+
+export async function uploadEvidenceFile(
+  reportId: string,
+  file: File,
+  caption: string,
+  uploadedBy: string
+): Promise<Evidence> {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `evidences/${reportId}/${Date.now()}_${safeName}`;
+  let publicUrl: string | undefined;
+
+  if (isSupabaseConfigured && supabase) {
+    const { error: uploadErr } = await supabase.storage
+      .from('synqra-evidences')
+      .upload(storagePath, file, { upsert: true });
+
+    if (!uploadErr) {
+      const { data: pub } = supabase.storage
+        .from('synqra-evidences')
+        .getPublicUrl(storagePath);
+      publicUrl = pub.publicUrl;
+    }
+
+    await supabase.from('evidences').insert({
+      report_id: reportId,
+      file_name: file.name,
+      storage_path: storagePath,
+      mime_type: file.type,
+      file_size_bytes: file.size,
+      caption,
+      uploaded_by: uploadedBy,
+    });
+  }
+
+  if (!publicUrl && typeof window !== 'undefined' && file.type.startsWith('image/')) {
+    publicUrl = URL.createObjectURL(file);
+  }
+
+  return {
+    id: `ev-${Date.now()}`,
+    report_id: reportId,
+    file_name: file.name,
+    storage_path: storagePath,
+    mime_type: file.type,
+    file_size_bytes: file.size,
+    caption: caption || 'Bukti fisik inspeksi lapangan',
+    uploaded_by: uploadedBy,
+    created_at: new Date().toISOString(),
+    public_url: publicUrl,
+  };
+}

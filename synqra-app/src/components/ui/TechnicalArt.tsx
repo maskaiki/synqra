@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface TechnicalArtProps {
-  type?: 'pump' | 'heat' | 'valve' | 'compressor' | 'vessel' | 'heater' | string;
+  type?: string;
   className?: string;
   darkMode?: boolean;
 }
 
 export const TechnicalArt: React.FC<TechnicalArtProps> = ({
   type = 'pump',
-  className = 'w-full h-auto max-h-[180px]',
+  className = 'w-full h-24',
   darkMode = false,
 }) => {
   const strokeColor = darkMode ? '#7CC0FF' : '#1E4B6B';
@@ -22,7 +22,7 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
           <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M32 102h154v13H32z" fill={fillColor} />
             <rect x="48" y="53" width="63" height="49" rx="9" fill={fillColor} />
-            <circle cx="79" cy="77" r="18" fill="rgba(0,184,217,.2)" />
+            <circle cx="79" cy="77" r="18" fill="rgba(0,184,217,0.2)" />
             <path d="M79 59v36m-18-18h36" stroke={highlightColor} />
             <path d="M111 64h22l15 13v25h-37z" fill={fillColor} />
             <path d="M133 64V43h27v21m-19-21v-9h10v9" />
@@ -34,7 +34,10 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
           <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M28 54h22m120 0h22M28 91h22m120 0h22" />
             <rect x="48" y="38" width="124" height="70" rx="18" fill={fillColor} />
-            <path d="M66 42v62m88-62v62M78 48c10 6 10 44 0 50m20-50c10 6 10 44 0 50m20-50c10 6 10 44 0 50m20-50c10 6 10 44 0 50" stroke={highlightColor} />
+            <path
+              d="M66 42v62m88-62v62M78 48c10 6 10 44 0 50m20-50c10 6 10 44 0 50m20-50c10 6 10 44 0 50m20-50c10 6 10 44 0 50"
+              stroke={highlightColor}
+            />
             <path d="M58 38V26h18v12m68 0V26h18v12M58 108v12h18v-12m68 0v12h18v-12" />
             <path d="M25 72h21m126 0h22" stroke={highlightColor} strokeWidth="5" />
           </g>
@@ -49,26 +52,6 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
             <path d="M110 16V8" />
           </g>
         );
-      case 'compressor':
-        return (
-          <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M30 109h160" />
-            <rect x="49" y="51" width="122" height="54" rx="17" fill={fillColor} />
-            <path d="M61 62h96M61 94h96" />
-            <circle cx="84" cy="78" r="13" fill="rgba(0,184,217,.2)" />
-            <circle cx="137" cy="78" r="13" fill="rgba(0,184,217,.2)" />
-            <path d="M84 65v26m-13-13h26m40-13v26m-13-13h26" stroke={highlightColor} />
-            <path d="M75 51V34h20v17m45 0V34h20v17" />
-          </g>
-        );
-      case 'vessel':
-        return (
-          <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="73" y="18" width="74" height="108" rx="34" fill={fillColor} />
-            <path d="M76 61h68M76 83h68" stroke={highlightColor} />
-            <path d="M110 18V8m-22 118v10m44-10v10M73 50H48v25h25m74-25h25v25h-25" />
-          </g>
-        );
       default:
         return (
           <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -81,7 +64,13 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
   };
 
   return (
-    <svg viewBox="0 0 220 145" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg
+      viewBox="0 0 220 145"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
       {renderGraphic()}
     </svg>
   );

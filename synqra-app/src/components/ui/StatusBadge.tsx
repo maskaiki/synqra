@@ -1,55 +1,162 @@
 import React from 'react';
-import { ReportStatus } from '@/types/synqra';
-import { AlertTriangle, Clock, Search, CheckCircle2 } from 'lucide-react';
+import { ReportStatus, RiskLevel, SlaInfo } from '@/types/synqra';
+import {
+  AlertTriangle,
+  Clock,
+  Search,
+  CheckCircle2,
+  ShieldAlert,
+} from 'lucide-react';
 
 interface StatusBadgeProps {
   status: ReportStatus;
+  size?: 'sm' | 'md';
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '', size = 'md' }) => {
-  const configs: Record<ReportStatus, {
-    label: string;
-    icon: React.ReactNode;
-    classes: string;
-  }> = {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  size = 'md',
+  className = '',
+}) => {
+  const configs: Record<
+    ReportStatus,
+    { label: string; icon: React.ReactNode; style: React.CSSProperties }
+  > = {
     PRADUGA: {
       label: 'PRADUGA',
-      icon: <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />,
-      classes: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 border-l-[3.5px] border-l-amber-500',
+      icon: <AlertTriangle className="w-3.5 h-3.5 shrink-0" />,
+      style: {
+        backgroundColor: 'var(--amber-bg)',
+        color: 'var(--amber)',
+        borderColor: 'var(--amber-border)',
+        borderLeftColor: 'var(--amber)',
+      },
     },
     TRIAGE: {
       label: 'TRIAGE DEPT',
-      icon: <Clock className="w-3.5 h-3.5 flex-shrink-0" />,
-      classes: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30 border-l-[3.5px] border-l-sky-500',
+      icon: <Clock className="w-3.5 h-3.5 shrink-0" />,
+      style: {
+        backgroundColor: 'var(--info-bg)',
+        color: 'var(--info)',
+        borderColor: 'var(--info-border)',
+        borderLeftColor: 'var(--info)',
+      },
     },
     INVESTIGATION: {
       label: 'INVESTIGASI',
-      icon: <Search className="w-3.5 h-3.5 flex-shrink-0" />,
-      classes: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30 border-l-[3.5px] border-l-purple-500',
+      icon: <Search className="w-3.5 h-3.5 shrink-0" />,
+      style: {
+        backgroundColor: 'var(--purple-bg)',
+        color: 'var(--purple)',
+        borderColor: 'var(--purple-border)',
+        borderLeftColor: 'var(--purple)',
+      },
     },
     VERIFIED: {
       label: 'TERVERIFIKASI',
-      icon: <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />,
-      classes: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 border-l-[3.5px] border-l-emerald-500',
+      icon: <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />,
+      style: {
+        backgroundColor: 'var(--green-bg)',
+        color: 'var(--green)',
+        borderColor: 'var(--green-border)',
+        borderLeftColor: 'var(--green)',
+      },
     },
   };
 
-  const config = configs[status] || configs.PRADUGA;
-
-  const sizeClasses = {
-    sm: 'text-[10.5px] py-1 px-2 gap-1.5',
-    md: 'text-[11.5px] py-1.5 px-3 gap-2',
-    lg: 'text-[12.5px] py-2 px-3.5 gap-2.5',
-  }[size];
+  const cfg = configs[status] || configs.PRADUGA;
+  const paddingClass =
+    size === 'sm' ? 'px-2.5 py-1 text-[11.5px]' : 'px-3 py-1.5 text-xs';
 
   return (
     <span
-      className={`inline-flex items-center font-['Poppins',sans-serif] font-bold uppercase tracking-wider rounded-[7px] border shadow-sm select-none transition-all ${config.classes} ${sizeClasses} ${className}`}
+      style={cfg.style}
+      className={`inline-flex items-center gap-1.5 font-heading font-bold uppercase tracking-wider rounded-[7px] border border-l-[3.5px] whitespace-nowrap select-none ${paddingClass} ${className}`}
     >
-      {config.icon}
-      <span>{config.label}</span>
+      {cfg.icon}
+      <span>{cfg.label}</span>
+    </span>
+  );
+};
+
+interface SlaBadgeProps {
+  sla: SlaInfo;
+  compact?: boolean;
+}
+
+export const SlaBadge: React.FC<SlaBadgeProps> = ({ sla, compact = false }) => {
+  const styleMap: Record<SlaInfo['level'], React.CSSProperties> = {
+    green: {
+      backgroundColor: 'var(--green-bg)',
+      color: 'var(--green)',
+      borderColor: 'var(--green-border)',
+      borderLeftColor: 'var(--green)',
+    },
+    yellow: {
+      backgroundColor: 'var(--amber-bg)',
+      color: 'var(--amber)',
+      borderColor: 'var(--amber-border)',
+      borderLeftColor: 'var(--amber)',
+    },
+    red: {
+      backgroundColor: 'var(--red-bg)',
+      color: 'var(--red)',
+      borderColor: 'var(--red-border)',
+      borderLeftColor: 'var(--red)',
+    },
+  };
+
+  return (
+    <span
+      style={styleMap[sla.level]}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-[11.5px] whitespace-nowrap select-none"
+    >
+      <Clock className="w-3.5 h-3.5 shrink-0" />
+      <span>{compact ? sla.shortLabel : sla.label}</span>
+    </span>
+  );
+};
+
+interface RiskBadgeProps {
+  level?: RiskLevel;
+}
+
+export const RiskBadge: React.FC<RiskBadgeProps> = ({ level = 'MEDIUM' }) => {
+  const styles: Record<RiskLevel, React.CSSProperties> = {
+    LOW: {
+      backgroundColor: 'var(--green-bg)',
+      color: 'var(--green)',
+      borderColor: 'var(--green-border)',
+      borderLeftColor: 'var(--green)',
+    },
+    MEDIUM: {
+      backgroundColor: 'var(--info-bg)',
+      color: 'var(--info)',
+      borderColor: 'var(--info-border)',
+      borderLeftColor: 'var(--info)',
+    },
+    HIGH: {
+      backgroundColor: 'var(--amber-bg)',
+      color: 'var(--amber)',
+      borderColor: 'var(--amber-border)',
+      borderLeftColor: 'var(--amber)',
+    },
+    CRITICAL: {
+      backgroundColor: 'var(--red-bg)',
+      color: 'var(--red)',
+      borderColor: 'var(--red-border)',
+      borderLeftColor: 'var(--red)',
+    },
+  };
+
+  return (
+    <span
+      style={styles[level]}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-[11.5px] uppercase whitespace-nowrap"
+    >
+      <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+      <span>RISK: {level}</span>
     </span>
   );
 };

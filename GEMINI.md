@@ -1,38 +1,22 @@
 # SYNQRA Workspace Rules & Design System Guidelines
 
-## 1. Tipografi & Kontras
-- Heading, judul, angka metrik, dan KPI wajib menggunakan font **Poppins** (`font-weight`: 600, 700, 800).
-- Body copy, input form, label, dan metadata teknis wajib menggunakan font **Montserrat** (`font-weight`: 500, 600, 700).
-- Strictly High Contrast: Dilarang menggunakan teks abu-abu pudar yang sulit dibaca di lingkungan industri.
-- Wajib mendukung Mode Terang (Light) dan Mode Gelap (Dark) dengan varian warna CSS token `--surface`, `--surface-elevated`, `--line`, `--ink`, `--cyan`.
+## STRICT PROHIBITIONS (WAJIB DIPATUHI OLEH AGEN AI)
+- DILARANG menggunakan hardcoded dark classes (`bg-slate-950`, `bg-slate-900`, `text-slate-400`, `text-slate-500`) pada elemen utama. WAJIB gunakan CSS variables (`bg-[var(--canvas)]`, `bg-[var(--surface)]`, `bg-[var(--soft)]`, `text-[var(--ink)]`, `text-[var(--ink-soft)]`, `border-[var(--line)]`) agar Mode Terang & Mode Gelap bekerja sempurna.
+- DILARANG menumpuk semua fitur ke dalam satu halaman. Gunakan navigasi Sidebar kiri untuk memisahkan `Beranda`, `Lapor Cepat`, `Triage & Kasus`, `Knowledge Graph`, dan `Tanya SYNQRA`.
+- DILARANG membuat teks body/paragraf lebih kecil dari `text-sm` (14px). Jaga keterbacaan dan kontras tinggi.
+- DILARANG mengganti logo PNG SYNQRA dengan kotak huruf inisial `"S"`. Wajib gunakan `/assets/synqra-logo-light.png` (Light Mode) dan `/assets/synqra-logo-dark.png` (Dark Mode).
+- DILARANG menggunakan `rounded-full` pada badge status atau badge SLA. Gunakan tag status arsitektural `rounded-[7px]` dengan aksen garis kiri `border-l-[3.5px]`.
+- DILARANG menggunakan model lawas `gemini-1.5-flash`. Wajib gunakan `gemini-2.5-flash`.
+- DILARANG menambahkan 3D Canvas / WebGL loop yang berat. Gunakan `TechnicalArt` 2D SVG schematics.
 
-## 2. Tag Status Arsitektural (Industrial Status Tag)
-- Dilarang menggunakan rounded pill generik (`rounded-full`).
-- Gunakan format arsitektural: sudut tegas (`rounded-md` atau `rounded-[7px]`), garis batas aksen warna di sisi kiri (`border-l-[3.5px]`), latar belakang semi-transparan, teks kapital tegas dengan tracking tajam, dan ikon mikro (13-14px).
-- Status resmi alur kasus:
-  - `PRADUGA`: Amber / Oranye (`#D97706`, latar amber lembut)
-  - `TRIAGE`: Biru Cerah (`#0284C7`, latar info lembut)
-  - `INVESTIGATION`: Ungu / Sian (`#8B5CF6` atau `#00B8D9`)
-  - `VERIFIED`: Emerald Hijau (`#059669`, latar hijau lembut)
+## 1. Tipografi & Tema
+- Heading, judul, tombol, dan angka KPI wajib menggunakan **Poppins**.
+- Body copy, input form, dan metadata teknis wajib menggunakan **Montserrat**.
+- Default tema adalah **Mode Terang (Light Mode)** dengan opsi tombol toggle ke **Mode Gelap (Dark Mode)** (`tailwind.config.ts` wajib `darkMode: 'class'`).
 
-## 3. Visualisasi Teknis Peralatan
-- Dilarang menambahkan kembali 3D Canvas / WebGL Inspector loop yang membebani browser.
-- Gunakan representasi 2D vector SVG teknis (`equipmentArt`) untuk peralatan: Heat Exchanger, Centrifugal Pump, Control Valve, Compressor, Separator Vessel, dan Furnace Heater.
-
-## 4. Multi-Role Workflow
-- Setiap alur kerja harus mempertimbangkan 3 peran demo:
-  1. Frontline OMI: Input temuan lapangan, unggah bukti foto, status awal terkunci `PRADUGA`.
-  2. Reviewer Departemen: Triage & evaluasi kelengkapan data (`TRIAGE` / `INVESTIGATION`).
-  3. HSE / Pakar Validator: Verifikasi akhir (`VERIFIED` / ditolak) dan konversi menjadi pengetahuan terstruktur (Knowledge Base).
-
-## 5. Fitur Lapor Cepat & Gemini AI Extraction
-- Ekstraksi AI wajib memetakan narasi lapangan menjadi 7 entitas kegagalan:
-  1. Identitas Alat (Asset Tag/Name)
-  2. Gejala (Symptom)
-  3. Kondisi Operasi (Operating Condition)
-  4. Pemeriksaan Awal (Initial Inspection)
-  5. Praduga Penyebab (Suspected Cause)
-  6. Usulan Tindakan (Proposed Action)
-  7. Verifikasi (Follow-up Verification)
-- Status awal laporan baru wajib dikunci sebagai `PRADUGA`.
-- Scan Nameplate mendeteksi kode tag aset dan mencocokkan dengan katalog aset terdaftar (`P-101A`, `E-201`, `FCV-301`).
+## 2. Tata Kelola & Hard Gate Rules
+- Laporan baru via Lapor Cepat wajib berstatus awal `PRADUGA`.
+- Tombol `Sahkan Terverifikasi` wajib TERKUNCI (*disabled*) jika:
+  1. Bukti fisik (`evidences`) untuk kasus tersebut masih kosong (0 bukti), ATAU
+  2. Akun Validator saat ini adalah orang yang sama dengan pelapor kasus (*No Self-Approval / Four-Eyes Principle*).
+- Pencarian `Tanya SYNQRA` wajib menampilkan kasus `VERIFIED` di urutan teratas, menampilkan peringatan kuning jika ada kasus `PRADUGA`, dan menyertakan sitasi `[1]`, `[2]` yang dapat diklik untuk membuka bukti.

@@ -1,383 +1,302 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Asset, Report } from '@/types/synqra';
+import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
+import { detectEarlyWarnings } from '@/lib/constants';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
-import {
-  Layers,
-  Image as ImageIcon,
-  ChevronRight,
-  ShieldCheck,
-} from 'lucide-react';
-import { EvidenceCitationData } from './EvidenceLightboxModal';
+import { AlertTriangle, CheckCircle2, Eye, FileCheck2, Layers } from 'lucide-react';
 
 interface KnowledgeGraphViewProps {
   assets: Asset[];
   reports: Report[];
-  onOpenEvidence: (citation: EvidenceCitationData) => void;
+  evidences: Evidence[];
+  isDarkMode: boolean;
+  onOpenEvidence: (citation: CitationItem) => void;
+  onOpenReport: (report: Report) => void;
 }
 
 export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   assets,
   reports,
+  evidences,
+  isDarkMode,
   onOpenEvidence,
+  onOpenReport,
 }) => {
-  const [selectedAssetId, setSelectedAssetId] = useState<string>('P-101A');
-  const [filterMode, setFilterMode] = useState<'VERIFIED_ONLY' | 'ALL'>('VERIFIED_ONLY');
-  const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [selectedAssetId, setSelectedAssetId] = useState<string>(assets[0]?.id || 'P-101A');
+  const [showAllStatuses, setShowAllStatuses] = useState(false);
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) || assets[0];
+  const assetReports = reports.filter((r) => r.asset_id === selectedAsset.id);
+  const visibleReports = showAllStatuses
+    ? assetReports
+    : assetReports.filter((r) => r.status === 'VERIFIED');
 
-  // Filter reports isolated for this asset
-  const assetReports = reports.filter((r) => {
-    if (r.asset_id !== selectedAssetId) return false;
-    if (filterMode === 'VERIFIED_ONLY') return r.status === 'VERIFIED';
-    return true;
-  });
-
-  // Selected or first report in the isolated chain
-  const activeReport =
-    assetReports.find((r) => r.id === activeReportId) || assetReports[0] || null;
-
-  const verifiedCount = reports.filter(
-    (r) => r.asset_id === selectedAssetId && r.status === 'VERIFIED'
-  ).length;
-
-  const totalAssetCount = reports.filter((r) => r.asset_id === selectedAssetId).length;
+  const warnings = detectEarlyWarnings(reports, [selectedAsset]);
 
   return (
-    <div className="space-y-6">
-      
-      {/* 1. Header & Asset Selector (Terisolasi per Aset) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-lg">
+    <div className="space-y-6 animate-fade-in">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-['Poppins',sans-serif] text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-              <Layers className="w-4 h-4" /> KNOWLEDGE GRAPH TERISOLASI PER ASET
-            </span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/30">
-              Otomatis Terupdate
-            </span>
+          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
+            TAHAP 5 · ISOLATED ASSET KNOWLEDGE GRAPH
           </div>
-          <h2 className="font-['Poppins',sans-serif] text-xl font-extrabold text-white">
-            Graf Pengetahuan 5 Tingkat: Aset &rarr; Kasus &rarr; Gejala &rarr; Penyebab &rarr; File Bukti
-          </h2>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Setiap kali kasus baru disahkan oleh pakar (status VERIFIED), rantai bukti otomatis terintegrasi ke dalam graf aset terkait.
+          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1">
+            Peta Pengetahuan per Aset
+          </h1>
+          <p className="text-[15px] text-[var(--ink-soft)] mt-1">
+            Graf dipisahkan khusus untuk satu peralatan agar riwayat gejala, penyebab, dan bukti tidak bercampur antar-mesin.
           </p>
         </div>
 
-        {/* Asset Selector Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
-          {assets.map((asset) => {
-            const isSelected = asset.id === selectedAssetId;
-            return (
-              <button
-                key={asset.id}
-                type="button"
-                onClick={() => {
-                  setSelectedAssetId(asset.id);
-                  setActiveReportId(null);
-                }}
-                className={`px-3.5 py-2 rounded-xl text-xs font-['Poppins',sans-serif] font-bold transition-all flex items-center gap-2 ${
-                  isSelected
-                    ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                    : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
-                }`}
-              >
-                <span>{asset.id}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded font-black ${
-                  isSelected ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-900 text-slate-400'
-                }`}>
-                  {reports.filter((r) => r.asset_id === asset.id && r.status === 'VERIFIED').length} KB
-                </span>
-              </button>
-            );
-          })}
+        <label className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] cursor-pointer text-sm font-bold text-[var(--ink)] select-none self-start sm:self-auto">
+          <input
+            type="checkbox"
+            checked={showAllStatuses}
+            onChange={(e) => setShowAllStatuses(e.target.checked)}
+            className="w-4 h-4 accent-[#00B8D9]"
+          />
+          <span>Tampilkan juga kasus Praduga / Investigasi</span>
+        </label>
+      </header>
+
+      {/* Asset Selector Cards (Isolated Switch) */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {assets.map((asset) => {
+          const isSelected = asset.id === selectedAsset.id;
+          const verifiedTotal = reports.filter(
+            (r) => r.asset_id === asset.id && r.status === 'VERIFIED'
+          ).length;
+          const allTotal = reports.filter((r) => r.asset_id === asset.id).length;
+
+          return (
+            <button
+              key={asset.id}
+              type="button"
+              onClick={() => setSelectedAssetId(asset.id)}
+              className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
+                isSelected
+                  ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
+                  : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)]/60'
+              }`}
+            >
+              <div className="w-16 h-16 rounded-xl bg-[var(--soft)] border border-[var(--line-soft)] flex items-center justify-center p-1.5 shrink-0">
+                <TechnicalArt type={asset.type} darkMode={isDarkMode} className="w-14 h-14" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
+                  {asset.id}
+                </div>
+                <div className="font-heading font-bold text-[15px] text-[var(--ink)] truncate">
+                  {asset.name}
+                </div>
+                <div className="text-xs font-bold text-[var(--ink-soft)] mt-1">
+                  {verifiedTotal} Verified · {allTotal} Total Kasus
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </section>
+
+      {warnings.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'var(--amber-bg)',
+            borderColor: 'var(--amber-border)',
+            borderLeftColor: 'var(--amber)',
+          }}
+          className="p-4 rounded-2xl border border-l-[4px] flex items-start gap-3"
+        >
+          <AlertTriangle
+            className="w-5 h-5 shrink-0 mt-0.5"
+            style={{ color: 'var(--amber)' }}
+          />
+          <div className="text-sm font-semibold text-[var(--ink)]">
+            <b style={{ color: 'var(--amber)' }}>Sinyal Dini pada {selectedAsset.id}: </b>
+            {warnings[0].message}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* 2. Isolated Asset Overview Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
-        {/* Left Column: Asset Info & Technical 2D Diagram (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/60 flex flex-col justify-between">
+      {/* Isolated Graph Main View */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* Root Asset Node (4 cols) */}
+        <div className="xl:col-span-4 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] font-heading text-xs font-extrabold uppercase">
+            <Layers className="w-3.5 h-3.5" />
+            <span>NODE ASET TERISOLASI</span>
+          </div>
+          <div className="h-36 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)] flex items-center justify-center p-3">
+            <TechnicalArt type={selectedAsset.type} darkMode={isDarkMode} className="w-full h-32" />
+          </div>
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-[var(--ink)]">
+              {selectedAsset.id}
+            </h2>
+            <div className="font-heading font-bold text-base text-[var(--cyan-dark)]">
+              {selectedAsset.name}
+            </div>
+            <p className="text-sm text-[var(--ink-soft)] mt-2 leading-relaxed">
+              {selectedAsset.description}
+            </p>
+          </div>
+          <div className="pt-3 border-t border-[var(--line-soft)] text-sm space-y-1.5 text-[var(--ink-soft)]">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-['Poppins',sans-serif] text-xs font-extrabold text-cyan-400 px-2.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30">
-                  {selectedAsset.id}
-                </span>
-                <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  {verifiedCount} Kasus Terverifikasi
-                </span>
-              </div>
+              Area: <b className="text-[var(--ink)]">{selectedAsset.area}</b>
+            </div>
+            <div>
+              Departemen: <b className="text-[var(--ink)]">{selectedAsset.dept}</b>
+            </div>
+          </div>
+        </div>
 
-              <div className="py-2">
-                <TechnicalArt type={selectedAsset.type} darkMode={true} className="w-full h-32 mx-auto" />
+        {/* Connected 5-Tier Causal Chains (8 cols) */}
+        <div className="xl:col-span-8 space-y-5">
+          {visibleReports.length === 0 ? (
+            <div className="p-10 rounded-2xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center space-y-2">
+              <CheckCircle2 className="w-8 h-8 mx-auto text-[var(--cyan-dark)]" />
+              <div className="font-heading font-bold text-base text-[var(--ink)]">
+                Belum ada kasus TERVERIFIKASI pada aset {selectedAsset.id}
               </div>
-
-              <h3 className="font-['Poppins',sans-serif] text-base font-bold text-white mt-1">
-                {selectedAsset.name}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                {selectedAsset.area} &mdash; {selectedAsset.description}
+              <p className="text-sm text-[var(--ink-soft)]">
+                Centang &ldquo;Tampilkan juga kasus Praduga / Investigasi&rdquo; di kanan atas, atau sahkan kasus pada menu Triage &amp; Kasus.
               </p>
             </div>
+          ) : (
+            visibleReports.map((rep, repIdx) => {
+              const repEvidences = evidences.filter((e) => e.report_id === rep.id);
+              const firstEv = repEvidences[0];
 
-            {/* Filter Toggle: Verified Only vs Semua Status */}
-            <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-400 font-semibold">Tampilkan Graf:</span>
-              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[10.5px]">
-                <button
-                  type="button"
-                  onClick={() => setFilterMode('VERIFIED_ONLY')}
-                  className={`px-2.5 py-1 rounded font-bold transition-all ${
-                    filterMode === 'VERIFIED_ONLY'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
+              const chainNodes = [
+                {
+                  tier: '1 · KASUS TERCATAT',
+                  accent: 'var(--cyan-dark)',
+                  text: `${rep.id} — ${rep.title}`,
+                },
+                {
+                  tier: '2 · GEJALA LAPANGAN',
+                  accent: 'var(--amber)',
+                  text: rep.gejala,
+                },
+                {
+                  tier:
+                    rep.status === 'VERIFIED'
+                      ? '3 · AKAR PENYEBAB (TERVERIFIKASI)'
+                      : '3 · PRADUGA PENYEBAB (BELUM DISAHKAN)',
+                  accent: 'var(--red)',
+                  text: rep.praduga_penyebab,
+                },
+                {
+                  tier: '4 · SOLUSI & VERIFIKASI',
+                  accent: 'var(--info)',
+                  text: `${rep.usulan_tindakan} · Verifikasi: ${rep.verifikasi}`,
+                },
+              ];
+
+              return (
+                <article
+                  key={rep.id}
+                  className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4"
                 >
-                  Terverifikasi ({verifiedCount})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterMode('ALL')}
-                  className={`px-2.5 py-1 rounded font-bold transition-all ${
-                    filterMode === 'ALL'
-                      ? 'bg-cyan-600 text-white'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Semua ({totalAssetCount})
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Cases List Selector for this Asset */}
-          <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-2">
-            <div className="text-[11px] font-['Poppins',sans-serif] font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Daftar Kasus Terhubung Pada {selectedAsset.id} ({assetReports.length})
-            </div>
-
-            <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-              {assetReports.map((r) => {
-                const isActive = (activeReport?.id || '') === r.id;
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setActiveReportId(r.id)}
-                    className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between ${
-                      isActive
-                        ? 'border-cyan-500 bg-cyan-950/30 text-white shadow-md'
-                        : 'border-slate-800 hover:border-slate-700 bg-slate-800/40 text-slate-300'
-                    }`}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-['Poppins',sans-serif] text-xs font-black text-cyan-400">
-                          {r.id}
-                        </span>
-                        <StatusBadge status={r.status} size="sm" />
-                      </div>
-                      <p className="text-xs font-semibold truncate text-slate-200">
-                        {r.title}
-                      </p>
-                    </div>
-                    <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-cyan-400' : 'text-slate-600'}`} />
-                  </button>
-                );
-              })}
-
-              {assetReports.length === 0 && (
-                <div className="p-4 text-center rounded-xl border border-dashed border-slate-800 text-xs text-slate-500">
-                  Belum ada kasus berstatus {filterMode === 'VERIFIED_ONLY' ? 'VERIFIED' : 'aktif'} untuk aset ini.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: 5-Tier Isolated Chain Interactive Canvas (8 cols) */}
-        <div className="lg:col-span-8 space-y-4">
-          {activeReport ? (
-            <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl space-y-6">
-              
-              {/* Chain Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="font-['Poppins',sans-serif] text-xs font-black text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30">
-                    RANTAI BUKTI
-                  </span>
-                  <span className="font-['Poppins',sans-serif] text-sm font-bold text-white">
-                    {activeReport.id}: {activeReport.title}
-                  </span>
-                </div>
-                <StatusBadge status={activeReport.status} />
-              </div>
-
-              {/* 5-Tier Flowchart Cards */}
-              <div className="space-y-4 relative">
-                
-                {/* Connecting background vertical guide line */}
-                <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-cyan-500 via-sky-500 to-emerald-500 opacity-40 pointer-events-none" />
-
-                {/* Level 1: ASET */}
-                <div className="relative pl-12 flex items-start gap-3">
-                  <div className="absolute left-3 top-2.5 w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-lg shadow-cyan-500/40">
-                    1
-                  </div>
-                  <div className="flex-1 p-3.5 rounded-xl border border-cyan-500/40 bg-cyan-950/20">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Poppins',sans-serif] text-[10.5px] font-bold text-cyan-400 uppercase tracking-wider">
-                        TINGKAT 1 · ASET UTAMA
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--line-soft)]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
+                        {rep.id}
                       </span>
-                      <span className="text-xs font-semibold text-cyan-300">
-                        {selectedAsset.id}
-                      </span>
+                      <StatusBadge status={rep.status} size="sm" />
                     </div>
-                    <div className="text-sm font-bold text-white mt-0.5">
-                      {selectedAsset.name} ({selectedAsset.area})
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onOpenReport(rep)}
+                      className="font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline"
+                    >
+                      Buka Ruang Kasus →
+                    </button>
                   </div>
-                </div>
 
-                {/* Level 2: KASUS (Report) */}
-                <div className="relative pl-12 flex items-start gap-3">
-                  <div className="absolute left-3 top-2.5 w-6 h-6 rounded-full bg-sky-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-lg shadow-sky-500/40">
-                    2
-                  </div>
-                  <div className="flex-1 p-3.5 rounded-xl border border-sky-500/40 bg-sky-950/20">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Poppins',sans-serif] text-[10.5px] font-bold text-sky-400 uppercase tracking-wider">
-                        TINGKAT 2 · KASUS TERDATA
-                      </span>
-                      <span className="text-[11px] text-slate-400">
-                        Pelapor: {activeReport.reporter_name}
-                      </span>
-                    </div>
-                    <div className="text-sm font-bold text-white mt-0.5">
-                      {activeReport.title}
-                    </div>
-                    <p className="text-xs text-slate-300 mt-1">
-                      {activeReport.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Level 3: GEJALA (Symptom) */}
-                <div className="relative pl-12 flex items-start gap-3">
-                  <div className="absolute left-3 top-2.5 w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-lg shadow-amber-500/40">
-                    3
-                  </div>
-                  <div className="flex-1 p-3.5 rounded-xl border border-amber-500/40 bg-amber-950/20">
-                    <span className="font-['Poppins',sans-serif] text-[10.5px] font-bold text-amber-400 uppercase tracking-wider block">
-                      TINGKAT 3 · GEJALA TERAMATI (SYMPTOM)
-                    </span>
-                    <div className="text-sm font-semibold text-amber-100 mt-0.5">
-                      {activeReport.gejala}
-                    </div>
-                    {activeReport.kondisi_operasi && (
-                      <div className="text-xs text-slate-400 mt-1">
-                        <b>Kondisi Operasi:</b> {activeReport.kondisi_operasi}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Level 4: PENYEBAB (Root Cause & Solution) */}
-                <div className="relative pl-12 flex items-start gap-3">
-                  <div className="absolute left-3 top-2.5 w-6 h-6 rounded-full bg-purple-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-lg shadow-purple-500/40">
-                    4
-                  </div>
-                  <div className="flex-1 p-3.5 rounded-xl border border-purple-500/40 bg-purple-950/20">
-                    <span className="font-['Poppins',sans-serif] text-[10.5px] font-bold text-purple-400 uppercase tracking-wider block">
-                      TINGKAT 4 · AKAR MASALAH &amp; USULAN TINDAKAN
-                    </span>
-                    <div className="text-sm font-semibold text-purple-200 mt-0.5">
-                      {activeReport.praduga_penyebab}
-                    </div>
-                    <div className="text-xs text-slate-300 mt-1">
-                      <b className="text-emerald-400">Solusi:</b> {activeReport.usulan_tindakan}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Level 5: FILE BUKTI (Evidence File) */}
-                <div className="relative pl-12 flex items-start gap-3">
-                  <div className="absolute left-3 top-2.5 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-lg shadow-emerald-500/40">
-                    5
-                  </div>
-                  <div className="flex-1 p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Poppins',sans-serif] text-[10.5px] font-bold text-emerald-400 uppercase tracking-wider">
-                        TINGKAT 5 · FILE BUKTI NYATA (EVIDENCES)
-                      </span>
-                      {activeReport.image_url ? (
-                        <span className="text-[10px] text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded font-bold">
-                          Tersimpan di Supabase
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded font-bold">
-                          Bukti Kosong
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
-                          {activeReport.evidence_note || 'Lampiran foto bukti fisik temuan.'}
+                  {/* 5-Tier Connected Chain */}
+                  <div className="space-y-0">
+                    {chainNodes.map((node, i) => (
+                      <div key={node.tier}>
+                        <div
+                          style={{ borderLeftColor: node.accent }}
+                          className="p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[4px]"
+                        >
+                          <div
+                            style={{ color: node.accent }}
+                            className="font-heading text-[11.5px] font-extrabold uppercase tracking-wider mb-0.5"
+                          >
+                            {node.tier}
+                          </div>
+                          <div className="text-sm font-semibold text-[var(--ink)] leading-snug">
+                            {node.text}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Klik untuk memeriksa gambar resolusi penuh & data EXIF.
+                        {i < chainNodes.length && (
+                          <div className="w-[2px] h-3.5 bg-[var(--line)] ml-5" />
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Tier 5: Clickable Evidence Node */}
+                    <div
+                      style={{
+                        backgroundColor: 'var(--green-bg)',
+                        borderColor: 'var(--green-border)',
+                        borderLeftColor: 'var(--green)',
+                      }}
+                      className="p-3.5 rounded-xl border border-l-[4px] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <FileCheck2
+                          className="w-5 h-5 shrink-0 mt-0.5"
+                          style={{ color: 'var(--green)' }}
+                        />
+                        <div className="min-w-0">
+                          <div
+                            style={{ color: 'var(--green)' }}
+                            className="font-heading text-[11.5px] font-extrabold uppercase tracking-wider"
+                          >
+                            5 · FILE BUKTI ({repEvidences.length} LAMPIRAN)
+                          </div>
+                          <div className="text-sm font-bold text-[var(--ink)] truncate">
+                            {firstEv?.file_name || rep.evidence_note || 'Belum ada file bukti'}
+                          </div>
                         </div>
                       </div>
-
                       <button
                         type="button"
                         onClick={() =>
                           onOpenEvidence({
-                            index: 1,
-                            reportId: activeReport.id,
-                            status: activeReport.status,
-                            assetId: activeReport.asset_id,
-                            title: activeReport.title,
-                            evidenceName: activeReport.evidence_note || 'Bukti foto inspeksi',
-                            evidenceUrl: activeReport.image_url,
-                            gejala: activeReport.gejala,
-                            praduga_penyebab: activeReport.praduga_penyebab,
-                            usulan_tindakan: activeReport.usulan_tindakan,
+                            index: repIdx + 1,
+                            reportId: rep.id,
+                            status: rep.status,
+                            assetId: rep.asset_id,
+                            title: rep.title,
+                            evidenceName:
+                              firstEv?.file_name || rep.evidence_note || 'Lampiran Bukti',
+                            evidenceUrl: firstEv?.public_url || rep.image_url,
+                            gejala: rep.gejala,
+                            praduga_penyebab: rep.praduga_penyebab,
+                            usulan_tindakan: rep.usulan_tindakan,
+                            verifiedBy: rep.verified_by,
                           })
                         }
-                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-['Poppins',sans-serif] font-bold flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                        className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] font-heading text-xs font-bold text-[var(--ink)] inline-flex items-center gap-1.5 shrink-0"
                       >
-                        <ImageIcon className="w-3.5 h-3.5" />
-                        <span>Buka File Bukti</span>
+                        <Eye className="w-4 h-4 text-[var(--cyan-dark)]" />
+                        <span>Lihat Bukti</span>
                       </button>
                     </div>
                   </div>
-                </div>
-
-              </div>
-
-            </div>
-          ) : (
-            <div className="p-12 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40">
-              <p className="text-sm text-slate-400 font-medium">
-                Pilih kasus dari panel kiri untuk memvisualisasikan Knowledge Graph 5 tingkat.
-              </p>
-            </div>
+                </article>
+              );
+            })
           )}
         </div>
-
-      </div>
-
+      </section>
     </div>
   );
 };

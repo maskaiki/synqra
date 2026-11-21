@@ -1,159 +1,148 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React from 'react';
+import { CitationItem } from '@/types/synqra';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { TechnicalArt } from '@/components/ui/TechnicalArt';
-import { X, Image as ImageIcon, AlertTriangle, CheckCircle, FileText } from 'lucide-react';
-
-export interface EvidenceCitationData {
-  index: number;
-  reportId: string;
-  status: 'PRADUGA' | 'TRIAGE' | 'INVESTIGATION' | 'VERIFIED';
-  assetId: string;
-  title: string;
-  evidenceName: string;
-  evidenceUrl?: string;
-  gejala?: string;
-  praduga_penyebab?: string;
-  usulan_tindakan?: string;
-}
+import { CheckCircle2, FileCheck2, ShieldAlert, X } from 'lucide-react';
 
 interface EvidenceLightboxModalProps {
-  citation: EvidenceCitationData | null;
+  citation: CitationItem | null;
   onClose: () => void;
 }
 
-export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({ citation, onClose }) => {
+export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
+  citation,
+  onClose,
+}) => {
   if (!citation) return null;
 
-  const getAssetType = (assetId: string) => {
-    if (assetId.includes('E-201')) return 'heat';
-    if (assetId.includes('FCV')) return 'valve';
-    return 'pump';
-  };
-
-  const hasImage = Boolean(
-    citation.evidenceUrl &&
-    citation.evidenceUrl.trim() !== '' &&
-    !citation.evidenceName.toLowerCase().includes('belum')
-  );
+  const isVerified = citation.status === 'VERIFIED';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100 p-6 space-y-4">
-        
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-[#051024]/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-2xl overflow-hidden"
+      >
         {/* Header */}
-        <div className="flex items-start justify-between pb-3 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-6 h-6 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 text-xs font-['Poppins',sans-serif] font-black flex items-center justify-center">
-                [{citation.index}]
+        <div className="p-5 border-b border-[var(--line)] flex items-start justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-1 rounded-[7px] bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] font-heading text-xs font-extrabold">
+                SITASI [{citation.index}]
               </span>
-              <span className="font-['Poppins',sans-serif] text-xs font-bold text-white">
+              <span className="font-heading text-sm font-bold text-[var(--cyan-dark)]">
                 {citation.reportId} · {citation.assetId}
               </span>
               <StatusBadge status={citation.status} size="sm" />
             </div>
-            <h3 className="font-['Poppins',sans-serif] text-base font-bold text-white">
+            <h3 className="font-heading text-xl font-bold text-[var(--ink)]">
               {citation.title}
             </h3>
           </div>
-
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Tutup pratinjau"
+            className="w-9 h-9 rounded-xl border border-[var(--line)] bg-[var(--soft)] flex items-center justify-center text-[var(--ink)] hover:border-[var(--cyan)] shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Evidence Photo Preview or Empty Notice */}
-        <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/70 text-center">
-          <div className="flex items-center justify-between mb-3 text-xs text-slate-400">
-            <span className="font-['Poppins',sans-serif] font-bold uppercase tracking-wider flex items-center gap-1.5 text-cyan-400">
-              <ImageIcon className="w-4 h-4" /> Dokumen Bukti Fisik Lapangan
-            </span>
-            {hasImage ? (
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Bukti Terverifikasi
+        {/* Body */}
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Evidence Preview Box */}
+          <div className="p-5 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+            <div className="flex items-center gap-2.5 mb-3">
+              <FileCheck2 className="w-5 h-5 text-[var(--cyan-dark)]" />
+              <span className="font-heading font-bold text-sm text-[var(--ink)]">
+                Dokumen / Foto Bukti: {citation.evidenceName}
               </span>
+            </div>
+
+            {citation.evidenceUrl ? (
+              <img
+                src={citation.evidenceUrl}
+                alt={citation.evidenceName}
+                className="w-full max-h-72 object-contain rounded-xl border border-[var(--line)] bg-[var(--surface)]"
+              />
             ) : (
-              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" /> Bukti Belum Terlampir
-              </span>
+              <div className="p-6 rounded-xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center space-y-2">
+                <FileCheck2 className="w-10 h-10 mx-auto text-[var(--cyan-dark)]" />
+                <div className="font-heading font-bold text-sm text-[var(--ink)]">
+                  Arsip Bukti Teknis Terverifikasi ({citation.evidenceName})
+                </div>
+                <p className="text-sm text-[var(--ink-soft)]">
+                  Tersimpan dalam repositori integritas kasus {citation.reportId} pada aset {citation.assetId}.
+                </p>
+              </div>
             )}
           </div>
 
-          {hasImage && citation.evidenceUrl ? (
-            <div className="space-y-2">
-              <img
-                src={citation.evidenceUrl}
-                alt="File Bukti Lapangan"
-                className="w-full max-h-64 object-contain rounded-xl border border-slate-700 bg-black/40 mx-auto shadow-inner"
-              />
-              <p className="text-xs font-semibold text-slate-300">
-                {citation.evidenceName}
+          {/* Evidence Traceability Details */}
+          <div className="grid grid-cols-1 gap-3">
+            <div className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+              <div className="font-heading text-xs font-extrabold uppercase text-[var(--amber)] mb-1">
+                Gejala Teramati
+              </div>
+              <p className="text-sm font-semibold text-[var(--ink)] m-0">{citation.gejala}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+              <div className="font-heading text-xs font-extrabold uppercase text-[var(--red)] mb-1">
+                {isVerified ? 'Akar Penyebab Terverifikasi' : 'Praduga Penyebab (Belum Disahkan)'}
+              </div>
+              <p className="text-sm font-semibold text-[var(--ink)] m-0">
+                {citation.praduga_penyebab}
               </p>
             </div>
-          ) : (
-            <div className="py-8 px-4 rounded-xl border border-dashed border-amber-500/30 bg-amber-500/5 space-y-2">
-              <TechnicalArt type={getAssetType(citation.assetId)} darkMode={true} className="w-full h-24 mx-auto opacity-70" />
-              <p className="text-xs font-bold text-amber-300">
-                Laporan ini ({citation.reportId}) berstatus {citation.status} dan file foto bukti belum diunggah.
-              </p>
-              <p className="text-[11px] text-slate-400 max-w-md mx-auto">
-                Sesuai aturan keras kepatuhan keandalan, temuan ini belum dapat disahkan pakar ke dalam standar Knowledge Base.
+            <div className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+              <div className="font-heading text-xs font-extrabold uppercase text-[var(--info)] mb-1">
+                Tindakan Rekomendasi
+              </div>
+              <p className="text-sm font-semibold text-[var(--ink)] m-0">
+                {citation.usulan_tindakan}
               </p>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Fact Connection details from Citation */}
-        <div className="space-y-2 text-xs">
-          {citation.gejala && (
-            <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-800">
-              <span className="font-['Poppins',sans-serif] font-bold text-amber-400 uppercase text-[10.5px] block mb-0.5">
-                Gejala Teramati:
-              </span>
-              <p className="text-slate-200">{citation.gejala}</p>
-            </div>
-          )}
-
-          {citation.praduga_penyebab && (
-            <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-800">
-              <span className="font-['Poppins',sans-serif] font-bold text-purple-400 uppercase text-[10.5px] block mb-0.5">
-                Akar Masalah (Root Cause):
-              </span>
-              <p className="text-slate-200">{citation.praduga_penyebab}</p>
-            </div>
-          )}
-
-          {citation.usulan_tindakan && (
-            <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-800">
-              <span className="font-['Poppins',sans-serif] font-bold text-emerald-400 uppercase text-[10.5px] block mb-0.5">
-                Tindakan Rekomendasi Teruji:
-              </span>
-              <p className="text-slate-200">{citation.usulan_tindakan}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="pt-2 flex items-center justify-between border-t border-slate-800">
-          <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-cyan-400" /> Sitasi [{citation.index}] dari Supabase Storage
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-['Poppins',sans-serif] font-bold text-white transition-colors"
+          {/* Verification Stamp */}
+          <div
+            style={
+              isVerified
+                ? {
+                    backgroundColor: 'var(--green-bg)',
+                    borderColor: 'var(--green-border)',
+                    color: 'var(--green)',
+                  }
+                : {
+                    backgroundColor: 'var(--amber-bg)',
+                    borderColor: 'var(--amber-border)',
+                    color: 'var(--amber)',
+                  }
+            }
+            className="p-3.5 rounded-xl border flex items-center gap-2.5 text-sm font-bold"
           >
-            Tutup Pratinjau
-          </button>
+            {isVerified ? (
+              <>
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>
+                  Disahkan oleh Pakar Validator ({citation.verifiedBy || 'Dr. Rina Suryani'}) — Siap dijadikan acuan teknis.
+                </span>
+              </>
+            ) : (
+              <>
+                <ShieldAlert className="w-5 h-5 shrink-0" />
+                <span>
+                  Peringatan: Kasus ini masih berstatus {citation.status} dan belum disahkan pakar. Jangan jadikan kesimpulan pasti tanpa pemeriksaan fisik.
+                </span>
+              </>
+            )}
+          </div>
         </div>
-
       </div>
     </div>
   );
