@@ -63,14 +63,11 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
     <div className="space-y-6 animate-fade-in">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
-            TAHAP 2–4 · TRIAGE, INVESTIGASI &amp; VALIDASI
-          </div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1">
-            Daftar Triage &amp; Kasus ({filtered.length})
+          <h1 className="font-heading text-3xl font-bold text-[var(--ink)]">
+            Triage &amp; Daftar Kasus ({filtered.length})
           </h1>
           <p className="text-[15px] text-[var(--ink-soft)] mt-1">
-            Saring kasus berdasarkan aset, status alur, dan batas waktu SLA otomatis.
+            Saring kasus berdasarkan aset, status, dan batas SLA.
           </p>
         </div>
         <button
@@ -107,7 +104,7 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
             <span className="font-heading font-bold" style={{ color: 'var(--amber)' }}>
               Peringatan Dini Pola Berulang:{' '}
             </span>
-            {earlyWarnings.map((w) => w.message).join(' ')}
+            {earlyWarnings.map((w) => w.message || w.summary).join(' ')}
           </div>
         </div>
       )}

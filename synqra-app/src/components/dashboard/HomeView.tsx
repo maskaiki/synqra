@@ -62,7 +62,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     earlyWarnings[0]
       ? {
           title: `Pola Berulang · ${earlyWarnings[0].assetId}`,
-          detail: `${earlyWarnings[0].recentCount} laporan aktif dalam 14 hari pada aset yang sama.`,
+          detail: `${earlyWarnings[0].recentCount ?? earlyWarnings[0].relatedReportIds.length} laporan aktif dalam 14 hari pada aset yang sama.`,
         }
       : {
           title: 'Tidak Ada Anomali Berulang',
@@ -86,19 +86,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
     <div className="space-y-6 animate-fade-in">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
-            BERANDA · {roleInfo.shortRole.toUpperCase()}
-          </div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1">
+          <h1 className="font-heading text-3xl font-bold text-[var(--ink)]">
             Halo, {firstName}.
           </h1>
           <p className="text-[15px] text-[var(--ink-soft)] mt-1">
             {roleInfo.key === 'frontline_omi' &&
-              'Catat temuan lapangan dalam 2 menit via suara atau telusuri solusi terverifikasi.'}
+              'Catat temuan lapangan cepat atau cari solusi terverifikasi.'}
             {roleInfo.key === 'dept_reviewer' &&
-              'Periksa kelengkapan bukti laporan masuk, pantau SLA, dan kelola investigasi aset.'}
+              'Tinjau bukti laporan masuk, SLA, dan investigasi aset.'}
             {roleInfo.key === 'hse_validator' &&
-              'Verifikasi risk report & bukti fisik sebelum mengesahkan pengetahuan ke Knowledge Base.'}
+              'Validasi risiko dan bukti sebelum mengesahkan pengetahuan baru.'}
           </p>
         </div>
         <button
@@ -121,14 +118,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <section className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-gradient-to-r from-[#091B3D] via-[#123D68] to-[#0C5F7D] text-white border border-cyan-400/25 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="pointer-events-none absolute -right-16 -top-28 w-72 h-72 rounded-full border border-cyan-300/25" />
         <div className="relative z-10 max-w-2xl">
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-cyan-300">
-            INTELLIGENCE, CONNECTED BY EVIDENCE
-          </div>
-          <h2 className="font-heading text-2xl sm:text-[26px] font-bold text-white mt-1.5 mb-2">
+          <h2 className="font-heading text-2xl sm:text-[26px] font-bold text-white mb-2">
             Temuan kecil di lapangan mencegah unplanned shutdown.
           </h2>
-          <p className="text-[15px] text-slate-100/90 leading-relaxed">
-            Setiap laporan awal ditandai <b className="text-amber-300">PRADUGA</b> sampai bukti fisiknya lengkap dan disahkan oleh pakar validator.
+          <p className="text-[15px] text-white/90 leading-relaxed m-0">
+            Laporan awal berstatus <b className="text-amber-300">PRADUGA</b> hingga bukti disahkan pakar.
           </p>
         </div>
         <div className="relative z-10 shrink-0">

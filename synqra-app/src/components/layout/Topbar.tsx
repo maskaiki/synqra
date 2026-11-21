@@ -24,7 +24,7 @@ const PAGE_LABELS: Record<MainPage, string> = {
   'case-detail': 'Detail Investigasi & Validasi',
   graph: 'Knowledge Graph Aset',
   tanya: 'Tanya SYNQRA AI',
-  analytics: 'Analitik & ROI',
+  analytics: 'Peringatan Dini',
 };
 
 export const Topbar: React.FC<TopbarProps> = ({

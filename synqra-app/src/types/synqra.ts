@@ -126,30 +126,26 @@ export interface CitationItem {
   verifiedBy?: string;
 }
 
+export type EarlyWarningSeverity = 'KRITIS' | 'WASPADA' | 'PANTAU';
+
 export interface EarlyWarningAlert {
+  id: string;
   assetId: string;
-  assetName: string;
-  recentCount: number;
-  message: string;
+  severity: EarlyWarningSeverity;
+  patternTitle: string;
+  frequencyLabel: string;
+  summary: string;
+  recommendedAction: string;
+  relatedReportIds: string[];
+  assetName?: string;
+  recentCount?: number;
+  message?: string;
 }
 
-export interface RoiCaseBreakdownItem {
-  reportId: string;
-  assetId: string;
-  title: string;
-  preventedHours: number;
-  rationale: string;
-}
-
-export interface RoiAnalysisResult {
-  estimatedHoursSaved: number;
-  estimatedCostSavedIdr: number;
-  hourlyDowntimeRateIdr: number;
-  executiveSummary: string;
-  caseBreakdown: RoiCaseBreakdownItem[];
-  activeHighRiskCount?: number;
-  activeHighRiskNote?: string;
+export interface EarlyWarningResponse {
+  alerts: EarlyWarningAlert[];
   engine: 'gemini-live' | 'local-fallback';
   usedModel?: string;
   errorReason?: string;
+  generatedAt: string;
 }

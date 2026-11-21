@@ -7,9 +7,13 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { uploadEvidenceFile } from '@/lib/dataService';
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   Camera,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
   Cpu,
   FileAudio,
   FileText,
@@ -29,6 +33,7 @@ interface LaporCepatViewProps {
   onCancel: () => void;
 }
 
+type WizardStep = 1 | 2 | 3;
 type MicStatus = 'idle' | 'requesting' | 'live' | 'recorded' | 'denied' | 'unavailable';
 
 interface ExtractionMeta {
@@ -56,59 +61,8 @@ interface NameplateScanViewState {
   compressedKb: number;
 }
 
-const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
-const MAX_NAMEPLATE_IMAGE_BYTES = 4 * 1024 * 1024; // 4 MB
-
-async function compressNameplateImage(file: File): Promise<{
-  blob: Blob;
-  previewUrl: string;
-  originalKb: number;
-  compressedKb: number;
-}> {
-  const rawUrl = URL.createObjectURL(file);
-  const originalKb = Math.max(1, Math.round(file.size / 1024));
-
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error('Gagal memuat pratinjau gambar nameplate.'));
-      el.src = rawUrl;
-    });
-
-    const maxWidth = 1280;
-    const scale = img.width > maxWidth ? maxWidth / img.width : 1;
-    const targetWidth = Math.max(1, Math.round(img.width * scale));
-    const targetHeight = Math.max(1, Math.round(img.height * scale));
-
-    const canvas = document.createElement('canvas');
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Canvas browser tidak tersedia untuk kompresi gambar.');
-    }
-    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (result) => {
-          if (result) resolve(result);
-          else reject(new Error('Gagal mengompresi foto nameplate ke JPEG.'));
-        },
-        'image/jpeg',
-        0.82
-      );
-    });
-
-    const previewUrl = URL.createObjectURL(blob);
-    const compressedKb = Math.max(1, Math.round(blob.size / 1024));
-    return { blob, previewUrl, originalKb, compressedKb };
-  } finally {
-    URL.revokeObjectURL(rawUrl);
-  }
-}
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+const MAX_NAMEPLATE_IMAGE_BYTES = 4 * 1024 * 1024;
 
 const SAMPLE_PROMPTS: Record<string, string> = {
   'P-101A':
@@ -127,6 +81,57 @@ function pickSupportedAudioMimeType(): string | undefined {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type));
 }
 
+async function compressNameplateImage(file: File): Promise<{
+  blob: Blob;
+  previewUrl: string;
+  originalKb: number;
+  compressedKb: number;
+}> {
+  const rawUrl = URL.createObjectURL(file);
+  const originalKb = Math.max(1, Math.round(file.size / 1024));
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Gagal memuat gambar nameplate.'));
+      el.src = rawUrl;
+    });
+
+    const maxWidth = 1280;
+    const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+    const targetWidth = Math.max(1, Math.round(img.width * scale));
+    const targetHeight = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas tidak tersedia untuk kompresi gambar.');
+    }
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) => {
+          if (result) resolve(result);
+          else reject(new Error('Gagal mengompresi foto ke JPEG.'));
+        },
+        'image/jpeg',
+        0.82
+      );
+    });
+
+    const previewUrl = URL.createObjectURL(blob);
+    const compressedKb = Math.max(1, Math.round(blob.size / 1024));
+    return { blob, previewUrl, originalKb, compressedKb };
+  } finally {
+    URL.revokeObjectURL(rawUrl);
+  }
+}
+
 export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   assets,
   roleInfo,
@@ -134,6 +139,9 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   onReportCreated,
   onCancel,
 }) => {
+  const [activeStep, setActiveStep] = useState<WizardStep>(1);
+  const [highestStep, setHighestStep] = useState<WizardStep>(1);
+
   const [selectedAssetId, setSelectedAssetId] = useState<string>('P-101A');
   const [findingType, setFindingType] = useState<'Kondisi Abnormal' | 'Potensi Bahaya' | 'Near Miss'>('Kondisi Abnormal');
   const [urgency, setUrgency] = useState<'Mendesak' | 'Normal'>('Normal');
@@ -154,6 +162,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const [entities, setEntities] = useState<FailureEntities | null>(null);
   const [extractionMeta, setExtractionMeta] = useState<ExtractionMeta | null>(null);
   const [reportTitle, setReportTitle] = useState('');
+  const [showTranscript, setShowTranscript] = useState(false);
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -169,6 +178,8 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const scanThumbUrlRef = useRef<string | null>(null);
   const nameplateInputRef = useRef<HTMLInputElement | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const selectedAsset = assets.find((a) => a.id === selectedAssetId) || assets[0];
 
   const revokeAudioUrl = () => {
     if (audioUrlRef.current) {
@@ -193,6 +204,18 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
     };
   }, []);
 
+  const goToStep = (step: WizardStep) => {
+    setErrorMsg(null);
+    setActiveStep(step);
+    setHighestStep((prev) => (step > prev ? step : prev));
+  };
+
+  const canJumpToStep = (step: WizardStep): boolean => {
+    if (step === 1) return true;
+    if (step === 2) return highestStep >= 2 || Boolean(selectedAssetId);
+    return Boolean(entities);
+  };
+
   const startRecording = async () => {
     setErrorMsg(null);
     setMicNotice(null);
@@ -207,7 +230,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       setIsRecording(false);
       setMicStatus('unavailable');
       setMicNotice(
-        'Mikrofon browser tidak tersedia pada perangkat atau konteks ini. Silakan gunakan tab Ketik Teks atau tombol Contoh Narasi di bawah.'
+        'Mikrofon tidak tersedia di browser ini. Beralih ke Ketik Teks atau pakai Contoh Narasi.'
       );
       return;
     }
@@ -259,8 +282,8 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       setMicStatus(isDenied ? 'denied' : 'unavailable');
       setMicNotice(
         isDenied
-          ? 'Izin mikrofon ditolak browser. Aktifkan izin mikrofon di address bar atau beralih ke Ketik Teks / Contoh Narasi untuk melanjutkan.'
-          : 'Perangkat mikrofon tidak terdeteksi atau sedang dipakai aplikasi lain. Silakan gunakan Ketik Teks atau Contoh Narasi.'
+          ? 'Izin mikrofon ditolak browser. Aktifkan izin mic atau gunakan Ketik Teks.'
+          : 'Perangkat mikrofon tidak terdeteksi. Gunakan Ketik Teks atau Contoh Narasi.'
       );
     }
   };
@@ -291,6 +314,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
     setIsScanning(true);
     setErrorMsg(null);
     let nextThumbUrl: string | null = null;
+
     try {
       const compressed = await compressNameplateImage(file);
       nextThumbUrl = compressed.previewUrl;
@@ -298,9 +322,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       if (compressed.blob.size > MAX_NAMEPLATE_IMAGE_BYTES) {
         URL.revokeObjectURL(nextThumbUrl);
         nextThumbUrl = null;
-        setErrorMsg(
-          'Ukuran foto setelah kompresi masih melebihi 4 MB. Silakan ambil foto ulang lebih dekat.'
-        );
+        setErrorMsg('Ukuran foto setelah kompresi masih melebihi 4 MB. Ambil foto lebih dekat.');
         return;
       }
 
@@ -404,14 +426,12 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           : inputMode === 'voice' && Boolean(recordedBlob);
 
     if (!useAudio && !narrative.trim()) {
-      setErrorMsg('Rekam suara atau isi narasi singkat terlebih dahulu sebelum ekstraksi AI.');
+      setErrorMsg('Rekam suara atau isi narasi singkat sebelum ekstraksi AI.');
       return;
     }
 
     if (useAudio && recordedBlob && recordedBlob.size > MAX_AUDIO_BYTES) {
-      setErrorMsg(
-        'Ukuran rekaman audio melebihi batas maksimal 10 MB. Silakan rekam lebih singkat atau gunakan input teks.'
-      );
+      setErrorMsg('Ukuran rekaman audio melebihi batas maksimal 10 MB.');
       return;
     }
 
@@ -438,7 +458,6 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
       const json = (await res.json()) as {
         success?: boolean;
-        status?: string;
         transcript?: string;
         asset_id?: string;
         suggestedTitle?: string;
@@ -479,8 +498,11 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
         transcript: rawTranscript,
         sourceMode: useAudio ? 'audio' : 'text',
       });
+      setShowTranscript(false);
+      setActiveStep(3);
+      setHighestStep(3);
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kendala saat menghubungi AI.');
+      setErrorMsg(err instanceof Error ? err.message : 'Kendala saat menghubungi AI.');
     } finally {
       setIsExtracting(false);
     }
@@ -542,646 +564,552 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const audioSizeKb = recordedBlob ? Math.max(1, Math.round(recordedBlob.size / 1024)) : 0;
 
   return (
-    <div className="space-y-6 max-w-5xl animate-fade-in">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-4 max-w-5xl animate-fade-in">
+      {/* Header Ringkas */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
-            TAHAP 1 · PRELIMINARY REPORT
-          </div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1">
-            Lapor Cepat Lapangan
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[var(--ink)] m-0">
+            Lapor Cepat
           </h1>
-          <p className="text-[15px] text-[var(--ink-soft)] mt-1">
-            Pilih aset, rekam suara (VN) atau ketik singkat — Gemini AI menyusun 7 entitas berstatus{' '}
-            <b className="text-[var(--amber)]">PRADUGA</b>.
-          </p>
         </div>
-        <StatusBadge status="PRADUGA" />
+        <StatusBadge status="PRADUGA" size="sm" />
       </header>
 
-      <div className="flex items-center gap-3 flex-wrap">
-        {[
-          { num: 1, label: 'Pilih Aset / Scan', done: Boolean(selectedAssetId) },
-          { num: 2, label: 'Rekam Suara / Narasi', done: Boolean(narrative.trim() || recordedBlob) },
-          { num: 3, label: 'Tinjau 7 Entitas & Kirim', done: Boolean(entities) },
-        ].map((st, idx) => (
-          <React.Fragment key={st.num}>
-            <div className="flex items-center gap-2 font-heading text-sm font-bold text-[var(--ink)]">
-              <span
-                className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${
-                  st.done
-                    ? 'bg-[#00B8D9] text-[#061A38]'
-                    : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--ink-soft)]'
+      {/* Indikator Langkah Wizard (Klik Ulang untuk Langkah Terlewati) */}
+      <nav
+        aria-label="Langkah Lapor Cepat"
+        className="flex flex-wrap items-center gap-2 p-2.5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm"
+      >
+        {(
+          [
+            { step: 1 as WizardStep, label: '1. Pilih Alat' },
+            { step: 2 as WizardStep, label: '2. Catat Temuan' },
+            { step: 3 as WizardStep, label: '3. Tinjau & Kirim' },
+          ] as const
+        ).map((item, idx) => {
+          const active = activeStep === item.step;
+          const unlocked = canJumpToStep(item.step);
+          const completed =
+            (item.step === 1 && highestStep > 1) ||
+            (item.step === 2 && Boolean(entities)) ||
+            (item.step === 3 && Boolean(entities) && activeStep === 3);
+
+          return (
+            <React.Fragment key={item.step}>
+              <button
+                type="button"
+                disabled={!unlocked}
+                onClick={() => unlocked && setActiveStep(item.step)}
+                className={`px-3.5 py-2 rounded-xl font-heading text-sm font-bold inline-flex items-center gap-2 transition-colors disabled:opacity-45 disabled:cursor-not-allowed ${
+                  active
+                    ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830]'
+                    : completed
+                      ? 'bg-[var(--cyan-pale)] text-[var(--cyan-dark)] hover:opacity-90'
+                      : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
-                {st.num}
-              </span>
-              <span>{st.label}</span>
-            </div>
-            {idx < 2 && <div className="w-8 h-[2px] bg-[var(--line)] hidden sm:block" />}
-          </React.Fragment>
-        ))}
-      </div>
+                {completed && !active && <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                <span>{item.label}</span>
+              </button>
+              {idx < 2 && (
+                <ChevronRight className="w-4 h-4 text-[var(--muted)] shrink-0 hidden sm:block" />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </nav>
 
-      {/* Step 1: Pilih Peralatan & Klasifikasi */}
-      <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
+      {/* LAYAR 1: PILIH ALAT & SCAN NAMEPLATE */}
+      {activeStep === 1 && (
+        <section className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-5 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
               1. Pilih Peralatan atau Scan Nameplate
             </h2>
-            <p className="text-sm text-[var(--ink-soft)]">
-              Pastikan kode aset tepat untuk mencegah kesalahan riwayat antar-mesin.
-            </p>
-          </div>
-          <div>
-            <input
-              ref={nameplateInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleScanNameplate}
-              className="hidden"
-            />
-            <button
-              type="button"
-              disabled={isScanning}
-              onClick={() => nameplateInputRef.current?.click()}
-              className="px-4 py-2.5 rounded-xl bg-[var(--cyan-pale)] border border-[var(--cyan)]/40 text-[var(--cyan-dark)] font-heading font-bold text-sm inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
-            >
-              <Scan className="w-4 h-4" />
-              <span>{isScanning ? 'Memindai Nameplate...' : 'Scan Nameplate (Kamera AI)'}</span>
-            </button>
-          </div>
-        </div>
 
-        {scanResult && (
-          <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-3 animate-fade-in">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <img
-                src={scanResult.thumbnailUrl}
-                alt={`Foto nameplate ${scanResult.assetTag}`}
-                className="w-24 h-24 rounded-xl object-cover border border-[var(--line)] bg-[var(--surface)] shrink-0"
+            <div>
+              <input
+                ref={nameplateInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleScanNameplate}
+                className="hidden"
               />
-              <div className="flex-1 min-w-0 space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-heading font-bold text-base text-[var(--ink)] flex flex-wrap items-center gap-2">
-                    <span>Hasil Scan Nameplate: {scanResult.assetTag}</span>
-                    {!scanResult.isUnknownAsset && scanResult.matchedAssetId && (
-                      <span
-                        style={{
-                          backgroundColor: 'var(--green-bg)',
-                          color: 'var(--green)',
-                          borderColor: 'var(--green-border)',
-                        }}
-                        className="px-2 py-0.5 rounded-[7px] border font-heading text-xs font-bold"
-                      >
-                        Cocok: {scanResult.matchedAssetId}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {scanResult.engine === 'gemini-live' ? (
-                      <span
-                        style={{
-                          backgroundColor: 'var(--green-bg)',
-                          color: 'var(--green)',
-                          borderColor: 'var(--green-border)',
-                          borderLeftColor: 'var(--green)',
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider whitespace-nowrap"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                        <span>
-                          {(scanResult.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE
-                        </span>
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          backgroundColor: 'var(--amber-bg)',
-                          color: 'var(--amber)',
-                          borderColor: 'var(--amber-border)',
-                          borderLeftColor: 'var(--amber)',
-                        }}
-                        title={scanResult.errorReason}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider whitespace-nowrap"
-                      >
-                        <Cpu className="w-3.5 h-3.5 shrink-0" />
-                        <span>LOCAL FALLBACK</span>
-                      </span>
-                    )}
-
-                    <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 text-[var(--cyan-dark)] font-heading text-xs font-bold">
-                      Confidence {Math.round(scanResult.confidence * 100)}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-[var(--ink-soft)]">
-                  <div>
-                    <b className="text-[var(--ink)]">Pabrikan / Model:</b>{' '}
-                    {scanResult.manufacturer} · {scanResult.model}
-                  </div>
-                  <div>
-                    <b className="text-[var(--ink)]">No. Seri:</b> {scanResult.serialNumber}
-                  </div>
-                  <div className="sm:col-span-2">
-                    <b className="text-[var(--ink)]">Spesifikasi:</b>{' '}
-                    {scanResult.specifications}
-                  </div>
-                </div>
-
-                <div className="text-sm text-[var(--ink-soft)]">
-                  Kompresi otomatis gambar HP: {scanResult.originalKb} KB →{' '}
-                  <b className="text-[var(--ink)]">{scanResult.compressedKb} KB</b> (JPEG)
-                </div>
-
-                {scanResult.engine === 'local-fallback' && scanResult.errorReason && (
-                  <div className="text-sm font-semibold" style={{ color: 'var(--amber)' }}>
-                    Alasan fallback: {scanResult.errorReason}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {scanResult.isUnknownAsset && (
-              <div
-                style={{
-                  backgroundColor: 'var(--amber-bg)',
-                  borderColor: 'var(--amber-border)',
-                  borderLeftColor: 'var(--amber)',
-                }}
-                className="p-3 rounded-[7px] border border-l-[4px] flex items-start gap-2.5 text-sm font-semibold text-[var(--ink)]"
+              <button
+                type="button"
+                disabled={isScanning}
+                onClick={() => nameplateInputRef.current?.click()}
+                className="px-4 py-2.5 rounded-xl bg-[var(--cyan-pale)] border border-[var(--cyan)]/40 text-[var(--cyan-dark)] font-heading font-bold text-sm inline-flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                <AlertTriangle
-                  className="w-4 h-4 shrink-0 mt-0.5"
-                  style={{ color: 'var(--amber)' }}
+                <Scan className="w-4 h-4" />
+                <span>
+                  {isScanning ? 'Memindai...' : 'Scan Nameplate (Kamera/Foto)'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {assets.map((asset) => {
+              const active = selectedAssetId === asset.id;
+              return (
+                <button
+                  key={asset.id}
+                  type="button"
+                  onClick={() => setSelectedAssetId(asset.id)}
+                  className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                    active
+                      ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
+                      : 'border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)]/60'
+                  }`}
+                >
+                  <div className="h-20 rounded-xl bg-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2 mb-2.5">
+                    <TechnicalArt
+                      type={asset.type}
+                      darkMode={isDarkMode}
+                      className="w-full h-16"
+                    />
+                  </div>
+                  <div className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
+                    {asset.id}
+                  </div>
+                  <div className="font-heading font-bold text-[15px] text-[var(--ink)] mt-0.5">
+                    {asset.name}
+                  </div>
+                  <div className="text-sm text-[var(--ink-soft)] mt-0.5 truncate">
+                    {asset.area}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {scanResult && (
+            <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-2.5 animate-fade-in">
+              <div className="flex flex-col sm:flex-row gap-3.5">
+                <img
+                  src={scanResult.thumbnailUrl}
+                  alt={`Foto nameplate ${scanResult.assetTag}`}
+                  className="w-20 h-20 rounded-xl object-cover border border-[var(--line)] bg-[var(--surface)] shrink-0"
                 />
-                <div>
-                  <b style={{ color: 'var(--amber)' }}>Tag Aset Belum Terdaftar: </b>
-                  Kode &ldquo;{scanResult.assetTag}&rdquo; tidak cocok dengan 3 aset utama
-                  terdaftar (P-101A, E-201, FCV-301). Silakan pilih kartu aset secara manual di
-                  bawah.
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {assets.map((asset) => {
-            const active = selectedAssetId === asset.id;
-            return (
-              <button
-                key={asset.id}
-                type="button"
-                onClick={() => setSelectedAssetId(asset.id)}
-                className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                  active
-                    ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
-                    : 'border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)]/60'
-                }`}
-              >
-                <div className="h-24 rounded-xl bg-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2 mb-3">
-                  <TechnicalArt type={asset.type} darkMode={isDarkMode} className="w-full h-20" />
-                </div>
-                <div className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
-                  {asset.id}
-                </div>
-                <div className="font-heading font-bold text-[15px] text-[var(--ink)] mt-0.5">
-                  {asset.name}
-                </div>
-                <div className="text-sm text-[var(--ink-soft)] mt-0.5 truncate">
-                  {asset.area}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[var(--line-soft)]">
-          <div>
-            <label className="block text-sm font-bold text-[var(--ink)] mb-2">
-              Klasifikasi Temuan Awal
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {(['Kondisi Abnormal', 'Potensi Bahaya', 'Near Miss'] as const).map((ft) => (
-                <button
-                  key={ft}
-                  type="button"
-                  onClick={() => setFindingType(ft)}
-                  className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold transition-colors ${
-                    findingType === ft
-                      ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] border-transparent'
-                      : 'bg-[var(--soft)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
-                  }`}
-                >
-                  {ft}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-[var(--ink)] mb-2">
-              Tingkat Urgensi Lapangan
-            </label>
-            <div className="flex gap-2">
-              {(['Normal', 'Mendesak'] as const).map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => setUrgency(u)}
-                  className={`px-4 py-2 rounded-xl border font-heading text-sm font-bold transition-colors ${
-                    urgency === u
-                      ? u === 'Mendesak'
-                        ? 'bg-[#B42318] text-white border-transparent'
-                        : 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] border-transparent'
-                      : 'bg-[var(--soft)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
-                  }`}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Step 2: Rekam Suara / Narasi Teks & Foto Bukti */}
-      <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
-              2. Sampaikan Temuan &amp; Foto Bukti Awal
-            </h2>
-            <p className="text-sm text-[var(--ink-soft)]">
-              Gunakan rekaman suara atau ketik bebas dalam bahasa lapangan Indonesia–Inggris.
-            </p>
-          </div>
-          <div className="inline-flex p-1 rounded-xl bg-[var(--soft)] border border-[var(--line)] self-start">
-            <button
-              type="button"
-              onClick={() => setInputMode('voice')}
-              className={`px-4 py-2 rounded-lg font-heading text-sm font-bold inline-flex items-center gap-2 transition-colors ${
-                inputMode === 'voice'
-                  ? 'bg-[var(--surface)] text-[var(--ink)] shadow-sm'
-                  : 'text-[var(--ink-soft)]'
-              }`}
-            >
-              <Mic className="w-4 h-4" />
-              <span>Rekam Suara</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setInputMode('text')}
-              className={`px-4 py-2 rounded-lg font-heading text-sm font-bold inline-flex items-center gap-2 transition-colors ${
-                inputMode === 'text'
-                  ? 'bg-[var(--surface)] text-[var(--ink)] shadow-sm'
-                  : 'text-[var(--ink-soft)]'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Ketik Teks</span>
-            </button>
-          </div>
-        </div>
-
-        {inputMode === 'voice' ? (
-          <div className="p-6 rounded-2xl border-2 border-dashed border-[var(--line)] bg-[var(--soft)] text-center space-y-4">
-            {/* Status Mikrofon Eksplisit */}
-            <div className="flex justify-center">
-              {micStatus === 'live' && isRecording ? (
-                <span
-                  style={{
-                    backgroundColor: 'var(--red-bg)',
-                    color: 'var(--red)',
-                    borderColor: 'var(--red-border)',
-                    borderLeftColor: 'var(--red)',
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider"
-                >
-                  <span className="w-2 h-2 rounded-[2px] bg-[#DC2626] animate-pulse" />
-                  <span>MIC LIVE · {formatTimer(recordSeconds)}</span>
-                </span>
-              ) : micStatus === 'requesting' ? (
-                <span
-                  style={{
-                    backgroundColor: 'var(--info-bg)',
-                    color: 'var(--info)',
-                    borderColor: 'var(--info-border)',
-                    borderLeftColor: 'var(--info)',
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider"
-                >
-                  <span>MEMINTA IZIN MIKROFON...</span>
-                </span>
-              ) : micStatus === 'recorded' && recordedBlob ? (
-                <span
-                  style={{
-                    backgroundColor: 'var(--green-bg)',
-                    color: 'var(--green)',
-                    borderColor: 'var(--green-border)',
-                    borderLeftColor: 'var(--green)',
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>REKAMAN SIAP ({formatTimer(recordSeconds)})</span>
-                </span>
-              ) : (
-                <span
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] border-[var(--line)] border-l-[var(--cyan-dark)] bg-[var(--surface)] text-[var(--ink-soft)] font-heading text-xs font-bold uppercase tracking-wider"
-                >
-                  <Mic className="w-3.5 h-3.5 text-[var(--cyan-dark)]" />
-                  <span>
-                    {micStatus === 'denied' || micStatus === 'unavailable'
-                      ? 'MIKROFON TIDAK AKTIF'
-                      : 'SIAP MEREKAM'}
-                  </span>
-                </span>
-              )}
-            </div>
-
-            <button
-              type="button"
-              disabled={micStatus === 'requesting'}
-              onClick={isRecording ? stopRecording : startRecording}
-              className={`w-20 h-20 rounded-2xl mx-auto flex items-center justify-center shadow-lg transition-transform hover:scale-105 disabled:opacity-60 ${
-                isRecording ? 'bg-[#DC2626] text-white' : 'bg-[#00B8D9] text-[#061A38]'
-              }`}
-              title={isRecording ? 'Hentikan rekaman suara' : 'Mulai rekam suara'}
-            >
-              {isRecording ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
-            </button>
-
-            <div className="font-heading font-bold text-base text-[var(--ink)]">
-              {isRecording
-                ? `Merekam suara lapangan secara langsung (${formatTimer(recordSeconds)})`
-                : recordedBlob
-                  ? 'Rekaman suara selesai — putar pratinjau atau langsung ekstrak'
-                  : 'Tekan tombol mikrofon untuk mulai berbicara'}
-            </div>
-
-            <div
-              className={`h-9 flex items-center justify-center gap-1 ${
-                isRecording ? 'voice-wave-active' : 'opacity-45'
-              }`}
-            >
-              {Array.from({ length: 18 }).map((_, i) => (
-                <span key={i} className="voice-wave-bar" />
-              ))}
-            </div>
-
-            {/* Peringatan Ramah jika Mikrofon Ditolak / Tidak Tersedia */}
-            {(micStatus === 'denied' || micStatus === 'unavailable') && micNotice && (
-              <div
-                style={{
-                  backgroundColor: 'var(--amber-bg)',
-                  borderColor: 'var(--amber-border)',
-                  borderLeftColor: 'var(--amber)',
-                }}
-                className="p-4 rounded-[7px] border border-l-[4px] text-left space-y-3"
-              >
-                <div className="flex items-start gap-2.5 text-sm font-semibold text-[var(--ink)]">
-                  <AlertTriangle
-                    className="w-5 h-5 shrink-0 mt-0.5"
-                    style={{ color: 'var(--amber)' }}
-                  />
-                  <div>
-                    <b style={{ color: 'var(--amber)' }}>Mikrofon Tidak Dapat Diakses: </b>
-                    <span>{micNotice}</span>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-heading font-bold text-base text-[var(--ink)]">
+                      Hasil Scan: {scanResult.assetTag}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {scanResult.engine === 'gemini-live' ? (
+                        <span
+                          style={{
+                            backgroundColor: 'var(--green-bg)',
+                            color: 'var(--green)',
+                            borderColor: 'var(--green-border)',
+                            borderLeftColor: 'var(--green)',
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>
+                            {(scanResult.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE
+                          </span>
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            backgroundColor: 'var(--amber-bg)',
+                            color: 'var(--amber)',
+                            borderColor: 'var(--amber-border)',
+                            borderLeftColor: 'var(--amber)',
+                          }}
+                          title={scanResult.errorReason}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                        >
+                          <Cpu className="w-3.5 h-3.5" />
+                          <span>LOCAL FALLBACK</span>
+                        </span>
+                      )}
+                      <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)] font-heading text-xs font-bold">
+                        {Math.round(scanResult.confidence * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-[var(--ink-soft)]">
+                    <b className="text-[var(--ink)]">{scanResult.manufacturer}</b> ({scanResult.model})
+                    {' · '}No. Seri: {scanResult.serialNumber}
+                  </div>
+                  <div className="text-sm text-[var(--ink-soft)]">
+                    {scanResult.specifications} ({scanResult.originalKb} KB ke {scanResult.compressedKb} KB)
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 pl-7">
-                  <button
-                    type="button"
-                    onClick={() => setInputMode('text')}
-                    className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] text-sm font-heading font-bold text-[var(--ink)] inline-flex items-center gap-1.5"
-                  >
-                    <FileText className="w-4 h-4 text-[var(--cyan-dark)]" />
-                    <span>Beralih ke Ketik Teks</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRecordedBlob(null);
-                      revokeAudioUrl();
-                      setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
-                      setInputMode('text');
-                    }}
-                    className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] text-sm font-heading font-bold text-[var(--ink)]"
-                  >
-                    Isi Contoh Narasi {selectedAssetId}
-                  </button>
-                </div>
               </div>
-            )}
 
-            {/* Pratinjau Pemutar Audio & Tombol Rekam Ulang / Ekstrak Langsung */}
-            {!isRecording && recordedBlob && audioUrl && (
-              <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-left space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-[var(--ink)]">
-                  <span className="inline-flex items-center gap-2 font-heading">
-                    <FileAudio className="w-4 h-4 text-[var(--cyan-dark)]" />
-                    <span>Pratinjau Rekaman Suara</span>
-                  </span>
-                  <span className="text-[var(--ink-soft)] font-heading text-xs">
-                    Durasi {formatTimer(recordSeconds)} · {audioSizeKb} KB
-                  </span>
-                </div>
-                <audio controls src={audioUrl} className="w-full" />
-                <div className="flex flex-wrap justify-end gap-2.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleReRecord}
-                    className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-sm font-heading font-bold text-[var(--ink)] inline-flex items-center gap-2 transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Rekam Ulang</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isExtracting}
-                    onClick={() => handleExtractAI('audio')}
-                    className="px-4 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 transition-colors disabled:opacity-50"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>
-                      {isExtracting
-                        ? 'Mengekstrak Audio...'
-                        : 'Ekstrak Audio ke 7 Entitas'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <p className="text-sm text-[var(--ink-soft)]">
-              {isRecording
-                ? 'Tekan kembali tombol merah untuk menghentikan rekaman.'
-                : 'Atau gunakan contoh narasi teks di bawah untuk menguji ekstraksi 7 entitas langsung:'}
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setRecordedBlob(null);
-                  revokeAudioUrl();
-                  setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
-                  setInputMode('text');
-                }}
-                className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-sm font-bold text-[var(--ink)]"
-              >
-                Gunakan Contoh Narasi {selectedAssetId}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="block text-sm font-bold text-[var(--ink)]">
-                Narasi Kondisi Lapangan
-              </label>
-              <button
-                type="button"
-                onClick={() =>
-                  setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A'])
-                }
-                className="px-3 py-1.5 rounded-[7px] border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-xs font-heading font-bold text-[var(--cyan-dark)]"
-              >
-                Isi Contoh Narasi {selectedAssetId}
-              </button>
-            </div>
-            <textarea
-              rows={4}
-              value={narrative}
-              onChange={(e) => setNarrative(e.target.value)}
-              placeholder="Contoh: Pompa P-101A bergetar keras 7,6 mm/s di bearing drive end dan ada rembesan tipis di sekitar mechanical seal..."
-              className="w-full p-4 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-[15px] font-medium focus:outline-none focus:border-[var(--cyan)]"
-            />
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
-              <Camera className="w-5 h-5" />
-            </span>
-            <div>
-              <div className="font-heading font-bold text-sm text-[var(--ink)]">
-                Lampirkan Foto Bukti Awal (Disarankan)
-              </div>
-              <div className="text-sm text-[var(--ink-soft)]">
-                {photoFile
-                  ? photoFile.name
-                  : 'Mendukung JPG, PNG, WEBP. Mempercepat lolos validasi pakar.'}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {photoPreview && (
-              <img
-                src={photoPreview}
-                alt="Preview bukti"
-                className="w-12 h-12 rounded-lg object-cover border border-[var(--line)]"
-              />
-            )}
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => photoInputRef.current?.click()}
-              className="px-4 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              <span>{photoFile ? 'Ganti Foto' : 'Pilih Foto'}</span>
-            </button>
-          </div>
-        </div>
-
-        {errorMsg && (
-          <div
-            style={{
-              backgroundColor: 'var(--red-bg)',
-              borderColor: 'var(--red-border)',
-              color: 'var(--red)',
-            }}
-            className="p-3.5 rounded-xl border text-sm font-bold"
-          >
-            {errorMsg}
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            disabled={isExtracting}
-            onClick={() => handleExtractAI()}
-            className="px-6 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>
-              {isExtracting
-                ? 'Mengekstrak 7 Entitas via Gemini AI...'
-                : 'Ekstrak 7 Entitas dengan AI'}
-            </span>
-          </button>
-        </div>
-      </section>
-
-      {/* Step 3: Hasil Ekstraksi AI — 7 Entitas Terstruktur */}
-      {entities && (
-        <section className="p-6 rounded-2xl bg-[var(--surface)] border-2 border-[var(--cyan)] shadow-md space-y-5 animate-fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--line-soft)]">
-            <div>
-              <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
-                3. Hasil Ekstraksi AI — 7 Entitas Terstruktur
-              </h2>
-              <p className="text-sm text-[var(--ink-soft)]">
-                Tinjau dan sunting bila perlu sebelum dikirim ke antrean Triage. Status awal dikunci sebagai PRADUGA.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {extractionMeta?.engine === 'gemini-live' ? (
-                <span
-                  style={{
-                    backgroundColor: 'var(--green-bg)',
-                    color: 'var(--green)',
-                    borderColor: 'var(--green-border)',
-                    borderLeftColor: 'var(--green)',
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider whitespace-nowrap"
-                >
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                  <span>{(extractionMeta.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE</span>
-                </span>
-              ) : (
-                <span
+              {scanResult.isUnknownAsset && (
+                <div
                   style={{
                     backgroundColor: 'var(--amber-bg)',
-                    color: 'var(--amber)',
                     borderColor: 'var(--amber-border)',
                     borderLeftColor: 'var(--amber)',
                   }}
-                  title={extractionMeta?.errorReason}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+                  className="p-3 rounded-[7px] border border-l-[4px] flex items-center gap-2 text-sm font-semibold text-[var(--ink)]"
                 >
-                  <Cpu className="w-3.5 h-3.5 shrink-0" />
-                  <span>LOCAL FALLBACK</span>
-                </span>
+                  <AlertTriangle
+                    className="w-4 h-4 shrink-0"
+                    style={{ color: 'var(--amber)' }}
+                  />
+                  <span>
+                    Tag &ldquo;{scanResult.assetTag}&rdquo; tidak ada di daftar utama. Pilih kartu alat secara manual di atas.
+                  </span>
+                </div>
               )}
-              <StatusBadge status="PRADUGA" />
+            </div>
+          )}
+
+          {errorMsg && (
+            <div
+              style={{
+                backgroundColor: 'var(--red-bg)',
+                borderColor: 'var(--red-border)',
+                color: 'var(--red)',
+              }}
+              className="p-3.5 rounded-xl border text-sm font-bold"
+            >
+              {errorMsg}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-[var(--line-soft)]">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              onClick={() => goToStep(2)}
+              className="px-5 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm transition-colors"
+            >
+              <span>Lanjut ke Temuan</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* LAYAR 2: REKAM SUARA ATAU KETIK TEMUAN */}
+      {activeStep === 2 && (
+        <section className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4 animate-fade-in">
+          {/* Baris Info Aset Terpilih + Toggle Mode Input */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--line-soft)]">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 font-heading text-sm font-bold text-[var(--cyan-dark)]">
+              <span>Alat: {selectedAsset.id}</span>
+              <span className="text-[var(--ink)] font-semibold">({selectedAsset.name})</span>
+              <button
+                type="button"
+                onClick={() => setActiveStep(1)}
+                className="underline text-xs font-extrabold ml-1"
+              >
+                Ganti
+              </button>
+            </div>
+
+            <div className="inline-flex p-1 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+              <button
+                type="button"
+                onClick={() => setInputMode('voice')}
+                className={`px-3.5 py-1.5 rounded-lg font-heading text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
+                  inputMode === 'voice'
+                    ? 'bg-[var(--surface)] text-[var(--ink)] shadow-sm'
+                    : 'text-[var(--ink-soft)]'
+                }`}
+              >
+                <Mic className="w-4 h-4" />
+                <span>Rekam Suara</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode('text')}
+                className={`px-3.5 py-1.5 rounded-lg font-heading text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
+                  inputMode === 'text'
+                    ? 'bg-[var(--surface)] text-[var(--ink)] shadow-sm'
+                    : 'text-[var(--ink-soft)]'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Ketik Teks</span>
+              </button>
             </div>
           </div>
 
-          {/* Keterangan Fallback jika model lokal aktif */}
+          {inputMode === 'voice' ? (
+            <div className="p-5 rounded-2xl border-2 border-dashed border-[var(--line)] bg-[var(--soft)] text-center space-y-3">
+              <div className="flex justify-center">
+                {micStatus === 'live' && isRecording ? (
+                  <span
+                    style={{
+                      backgroundColor: 'var(--red-bg)',
+                      color: 'var(--red)',
+                      borderColor: 'var(--red-border)',
+                      borderLeftColor: 'var(--red)',
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                  >
+                    <span className="w-2 h-2 rounded-[2px] bg-[#DC2626] animate-pulse" />
+                    <span>MIC LIVE · {formatTimer(recordSeconds)}</span>
+                  </span>
+                ) : micStatus === 'requesting' ? (
+                  <span
+                    style={{
+                      backgroundColor: 'var(--info-bg)',
+                      color: 'var(--info)',
+                      borderColor: 'var(--info-border)',
+                      borderLeftColor: 'var(--info)',
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                  >
+                    <span>MEMINTA IZIN MIC...</span>
+                  </span>
+                ) : micStatus === 'recorded' && recordedBlob ? (
+                  <span
+                    style={{
+                      backgroundColor: 'var(--green-bg)',
+                      color: 'var(--green)',
+                      borderColor: 'var(--green-border)',
+                      borderLeftColor: 'var(--green)',
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>REKAMAN SIAP ({formatTimer(recordSeconds)})</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] border-[var(--line)] border-l-[var(--cyan-dark)] bg-[var(--surface)] text-[var(--ink-soft)] font-heading text-xs font-bold uppercase">
+                    <Mic className="w-3.5 h-3.5 text-[var(--cyan-dark)]" />
+                    <span>
+                      {micStatus === 'denied' || micStatus === 'unavailable'
+                        ? 'MIKROFON TIDAK AKTIF'
+                        : 'SIAP MEREKAM'}
+                    </span>
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                disabled={micStatus === 'requesting'}
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-lg transition-transform hover:scale-105 disabled:opacity-60 ${
+                  isRecording ? 'bg-[#DC2626] text-white' : 'bg-[#00B8D9] text-[#061A38]'
+                }`}
+                title={isRecording ? 'Hentikan rekaman' : 'Mulai rekam suara'}
+              >
+                {isRecording ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
+              </button>
+
+              <div className="font-heading font-bold text-sm text-[var(--ink)]">
+                {isRecording
+                  ? `Merekam (${formatTimer(recordSeconds)}). Tekan tombol merah untuk berhenti.`
+                  : recordedBlob
+                    ? 'Rekaman selesai. Putar pratinjau atau langsung ekstrak.'
+                    : 'Tekan tombol mikrofon untuk mulai berbicara.'}
+              </div>
+
+              <div
+                className={`h-7 flex items-center justify-center gap-1 ${
+                  isRecording ? 'voice-wave-active' : 'opacity-40'
+                }`}
+              >
+                {Array.from({ length: 16 }).map((_, i) => (
+                  <span key={i} className="voice-wave-bar" />
+                ))}
+              </div>
+
+              {(micStatus === 'denied' || micStatus === 'unavailable') && micNotice && (
+                <div
+                  style={{
+                    backgroundColor: 'var(--amber-bg)',
+                    borderColor: 'var(--amber-border)',
+                    borderLeftColor: 'var(--amber)',
+                  }}
+                  className="p-3.5 rounded-[7px] border border-l-[4px] text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div className="flex items-start gap-2 text-sm font-semibold text-[var(--ink)]">
+                    <AlertTriangle
+                      className="w-4 h-4 shrink-0 mt-0.5"
+                      style={{ color: 'var(--amber)' }}
+                    />
+                    <span>{micNotice}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setInputMode('text')}
+                      className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--line)] font-heading text-xs font-bold text-[var(--ink)]"
+                    >
+                      Ketik Teks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRecordedBlob(null);
+                        revokeAudioUrl();
+                        setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
+                        setInputMode('text');
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--line)] font-heading text-xs font-bold text-[var(--cyan-dark)]"
+                    >
+                      Contoh {selectedAssetId}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isRecording && recordedBlob && audioUrl && (
+                <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-left space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 text-sm font-bold text-[var(--ink)]">
+                    <span className="inline-flex items-center gap-2 font-heading">
+                      <FileAudio className="w-4 h-4 text-[var(--cyan-dark)]" />
+                      <span>Pratinjau Audio</span>
+                    </span>
+                    <span className="text-xs font-heading text-[var(--ink-soft)]">
+                      {formatTimer(recordSeconds)} · {audioSizeKb} KB
+                    </span>
+                  </div>
+                  <audio controls src={audioUrl} className="w-full" />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleReRecord}
+                      className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-xs font-heading font-bold text-[var(--ink)] inline-flex items-center gap-1.5"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Rekam Ulang</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecordedBlob(null);
+                    revokeAudioUrl();
+                    setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
+                    setInputMode('text');
+                  }}
+                  className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-sm font-bold text-[var(--ink)]"
+                >
+                  Isi Contoh Narasi {selectedAssetId}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-bold text-[var(--ink)]">
+                  Narasi Temuan Lapangan
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A'])
+                  }
+                  className="px-3 py-1.5 rounded-[7px] border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-xs font-heading font-bold text-[var(--cyan-dark)]"
+                >
+                  Isi Contoh {selectedAssetId}
+                </button>
+              </div>
+              <textarea
+                rows={5}
+                value={narrative}
+                onChange={(e) => setNarrative(e.target.value)}
+                placeholder="Tulis gejala alat, kondisi operasi, dan dugaan awal..."
+                className="w-full p-4 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-[15px] font-medium focus:outline-none focus:border-[var(--cyan)]"
+              />
+            </div>
+          )}
+
+          {errorMsg && (
+            <div
+              style={{
+                backgroundColor: 'var(--red-bg)',
+                borderColor: 'var(--red-border)',
+                color: 'var(--red)',
+              }}
+              className="p-3.5 rounded-xl border text-sm font-bold"
+            >
+              {errorMsg}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-[var(--line-soft)]">
+            <button
+              type="button"
+              onClick={() => setActiveStep(1)}
+              className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali</span>
+            </button>
+            <button
+              type="button"
+              disabled={isExtracting}
+              onClick={() => handleExtractAI()}
+              className="px-5 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+            >
+              <Sparkles className={`w-4 h-4 ${isExtracting ? 'animate-spin' : ''}`} />
+              <span>
+                {isExtracting
+                  ? 'Mengekstrak...'
+                  : 'Ekstrak 7 Entitas dengan AI'}
+              </span>
+              {!isExtracting && <ArrowRight className="w-4 h-4" />}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* LAYAR 3: TINJAU 7 ENTITAS & LAMPIRKAN BUKTI */}
+      {activeStep === 3 && entities && (
+        <section className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--line-soft)]">
+            <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+              3. Tinjau 7 Entitas &amp; Lampirkan Bukti
+            </h2>
+
+            {extractionMeta?.engine === 'gemini-live' ? (
+              <span
+                style={{
+                  backgroundColor: 'var(--green-bg)',
+                  color: 'var(--green)',
+                  borderColor: 'var(--green-border)',
+                  borderLeftColor: 'var(--green)',
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{(extractionMeta.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE</span>
+              </span>
+            ) : (
+              <span
+                style={{
+                  backgroundColor: 'var(--amber-bg)',
+                  color: 'var(--amber)',
+                  borderColor: 'var(--amber-border)',
+                  borderLeftColor: 'var(--amber)',
+                }}
+                title={extractionMeta?.errorReason}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+              >
+                <Cpu className="w-3.5 h-3.5" />
+                <span>LOCAL FALLBACK</span>
+              </span>
+            )}
+          </div>
+
           {extractionMeta?.engine === 'local-fallback' && extractionMeta.errorReason && (
             <div
               style={{
@@ -1189,126 +1117,208 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                 borderColor: 'var(--amber-border)',
                 borderLeftColor: 'var(--amber)',
               }}
-              className="p-3.5 rounded-[7px] border border-l-[4px] flex items-start gap-2.5 text-sm font-semibold text-[var(--ink)]"
+              className="p-3 rounded-[7px] border border-l-[4px] text-sm font-semibold text-[var(--ink)]"
             >
-              <AlertTriangle
-                className="w-4 h-4 shrink-0 mt-0.5"
-                style={{ color: 'var(--amber)' }}
-              />
-              <div>
-                <b style={{ color: 'var(--amber)' }}>Mode Fallback Lokal Aktif: </b>
-                <span>{extractionMeta.errorReason}</span>
-              </div>
+              <b style={{ color: 'var(--amber)' }}>Fallback Lokal: </b>
+              <span>{extractionMeta.errorReason}</span>
             </div>
           )}
 
-          {/* Kotak Transkrip Audio Asli untuk perbandingan langsung dengan 7 entitas */}
-          {extractionMeta?.transcript && (
-            <div className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-1.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-heading text-xs font-bold uppercase tracking-wider text-[var(--cyan-dark)] inline-flex items-center gap-1.5">
-                  {extractionMeta.sourceMode === 'audio' ? (
-                    <FileAudio className="w-4 h-4" />
-                  ) : (
-                    <FileText className="w-4 h-4" />
-                  )}
-                  <span>Transkrip Audio Asli</span>
-                </span>
-                <span className="font-heading text-xs font-bold text-[var(--ink-soft)]">
-                  Sumber: {extractionMeta.sourceMode === 'audio' ? 'Rekaman Suara (VN)' : 'Input Narasi Teks'}
-                </span>
-              </div>
-              <p className="text-sm text-[var(--ink)] font-medium leading-relaxed m-0">
-                &ldquo;{extractionMeta.transcript}&rdquo;
-              </p>
-            </div>
-          )}
-
-          {/* Field Auto-fill AI yang tetap dapat diedit manual */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
-              <label className="block text-sm font-bold text-[var(--ink)] mb-1.5">
-                Judul Singkat Laporan (Saran AI)
+          {/* Ringkasan Judul, Aset, Urgensi & Jenis Temuan */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div className="md:col-span-5">
+              <label className="block text-sm font-bold text-[var(--ink)] mb-1">
+                Judul Laporan
               </label>
               <input
                 type="text"
                 value={reportTitle}
                 onChange={(e) => setReportTitle(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-[15px] font-bold focus:outline-none focus:border-[var(--cyan)]"
+                className="w-full px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
               />
             </div>
+
             <div className="md:col-span-3">
-              <label className="block text-sm font-bold text-[var(--ink)] mb-1.5">
-                Aset Terdeteksi
+              <label className="block text-sm font-bold text-[var(--ink)] mb-1">
+                Aset
               </label>
               <select
                 value={selectedAssetId}
                 onChange={(e) => setSelectedAssetId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
+                className="w-full px-3 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
               >
                 {assets.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.id} — {a.name}
+                    {a.id} : {a.name}
                   </option>
                 ))}
               </select>
             </div>
-            <div className="md:col-span-3">
-              <label className="block text-sm font-bold text-[var(--ink)] mb-1.5">
-                Urgensi (Saran AI)
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-[var(--ink)] mb-1">
+                Urgensi
               </label>
               <select
                 value={urgency}
                 onChange={(e) => setUrgency(e.target.value as 'Mendesak' | 'Normal')}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
+                className="w-full px-3 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
               >
                 <option value="Normal">Normal</option>
                 <option value="Mendesak">Mendesak</option>
               </select>
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-[var(--ink)] mb-1">
+                Jenis
+              </label>
+              <select
+                value={findingType}
+                onChange={(e) =>
+                  setFindingType(
+                    e.target.value as 'Kondisi Abnormal' | 'Potensi Bahaya' | 'Near Miss'
+                  )
+                }
+                className="w-full px-3 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
+              >
+                <option value="Kondisi Abnormal">Kondisi Abnormal</option>
+                <option value="Potensi Bahaya">Potensi Bahaya</option>
+                <option value="Near Miss">Near Miss</option>
+              </select>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 7 Kolom Entitas dalam Grid 2 Kolom */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {(
               [
                 ['1. Identitas Alat', 'identitas_alat'],
                 ['2. Gejala Teramati', 'gejala'],
                 ['3. Kondisi Operasi', 'kondisi_operasi'],
                 ['4. Pemeriksaan Awal', 'pemeriksaan_awal'],
-                ['5. Praduga Penyebab (Belum Pasti)', 'praduga_penyebab'],
+                ['5. Praduga Penyebab', 'praduga_penyebab'],
                 ['6. Usulan Tindakan Awal', 'usulan_tindakan'],
                 ['7. Verifikasi Pasca-Perbaikan', 'verifikasi'],
               ] as const
             ).map(([label, key]) => (
               <div key={key} className={key === 'verifikasi' ? 'md:col-span-2' : ''}>
-                <label className="block text-sm font-bold text-[var(--ink)] mb-1.5">
+                <label className="block text-sm font-bold text-[var(--ink)] mb-1">
                   {label}
                 </label>
                 <textarea
                   rows={2}
                   value={entities[key]}
                   onChange={(e) => setEntities({ ...entities, [key]: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:border-[var(--cyan)]"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:border-[var(--cyan)]"
                 />
               </div>
             ))}
           </div>
 
-          <div className="flex flex-wrap justify-end gap-3 pt-4 border-t border-[var(--line-soft)]">
+          {/* Kotak Unggah Foto Bukti Opsional */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
+                <Camera className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="font-heading font-bold text-sm text-[var(--ink)]">
+                  Foto Bukti Awal (Opsional)
+                </div>
+                <div className="text-sm text-[var(--ink-soft)]">
+                  {photoFile ? photoFile.name : 'Mendukung JPG, PNG, WEBP.'}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt="Preview bukti"
+                  className="w-11 h-11 rounded-lg object-cover border border-[var(--line)]"
+                />
+              )}
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{photoFile ? 'Ganti Foto' : 'Pilih Foto'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Accordion Transkrip Asli (Tertutup Default) */}
+          {extractionMeta?.transcript && (
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--soft)] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowTranscript((prev) => !prev)}
+                className="w-full px-4 py-2.5 flex items-center justify-between gap-2 font-heading text-sm font-bold text-[var(--ink)] hover:bg-[var(--hover-bg)] transition-colors"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {extractionMeta.sourceMode === 'audio' ? (
+                    <FileAudio className="w-4 h-4 text-[var(--cyan-dark)]" />
+                  ) : (
+                    <FileText className="w-4 h-4 text-[var(--cyan-dark)]" />
+                  )}
+                  <span>Transkrip Asli</span>
+                </span>
+                {showTranscript ? (
+                  <ChevronUp className="w-4 h-4 text-[var(--ink-soft)]" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[var(--ink-soft)]" />
+                )}
+              </button>
+              {showTranscript && (
+                <div className="px-4 pb-3 pt-1 border-t border-[var(--line-soft)] text-sm text-[var(--ink)] leading-relaxed">
+                  &ldquo;{extractionMeta.transcript}&rdquo;
+                </div>
+              )}
+            </div>
+          )}
+
+          {errorMsg && (
+            <div
+              style={{
+                backgroundColor: 'var(--red-bg)',
+                borderColor: 'var(--red-border)',
+                color: 'var(--red)',
+              }}
+              className="p-3.5 rounded-xl border text-sm font-bold"
+            >
+              {errorMsg}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--line-soft)]">
             <button
               type="button"
-              onClick={onCancel}
-              className="px-5 py-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] font-heading font-bold text-sm"
+              onClick={() => setActiveStep(2)}
+              className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
             >
-              Batal
+              <ArrowLeft className="w-4 h-4" />
+              <span>Ubah Narasi</span>
             </button>
             <button
               type="button"
               disabled={isSubmitting}
               onClick={handleSubmitReport}
-              className="px-6 py-3 rounded-xl bg-[#087F5B] hover:bg-[#066346] text-white font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#087F5B] hover:bg-[#066346] text-white font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
             >
-              <span>{isSubmitting ? 'Menyimpan...' : 'Kirim Laporan (Status PRADUGA)'}</span>
+              <span>
+                {isSubmitting ? 'Menyimpan...' : 'Kirim Laporan (Status Praduga)'}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

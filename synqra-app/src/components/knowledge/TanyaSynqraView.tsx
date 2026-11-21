@@ -218,16 +218,11 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
       {/* Header dengan Tombol Mulai Sesi Baru */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--line)]">
         <div>
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
-            TAHAP 5 · EVIDENCE-GROUNDED HYBRID RAG
-          </div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1">
+          <h1 className="font-heading text-3xl font-bold text-[var(--ink)]">
             Tanya SYNQRA AI
           </h1>
           <p className="text-[15px] text-[var(--ink-soft)] mt-1">
-            Cari riwayat kasus serupa dengan sitasi sumber bukti{' '}
-            <b className="text-[var(--ink)]">[1] [2]</b> yang bisa diklik. Kasus
-            terverifikasi selalu diprioritaskan.
+            Cari solusi kasus serupa lengkap dengan sitasi bukti terverifikasi.
           </p>
         </div>
 
@@ -398,11 +393,13 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
                     {/* Daftar Sumber Sitasi Bukti dengan Chip matchReasons */}
                     {msg.citations && msg.citations.length > 0 && (
                       <div className="pt-4 border-t border-[var(--line-soft)] space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <h3 className="font-heading text-sm font-bold text-[var(--ink)] uppercase tracking-wider">
-                            Sumber Sitasi Bukti ({msg.citations.length}) — Klik
-                            untuk Pratinjau
+                            Sumber Sitasi Bukti ({msg.citations.length})
                           </h3>
+                          <span className="text-sm font-semibold text-[var(--ink-soft)]">
+                            Klik kartu untuk pratinjau
+                          </span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

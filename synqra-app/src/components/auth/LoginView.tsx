@@ -51,22 +51,19 @@ export const LoginView: React.FC<LoginViewProps> = ({
         </div>
 
         <div className="relative z-10 max-w-xl my-8 space-y-5">
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">
-            INDUSTRIAL KNOWLEDGE PLATFORM · OIL &amp; GAS
-          </div>
           <h1 className="font-heading text-4xl xl:text-5xl font-bold leading-tight text-white">
             Dari temuan lapangan,
             <br />
             <span className="text-cyan-300">menjadi pengetahuan.</span>
           </h1>
-          <p className="text-base text-slate-100/90 leading-relaxed font-medium">
-            Hubungkan laporan suara teknisi, penyaringan triage &amp; SLA, gerbang validasi bukti oleh pakar, dan Knowledge Graph aset dalam satu platform terstruktur.
+          <p className="text-base text-white/90 leading-relaxed font-medium">
+            Hubungkan laporan suara, validasi bukti pakar, dan peta pengetahuan aset.
           </p>
 
           <div className="mt-6 p-5 rounded-2xl bg-[#071630]/65 border border-cyan-300/25 backdrop-blur-md">
             <div className="flex items-center justify-between mb-3">
               <span className="font-heading text-xs font-bold uppercase tracking-wider text-cyan-300">
-                Aset Terpantau · CDU &amp; Treated Oil
+                Aset Terpantau
               </span>
               <span className="text-xs font-semibold text-emerald-300">
                 P-101A · E-201 · FCV-301
@@ -89,7 +86,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           </div>
         </div>
 
-        <div className="relative z-10 text-sm text-slate-200/80 font-medium">
+        <div className="relative z-10 text-sm text-white/80 font-medium">
           © 2026 SYNQRA · Evidence-Based Reliability &amp; Process Safety Platform
         </div>
       </section>
@@ -120,14 +117,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </div>
           </div>
 
-          <div className="font-heading text-xs font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)]">
-            AKSES WORKSPACE DEMO
-          </div>
-          <h2 className="font-heading text-3xl font-bold text-[var(--ink)] mt-1.5 mb-2">
+          <h2 className="font-heading text-3xl font-bold text-[var(--ink)] mb-2">
             Selamat datang
           </h2>
           <p className="text-[15px] text-[var(--ink-soft)] mb-6">
-            Pilih peran pengguna untuk masuk ke workspace fungsional SYNQRA.
+            Pilih peran pengguna untuk masuk ke workspace SYNQRA.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">

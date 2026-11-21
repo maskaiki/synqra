@@ -3,7 +3,7 @@
 import React from 'react';
 import { MainPage, RoleInfo } from '@/types/synqra';
 import {
-  BarChart3,
+  Radar,
   Home,
   Mic,
   Inbox,
@@ -66,8 +66,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'analytics',
-      label: 'Analitik & ROI',
-      icon: <BarChart3 className="w-5 h-5" />,
+      label: 'Peringatan Dini',
+      icon: <Radar className="w-5 h-5" />,
     },
   ];
 
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Temuan baru di lapangan?
           </div>
           <p className="text-[13px] text-slate-100/90 leading-relaxed mb-3">
-            Rekam suara 2 menit atau scan nameplate alat — AI merapikan 7 entitas otomatis.
+            Rekam suara 2 menit atau scan nameplate alat, AI merapikan 7 entitas otomatis.
           </p>
           <button
             type="button"
