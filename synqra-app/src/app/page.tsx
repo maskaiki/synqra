@@ -36,6 +36,7 @@ import { CasesListView } from '@/components/reports/CasesListView';
 import { CaseDetailView } from '@/components/reports/CaseDetailView';
 import { KnowledgeGraphView } from '@/components/knowledge/KnowledgeGraphView';
 import { TanyaSynqraView } from '@/components/knowledge/TanyaSynqraView';
+import { AnalyticsRoiView } from '@/components/analytics/AnalyticsRoiView';
 import { EvidenceLightboxModal } from '@/components/knowledge/EvidenceLightboxModal';
 import { Check } from 'lucide-react';
 
@@ -386,6 +387,17 @@ export default function SynqraApp() {
               reports={reports}
               evidences={evidences}
               onOpenEvidence={setActiveCitation}
+            />
+          )}
+
+          {activePage === 'analytics' && (
+            <AnalyticsRoiView
+              assets={assets}
+              reports={reports}
+              evidences={evidences}
+              comments={comments}
+              roleInfo={roleInfo}
+              onOpenReport={handleOpenReport}
             />
           )}
         </main>

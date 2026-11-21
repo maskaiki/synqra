@@ -3,6 +3,7 @@
 import React from 'react';
 import { MainPage, RoleInfo } from '@/types/synqra';
 import {
+  BarChart3,
   Home,
   Mic,
   Inbox,
@@ -62,6 +63,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'tanya',
       label: 'Tanya SYNQRA',
       icon: <Sparkles className="w-5 h-5" />,
+    },
+    {
+      id: 'analytics',
+      label: 'Analitik & ROI',
+      icon: <BarChart3 className="w-5 h-5" />,
     },
   ];
 

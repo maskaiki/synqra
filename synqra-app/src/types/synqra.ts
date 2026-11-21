@@ -8,7 +8,8 @@ export type MainPage =
   | 'cases'
   | 'case-detail'
   | 'graph'
-  | 'tanya';
+  | 'tanya'
+  | 'analytics';
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type RiskConsequence = 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
@@ -130,4 +131,25 @@ export interface EarlyWarningAlert {
   assetName: string;
   recentCount: number;
   message: string;
+}
+
+export interface RoiCaseBreakdownItem {
+  reportId: string;
+  assetId: string;
+  title: string;
+  preventedHours: number;
+  rationale: string;
+}
+
+export interface RoiAnalysisResult {
+  estimatedHoursSaved: number;
+  estimatedCostSavedIdr: number;
+  hourlyDowntimeRateIdr: number;
+  executiveSummary: string;
+  caseBreakdown: RoiCaseBreakdownItem[];
+  activeHighRiskCount?: number;
+  activeHighRiskNote?: string;
+  engine: 'gemini-live' | 'local-fallback';
+  usedModel?: string;
+  errorReason?: string;
 }
