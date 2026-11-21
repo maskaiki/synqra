@@ -3,7 +3,7 @@
 import React from 'react';
 import { MainPage, UserRole } from '@/types/synqra';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
-import { Database, Moon, RotateCcw, Sun } from 'lucide-react';
+import { Database, Moon, RefreshCw, RotateCcw, Sun } from 'lucide-react';
 
 interface TopbarProps {
   activePage: MainPage;
@@ -13,6 +13,8 @@ interface TopbarProps {
   onToggleTheme: () => void;
   dataSource: 'supabase' | 'local';
   onResetDemo: () => void;
+  onSyncData?: () => void;
+  isSyncing?: boolean;
 }
 
 const PAGE_LABELS: Record<MainPage, string> = {
@@ -32,6 +34,8 @@ export const Topbar: React.FC<TopbarProps> = ({
   onToggleTheme,
   dataSource,
   onResetDemo,
+  onSyncData,
+  isSyncing = false,
 }) => {
   return (
     <header className="sticky top-0 z-20 h-[76px] bg-[var(--topbar-bg)] backdrop-blur-md border-b border-[var(--line)] px-4 sm:px-8 flex items-center justify-between gap-4">
@@ -62,6 +66,23 @@ export const Topbar: React.FC<TopbarProps> = ({
           <Database className="w-3.5 h-3.5" />
           <span>{dataSource === 'supabase' ? 'SUPABASE LIVE' : 'DEMO · LOCAL DB'}</span>
         </span>
+
+        {dataSource === 'supabase' && (
+          <button
+            type="button"
+            onClick={() => onSyncData?.()}
+            disabled={isSyncing}
+            title="Sinkronkan Data terbaru dari Supabase"
+            className="px-3 py-2 rounded-[7px] border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-1.5 text-[var(--ink)] font-heading text-xs font-bold transition-colors disabled:opacity-60"
+          >
+            <RefreshCw
+              className={`w-4 h-4 text-[var(--cyan-dark)] ${isSyncing ? 'animate-spin' : ''}`}
+            />
+            <span className="hidden sm:inline">
+              {isSyncing ? 'Menyinkronkan...' : 'Sinkronkan Data'}
+            </span>
+          </button>
+        )}
 
         {dataSource === 'local' && (
           <button

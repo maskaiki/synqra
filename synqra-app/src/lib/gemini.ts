@@ -309,6 +309,10 @@ export interface NameplateScanResult {
   serialNumber: string;
   specifications: string;
   confidence: number;
+  engine: 'gemini-live' | 'local-fallback';
+  usedModel?: string;
+  errorReason?: string;
+  isUnknownAsset?: boolean;
 }
 
 export async function scanNameplateFromImage(
@@ -323,14 +327,20 @@ export async function scanNameplateFromImage(
     serialNumber: 'SN-2024-8849-CDU',
     specifications: 'Head 142m · Flow 125 m³/h · Motor 75 kW · 2950 RPM',
     confidence: 0.95,
+    engine: 'local-fallback',
+    isUnknownAsset: false,
   };
 
   const genAI = getGenAI();
   if (!genAI) {
-    return defaultResult;
+    return {
+      ...defaultResult,
+      errorReason: 'GEMINI_API_KEY belum dikonfigurasi di environment.',
+    };
   }
 
   const cleanMime = (mimeType || '').split(';')[0].trim() || 'image/jpeg';
+  let lastError = 'Semua model Gemini Vision gagal memindai foto nameplate.';
 
   for (const modelName of GEMINI_MODEL_FALLBACKS) {
     try {
@@ -342,13 +352,13 @@ export async function scanNameplateFromImage(
         },
       });
 
-      const prompt = `Analisis foto nameplate peralatan industri ini dan kembalikan JSON murni:
+      const prompt = `Analisis foto nameplate atau label kode tag peralatan industri ini dan kembalikan JSON murni:
 {
-  "assetTag": "Kode tag seperti P-101A, E-201, atau FCV-301",
-  "manufacturer": "Nama pabrikan",
-  "model": "Model peralatan",
-  "serialNumber": "Nomor seri",
-  "specifications": "Spesifikasi ringkas",
+  "assetTag": "Kode tag persis seperti tertulis (misal P-101A, E-201, FCV-301, atau tag lain yang terlihat)",
+  "manufacturer": "Nama pabrikan atau 'Tidak Tertera'",
+  "model": "Model atau jenis peralatan atau 'Tidak Tertera'",
+  "serialNumber": "Nomor seri atau 'Tidak Tertera'",
+  "specifications": "Spesifikasi teknis ringkas yang terbaca",
   "confidence": 0.95
 }`;
 
@@ -365,28 +375,48 @@ export async function scanNameplateFromImage(
       const parsed = JSON.parse(
         cleanJsonString(result.response.text())
       ) as Partial<NameplateScanResult>;
+
       const knownTags = ['P-101A', 'E-201', 'FCV-301'];
-      const rawTag = (parsed.assetTag || '').toUpperCase();
-      const matched =
-        knownTags.find(
-          (t) => rawTag.includes(t) || rawTag.includes(t.replace('-', ''))
-        ) || 'P-101A';
+      const rawTag = (parsed.assetTag || '').trim().toUpperCase();
+      const matched = knownTags.find(
+        (t) => rawTag.includes(t) || rawTag.includes(t.replace('-', ''))
+      );
+      const isUnknownAsset = !matched;
+
+      let confidence =
+        typeof parsed.confidence === 'number' && !Number.isNaN(parsed.confidence)
+          ? parsed.confidence
+          : 0.92;
+      if (confidence > 1) confidence = confidence / 100;
+      confidence = Math.max(0, Math.min(1, confidence));
 
       return {
-        assetTag: parsed.assetTag || matched,
-        matchedAssetId: matched,
-        manufacturer: parsed.manufacturer || defaultResult.manufacturer,
-        model: parsed.model || defaultResult.model,
-        serialNumber: parsed.serialNumber || defaultResult.serialNumber,
-        specifications: parsed.specifications || defaultResult.specifications,
-        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.93,
+        assetTag: parsed.assetTag?.trim() || matched || 'Tidak Teridentifikasi',
+        matchedAssetId: matched || '',
+        manufacturer: parsed.manufacturer?.trim() || 'Tidak Tertera',
+        model: parsed.model?.trim() || 'Tidak Tertera',
+        serialNumber: parsed.serialNumber?.trim() || 'Tidak Tertera',
+        specifications:
+          parsed.specifications?.trim() || 'Data terbaca dari foto nameplate lapangan.',
+        confidence,
+        engine: 'gemini-live',
+        usedModel: modelName,
+        isUnknownAsset,
       };
     } catch (err) {
-      console.warn(`Gemini vision scan fallback (${modelName}):`, formatGeminiError(err));
+      const formatted = formatGeminiError(err);
+      lastError = `[${modelName}] ${formatted}`;
+      console.warn(`Gemini vision scan fallback (${modelName}):`, formatted);
+      if (isInvalidKeyError(formatted)) {
+        break;
+      }
     }
   }
 
-  return defaultResult;
+  return {
+    ...defaultResult,
+    errorReason: lastError,
+  };
 }
 
 export function generateLocalFallbackEntities(text: string): FailureEntities {

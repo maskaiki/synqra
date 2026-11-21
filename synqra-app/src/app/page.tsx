@@ -21,6 +21,7 @@ import {
 import {
   loadWorkspaceData,
   persistComment,
+  persistEvidenceRecord,
   persistNewReport,
   persistReportUpdate,
   resetLocalWorkspace,
@@ -50,6 +51,7 @@ export default function SynqraApp() {
   const [evidences, setEvidences] = useState<Evidence[]>(INITIAL_EVIDENCES);
   const [dataSource, setDataSource] = useState<'supabase' | 'local'>('local');
   const [hydrated, setHydrated] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState<CitationItem | null>(null);
@@ -95,6 +97,28 @@ export default function SynqraApp() {
     });
   };
 
+  const handleSyncData = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const snap = await loadWorkspaceData();
+      setAssets(snap.assets);
+      setReports(snap.reports);
+      setComments(snap.comments);
+      setEvidences(snap.evidences);
+      setDataSource(snap.source);
+      showToast('Data berhasil disinkronkan dari Supabase.');
+    } catch (err: unknown) {
+      showToast(
+        err instanceof Error
+          ? `Gagal menyinkronkan data: ${err.message}`
+          : 'Gagal menyinkronkan data dari Supabase.'
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleLogin = (role: UserRole) => {
     setCurrentRole(role);
     setIsLoggedIn(true);
@@ -127,10 +151,26 @@ export default function SynqraApp() {
     if (initialEvidence) {
       setEvidences((prev) => [...prev, initialEvidence]);
     }
-    await persistNewReport(newReport);
+
+    const repRes = await persistNewReport(newReport);
+    let evError: string | undefined;
+    if (initialEvidence && repRes.ok) {
+      const evRes = await persistEvidenceRecord(initialEvidence);
+      if (!evRes.ok) {
+        evError = evRes.error;
+      }
+    }
+
     setSelectedReportId(newReport.id);
     setActivePage('case-detail');
-    showToast(`Laporan ${newReport.id} berhasil disimpan dengan status awal PRADUGA.`);
+
+    if (!repRes.ok) {
+      showToast(`Laporan ${newReport.id} tersimpan lokal, namun gagal ke Supabase: ${repRes.error}`);
+    } else if (evError) {
+      showToast(`Laporan ${newReport.id} tersimpan, namun metadata bukti gagal dicatat: ${evError}`);
+    } else {
+      showToast(`Laporan ${newReport.id} berhasil disimpan dengan status awal PRADUGA.`);
+    }
   };
 
   const handleUpdateReport = async (
@@ -142,50 +182,86 @@ export default function SynqraApp() {
     setReports((prev) =>
       prev.map((r) => (r.id === reportId ? { ...r, ...patch, updated_at: updatedAt } : r))
     );
-    await persistReportUpdate(reportId, { ...patch, updated_at: updatedAt });
-    showToast(toastText);
+    const res = await persistReportUpdate(reportId, { ...patch, updated_at: updatedAt });
+    if (!res.ok) {
+      showToast(`Gagal menyinkronkan perubahan ke Supabase: ${res.error}`);
+    } else {
+      showToast(toastText);
+    }
   };
 
   const handleAddEvidence = (ev: Evidence) => {
+    const updatedAt = new Date().toISOString();
+    const nextNote = `${ev.file_name} (${ev.caption || 'Terlampir'})`;
     setEvidences((prev) => [...prev, ev]);
     setReports((prev) =>
       prev.map((r) =>
         r.id === ev.report_id
           ? {
               ...r,
-              evidence_note: `${ev.file_name} (${ev.caption || 'Terlampir'})`,
+              evidence_note: nextNote,
               image_url: ev.public_url || r.image_url,
-              updated_at: new Date().toISOString(),
+              updated_at: updatedAt,
             }
           : r
       )
     );
+    void persistReportUpdate(ev.report_id, {
+      evidence_note: nextNote,
+      ...(ev.public_url ? { image_url: ev.public_url } : {}),
+      updated_at: updatedAt,
+    });
     showToast(`Bukti "${ev.file_name}" berhasil ditambahkan ke Evidence Vault.`);
   };
 
   const handleAddComment = async (newComment: CaseComment) => {
     setComments((prev) => [...prev, newComment]);
-    await persistComment(newComment);
-    showToast('Catatan kasus berhasil disimpan ke jejak audit.');
+    const res = await persistComment(newComment);
+    if (!res.ok) {
+      showToast(`Catatan tampil lokal, namun gagal tersimpan ke Supabase: ${res.error}`);
+    } else {
+      showToast('Catatan kasus berhasil disimpan ke jejak audit.');
+    }
   };
 
-  const handleSendSlaReminder = (targetReports: Report[]) => {
-    const ids = new Set(targetReports.map((t) => t.id));
+  const handleSendSlaReminder = async (targetReports: Report[]) => {
     const nowIso = new Date().toISOString();
+    const countMap = new Map<string, number>();
+    targetReports.forEach((t) => {
+      countMap.set(t.id, (t.sla_reminder_count || 0) + 1);
+    });
+
     setReports((prev) =>
-      prev.map((r) =>
-        ids.has(r.id)
+      prev.map((r) => {
+        const nextCount = countMap.get(r.id);
+        return nextCount !== undefined
           ? {
               ...r,
-              sla_reminder_count: (r.sla_reminder_count || 0) + 1,
+              sla_reminder_count: nextCount,
               sla_last_reminder_at: nowIso,
             }
-          : r
+          : r;
+      })
+    );
+
+    const results = await Promise.all(
+      targetReports.map((t) =>
+        persistReportUpdate(t.id, {
+          sla_reminder_count: countMap.get(t.id) ?? (t.sla_reminder_count || 0) + 1,
+          sla_last_reminder_at: nowIso,
+          updated_at: nowIso,
+        })
       )
     );
-    showToast(
-      `Pengingat SLA terkirim ke pelapor & supervisor untuk ${targetReports.length} kasus tertunda.`
-    );
+
+    const failed = results.find((res) => !res.ok);
+    if (failed) {
+      showToast(`Pengingat SLA terkirim lokal, namun sinkronisasi Supabase gagal: ${failed.error}`);
+    } else {
+      showToast(
+        `Pengingat SLA terkirim ke pelapor & supervisor untuk ${targetReports.length} kasus tertunda.`
+      );
+    }
   };
 
   if (!isLoggedIn) {
@@ -237,6 +313,8 @@ export default function SynqraApp() {
           onToggleTheme={toggleTheme}
           dataSource={dataSource}
           onResetDemo={handleResetDemo}
+          onSyncData={handleSyncData}
+          isSyncing={isSyncing}
         />
 
         <main className="w-full max-w-[1380px] mx-auto px-4 sm:px-8 py-7">

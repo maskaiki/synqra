@@ -39,7 +39,76 @@ interface ExtractionMeta {
   sourceMode: 'audio' | 'text';
 }
 
+interface NameplateScanViewState {
+  thumbnailUrl: string;
+  assetTag: string;
+  matchedAssetId: string;
+  manufacturer: string;
+  model: string;
+  serialNumber: string;
+  specifications: string;
+  confidence: number;
+  engine: 'gemini-live' | 'local-fallback';
+  usedModel?: string;
+  errorReason?: string;
+  isUnknownAsset?: boolean;
+  originalKb: number;
+  compressedKb: number;
+}
+
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_NAMEPLATE_IMAGE_BYTES = 4 * 1024 * 1024; // 4 MB
+
+async function compressNameplateImage(file: File): Promise<{
+  blob: Blob;
+  previewUrl: string;
+  originalKb: number;
+  compressedKb: number;
+}> {
+  const rawUrl = URL.createObjectURL(file);
+  const originalKb = Math.max(1, Math.round(file.size / 1024));
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Gagal memuat pratinjau gambar nameplate.'));
+      el.src = rawUrl;
+    });
+
+    const maxWidth = 1280;
+    const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+    const targetWidth = Math.max(1, Math.round(img.width * scale));
+    const targetHeight = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas browser tidak tersedia untuk kompresi gambar.');
+    }
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) => {
+          if (result) resolve(result);
+          else reject(new Error('Gagal mengompresi foto nameplate ke JPEG.'));
+        },
+        'image/jpeg',
+        0.82
+      );
+    });
+
+    const previewUrl = URL.createObjectURL(blob);
+    const compressedKb = Math.max(1, Math.round(blob.size / 1024));
+    return { blob, previewUrl, originalKb, compressedKb };
+  } finally {
+    URL.revokeObjectURL(rawUrl);
+  }
+}
 
 const SAMPLE_PROMPTS: Record<string, string> = {
   'P-101A':
@@ -79,7 +148,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const [isScanning, setIsScanning] = useState(false);
-  const [scanSummary, setScanSummary] = useState<string | null>(null);
+  const [scanResult, setScanResult] = useState<NameplateScanViewState | null>(null);
 
   const [isExtracting, setIsExtracting] = useState(false);
   const [entities, setEntities] = useState<FailureEntities | null>(null);
@@ -97,6 +166,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const photoPreviewRef = useRef<string | null>(null);
+  const scanThumbUrlRef = useRef<string | null>(null);
   const nameplateInputRef = useRef<HTMLInputElement | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -119,6 +189,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       }
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
       if (photoPreviewRef.current) URL.revokeObjectURL(photoPreviewRef.current);
+      if (scanThumbUrlRef.current) URL.revokeObjectURL(scanThumbUrlRef.current);
     };
   }, []);
 
@@ -219,31 +290,92 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
     if (!file) return;
     setIsScanning(true);
     setErrorMsg(null);
+    let nextThumbUrl: string | null = null;
     try {
+      const compressed = await compressNameplateImage(file);
+      nextThumbUrl = compressed.previewUrl;
+
+      if (compressed.blob.size > MAX_NAMEPLATE_IMAGE_BYTES) {
+        URL.revokeObjectURL(nextThumbUrl);
+        nextThumbUrl = null;
+        setErrorMsg(
+          'Ukuran foto setelah kompresi masih melebihi 4 MB. Silakan ambil foto ulang lebih dekat.'
+        );
+        return;
+      }
+
+      const compressedFile = new File([compressed.blob], 'nameplate.jpg', {
+        type: 'image/jpeg',
+      });
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('image', compressedFile);
+
       const res = await fetch('/api/scan-nameplate', { method: 'POST', body: fd });
       const json = (await res.json()) as {
         success?: boolean;
+        engine?: 'gemini-live' | 'local-fallback';
+        usedModel?: string;
+        errorReason?: string;
+        isUnknownAsset?: boolean;
         data?: {
           matchedAssetId?: string;
           assetTag?: string;
           manufacturer?: string;
+          model?: string;
+          serialNumber?: string;
           specifications?: string;
+          confidence?: number;
+          engine?: 'gemini-live' | 'local-fallback';
+          usedModel?: string;
+          errorReason?: string;
+          isUnknownAsset?: boolean;
         };
         error?: string;
       };
-      if (json.success && json.data) {
-        const matched = json.data.matchedAssetId || 'P-101A';
-        setSelectedAssetId(matched);
-        setScanSummary(
-          `Terdeteksi: ${json.data.assetTag || matched} (${json.data.manufacturer || 'Industrial Asset'}) — ${json.data.specifications || 'Katalog cocok'}`
-        );
-      } else {
+
+      if (!res.ok || !json.success || !json.data) {
+        URL.revokeObjectURL(nextThumbUrl);
+        nextThumbUrl = null;
         setErrorMsg(json.error || 'Gagal memindai nameplate.');
+        return;
       }
-    } catch {
-      setErrorMsg('Gagal menghubungi layanan Scan Nameplate.');
+
+      if (scanThumbUrlRef.current) {
+        URL.revokeObjectURL(scanThumbUrlRef.current);
+      }
+      scanThumbUrlRef.current = nextThumbUrl;
+
+      const d = json.data;
+      const isUnknown = Boolean(d.isUnknownAsset ?? json.isUnknownAsset);
+      const matched = d.matchedAssetId || '';
+
+      if (!isUnknown && matched && assets.some((a) => a.id === matched)) {
+        setSelectedAssetId(matched);
+      }
+
+      setScanResult({
+        thumbnailUrl: nextThumbUrl,
+        assetTag: d.assetTag || matched || 'Tidak Teridentifikasi',
+        matchedAssetId: matched,
+        manufacturer: d.manufacturer || 'Tidak Tertera',
+        model: d.model || 'Tidak Tertera',
+        serialNumber: d.serialNumber || 'Tidak Tertera',
+        specifications: d.specifications || 'Data terbaca dari foto nameplate.',
+        confidence: typeof d.confidence === 'number' ? d.confidence : 0.92,
+        engine: d.engine || json.engine || 'local-fallback',
+        usedModel: d.usedModel || json.usedModel,
+        errorReason: d.errorReason || json.errorReason,
+        isUnknownAsset: isUnknown,
+        originalKb: compressed.originalKb,
+        compressedKb: compressed.compressedKb,
+      });
+    } catch (err: unknown) {
+      if (nextThumbUrl) {
+        URL.revokeObjectURL(nextThumbUrl);
+      }
+      setErrorMsg(
+        err instanceof Error ? err.message : 'Gagal menghubungi layanan Scan Nameplate.'
+      );
     } finally {
       setIsScanning(false);
       if (nameplateInputRef.current) nameplateInputRef.current.value = '';
@@ -368,7 +500,8 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           newId,
           photoFile,
           `Foto awal lapangan (${assetObj.id})`,
-          roleInfo.name
+          roleInfo.name,
+          { skipDbInsert: true }
         );
       }
 
@@ -482,17 +615,118 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           </div>
         </div>
 
-        {scanSummary && (
-          <div
-            style={{
-              backgroundColor: 'var(--green-bg)',
-              borderColor: 'var(--green-border)',
-              color: 'var(--green)',
-            }}
-            className="p-3.5 rounded-xl border text-sm font-bold flex items-center gap-2"
-          >
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{scanSummary}</span>
+        {scanResult && (
+          <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-3 animate-fade-in">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <img
+                src={scanResult.thumbnailUrl}
+                alt={`Foto nameplate ${scanResult.assetTag}`}
+                className="w-24 h-24 rounded-xl object-cover border border-[var(--line)] bg-[var(--surface)] shrink-0"
+              />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-heading font-bold text-base text-[var(--ink)] flex flex-wrap items-center gap-2">
+                    <span>Hasil Scan Nameplate: {scanResult.assetTag}</span>
+                    {!scanResult.isUnknownAsset && scanResult.matchedAssetId && (
+                      <span
+                        style={{
+                          backgroundColor: 'var(--green-bg)',
+                          color: 'var(--green)',
+                          borderColor: 'var(--green-border)',
+                        }}
+                        className="px-2 py-0.5 rounded-[7px] border font-heading text-xs font-bold"
+                      >
+                        Cocok: {scanResult.matchedAssetId}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {scanResult.engine === 'gemini-live' ? (
+                      <span
+                        style={{
+                          backgroundColor: 'var(--green-bg)',
+                          color: 'var(--green)',
+                          borderColor: 'var(--green-border)',
+                          borderLeftColor: 'var(--green)',
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          {(scanResult.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE
+                        </span>
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          backgroundColor: 'var(--amber-bg)',
+                          color: 'var(--amber)',
+                          borderColor: 'var(--amber-border)',
+                          borderLeftColor: 'var(--amber)',
+                        }}
+                        title={scanResult.errorReason}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+                      >
+                        <Cpu className="w-3.5 h-3.5 shrink-0" />
+                        <span>LOCAL FALLBACK</span>
+                      </span>
+                    )}
+
+                    <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 text-[var(--cyan-dark)] font-heading text-xs font-bold">
+                      Confidence {Math.round(scanResult.confidence * 100)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-[var(--ink-soft)]">
+                  <div>
+                    <b className="text-[var(--ink)]">Pabrikan / Model:</b>{' '}
+                    {scanResult.manufacturer} · {scanResult.model}
+                  </div>
+                  <div>
+                    <b className="text-[var(--ink)]">No. Seri:</b> {scanResult.serialNumber}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <b className="text-[var(--ink)]">Spesifikasi:</b>{' '}
+                    {scanResult.specifications}
+                  </div>
+                </div>
+
+                <div className="text-sm text-[var(--ink-soft)]">
+                  Kompresi otomatis gambar HP: {scanResult.originalKb} KB →{' '}
+                  <b className="text-[var(--ink)]">{scanResult.compressedKb} KB</b> (JPEG)
+                </div>
+
+                {scanResult.engine === 'local-fallback' && scanResult.errorReason && (
+                  <div className="text-sm font-semibold" style={{ color: 'var(--amber)' }}>
+                    Alasan fallback: {scanResult.errorReason}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {scanResult.isUnknownAsset && (
+              <div
+                style={{
+                  backgroundColor: 'var(--amber-bg)',
+                  borderColor: 'var(--amber-border)',
+                  borderLeftColor: 'var(--amber)',
+                }}
+                className="p-3 rounded-[7px] border border-l-[4px] flex items-start gap-2.5 text-sm font-semibold text-[var(--ink)]"
+              >
+                <AlertTriangle
+                  className="w-4 h-4 shrink-0 mt-0.5"
+                  style={{ color: 'var(--amber)' }}
+                />
+                <div>
+                  <b style={{ color: 'var(--amber)' }}>Tag Aset Belum Terdaftar: </b>
+                  Kode &ldquo;{scanResult.assetTag}&rdquo; tidak cocok dengan 3 aset utama
+                  terdaftar (P-101A, E-201, FCV-301). Silakan pilih kartu aset secara manual di
+                  bawah.
+                </div>
+              </div>
+            )}
           </div>
         )}
 
