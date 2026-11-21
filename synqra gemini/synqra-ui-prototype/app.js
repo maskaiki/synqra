@@ -59,11 +59,163 @@ const assets = [
 ];
 
 let reports = [
-  { id: 'RPT-1048', title: 'Getaran pompa meningkat', asset: 'P-101A', symptom: 'Getaran terukur meningkat dan terdengar suara tidak normal.', description: 'Getaran pompa meningkat sejak awal shift. Pembacaan terakhir 7,8 mm/s, suhu bearing 72 °C. Terlihat rembesan pada area mechanical seal.', reporter: 'Ahmad Fauzi', reporterRole: 'Teknisi Lapangan', dept: 'Maintenance & Reliability', date: '19 Nov 2026 · 08.42', status: 'submitted', evidence: 'Foto area mechanical seal', priority: 'medium', source: 'voice' },
-  { id: 'RPT-1047', title: 'Differential pressure meningkat', asset: 'E-201', symptom: 'ΔP naik, suhu outlet turun 12 °C.', description: 'Differential pressure Heat Exchanger E-201 meningkat dari kondisi normal. Ada indikasi fouling di sisi tube bundle, perlu pemeriksaan lebih lanjut.', reporter: 'Dimas Pratama', reporterRole: 'Teknisi Lapangan', dept: 'Process & Thermal', date: '19 Nov 2026 · 07.56', status: 'validation', evidence: 'Foto indikator & kondisi flange', priority: 'high', source: 'text' },
-  { id: 'RPT-1046', title: 'Respons control valve melambat', asset: 'FCV-301', symptom: 'Respons valve tertinggal sekitar 8 detik.', description: 'Perintah posisi 60%, aktual tertinggal sekitar delapan detik. Belum dilakukan uji stroke.', reporter: 'Ahmad Fauzi', reporterRole: 'Teknisi Lapangan', dept: 'Piping & Instrumentation', date: '18 Nov 2026 · 15.20', status: 'more', evidence: 'Foto control valve', priority: 'low', source: 'text', note: 'Mohon lampirkan foto nameplate dan hasil uji stroke.' },
-  { id: 'RPT-1044', title: 'Kebocoran gasket channel', asset: 'E-201', symptom: 'Rembesan pada sambungan channel heat exchanger.', description: 'Ditemukan rembesan di sekitar sambungan channel. Area sudah diamankan dan dilaporkan untuk pemeriksaan.', reporter: 'Dimas Pratama', reporterRole: 'Teknisi Lapangan', dept: 'Process & Thermal', date: '17 Nov 2026 · 13.10', status: 'verified', evidence: 'Foto sambungan channel', priority: 'medium', source: 'voice', cause: 'Gasket channel mengeras', solution: 'Penggantian gasket dan pemeriksaan torsi baut sesuai prosedur.', verifiedBy: 'Rina Suryani' },
-  { id: 'RPT-1043', title: 'Fouling pada sisi tabung', asset: 'E-201', symptom: 'ΔP meningkat dan suhu keluar turun.', description: 'Inspeksi menunjukkan adanya deposit pada sisi tabung yang menghambat aliran.', reporter: 'Ahmad Fauzi', reporterRole: 'Teknisi Lapangan', dept: 'Process & Thermal', date: '15 Nov 2026 · 10.05', status: 'verified', evidence: 'Foto hasil borescope', priority: 'medium', source: 'text', cause: 'Akumulasi deposit pada tube bundle', solution: 'Pembersihan kimia dan monitoring differential pressure.', verifiedBy: 'Rina Suryani' }
+  {
+    id: 'RPT-1048',
+    title: 'Getaran pompa P-101A meningkat',
+    asset: 'P-101A',
+    symptom: 'Getaran terukur meningkat 7.8 mm/s dan suara abnormal di bantalan.',
+    description: 'Getaran pompa meningkat sejak awal shift. Pembacaan terakhir 7,8 mm/s, suhu bearing 72 °C. Terlihat rembesan pada area mechanical seal.',
+    reporter: 'Ahmad Fauzi',
+    reporterRole: 'Teknisi Lapangan',
+    dept: 'Rotating & Mechanical',
+    date: '19 Nov 2026 · 08.42',
+    status: 'review',
+    evidence: 'Foto area mechanical seal',
+    imageUrl: 'assets/synqra-logo-dark.png',
+    priority: 'high',
+    source: 'voice',
+    elapsedHours: 52, // RED SLA (> 48 jam - Overdue)
+    riskLevel: 'HIGH',
+    riskConsequence: 'Major',
+    riskLikelihood: 'Possible',
+    riskSummary: 'Risiko tinggi kerusakan catastrophic bearing & shutdown unit transfer.',
+    capaCorrective: 'Penggantian cartridge mechanical seal dan realign poros dengan laser alignment.',
+    capaPreventive: 'Pemasangan wireless vibration online sensor untuk monitoring kontinu.',
+    capaTargetDate: '2026-11-28',
+    capaPic: 'Ahmad Fauzi (Mekanik)',
+    comments: [
+      { author: 'Bambang Trihatmojo', role: 'Reviewer Dept', text: 'Mohon lampirkan data spektrum getaran 3 hari terakhir sebelum jadwal intervensi lapangan.', date: '19 Nov 14.10' }
+    ]
+  },
+  {
+    id: 'RPT-1047',
+    title: 'Differential pressure meningkat E-201',
+    asset: 'E-201',
+    symptom: 'ΔP naik 0.8 bar, suhu outlet turun 12 °C di bawah baseline standar.',
+    description: 'Differential pressure Heat Exchanger E-201 meningkat dari kondisi normal. Ada indikasi fouling di sisi tube bundle.',
+    reporter: 'Dimas Pratama',
+    reporterRole: 'Teknisi Lapangan',
+    dept: 'Process & Thermal',
+    date: '19 Nov 2026 · 07.56',
+    status: 'validation',
+    evidence: 'Foto indikator & kondisi flange',
+    imageUrl: 'assets/synqra-logo-light.png',
+    priority: 'high',
+    source: 'text',
+    elapsedHours: 18, // GREEN SLA (< 24 jam)
+    riskLevel: 'MEDIUM',
+    riskConsequence: 'Moderate',
+    riskLikelihood: 'Likely',
+    riskSummary: 'Risiko pemborosan konsumsi energi furnace preheat train.',
+    capaCorrective: 'Chemical flushing dan pembersihan tube bundle secara sirkulasi.',
+    capaPreventive: 'Kalibrasi differential pressure transmitter rutin per 3 bulan.',
+    capaTargetDate: '2026-12-05',
+    capaPic: 'Dimas Pratama (Proses)',
+    comments: []
+  },
+  {
+    id: 'RPT-1046',
+    title: 'Respons control valve FCV-301 melambat',
+    asset: 'FCV-301',
+    symptom: 'Respons valve tertinggal sekitar 8 detik saat throttling DCS.',
+    description: 'Perintah posisi 60%, aktual tertinggal sekitar delapan detik. Belum dilakukan uji stroke.',
+    reporter: 'Ahmad Fauzi',
+    reporterRole: 'Teknisi Lapangan',
+    dept: 'Piping & Instrumentation',
+    date: '18 Nov 2026 · 15.20',
+    status: 'submitted',
+    evidence: 'Foto control valve',
+    imageUrl: 'assets/synqra-logo-dark.png',
+    priority: 'low',
+    source: 'text',
+    elapsedHours: 31, // YELLOW SLA (24-48 jam - Segera Cek)
+    riskLevel: 'HIGH',
+    riskConsequence: 'Major',
+    riskLikelihood: 'Possible',
+    riskSummary: 'Risiko instabilitas pembakaran boiler saat fluktuasi beban uap.',
+    capaCorrective: 'Pelumasan packing stem dan kalibrasi smart valve positioner.',
+    capaPreventive: 'Jadwal preventive greasing diperketat tiap 2 minggu.',
+    capaTargetDate: '2026-11-25',
+    capaPic: 'Ahmad Fauzi (Instrumen)',
+    comments: []
+  },
+  {
+    id: 'RPT-1045',
+    title: 'Indikasi rembesan flange inlet E-201',
+    asset: 'E-201',
+    symptom: 'Aroma hidrokarbon terdeteksi di sekitar nozzle flange shift malam.',
+    description: 'Bau hidrokarbon terdeteksi di sekitar flange inlet nozzle E-201 shift malam. Pembacaan LEL 12% pada jarak 15 cm.',
+    reporter: 'Ahmad Fauzi',
+    reporterRole: 'Teknisi Lapangan',
+    dept: 'Process & Thermal',
+    date: '17 Nov 2026 · 23.15',
+    status: 'more',
+    evidence: 'Bukti foto belum dilampirkan',
+    imageUrl: null, // HARD GATE DEMO: Empty Evidence!
+    priority: 'high',
+    source: 'text',
+    elapsedHours: 58, // RED SLA (> 48 jam - Overdue)
+    riskLevel: 'CRITICAL',
+    riskConsequence: 'Catastrophic',
+    riskLikelihood: 'Possible',
+    riskSummary: 'Bahaya kebakaran uap hidrokarbon mudah menyala di area kilang aktif.',
+    capaCorrective: 'Retorque baut flange dengan hydraulic torque wrench 450 Nm.',
+    capaPreventive: 'Pemasangan thermal leak wraps di sekeliling flange joint.',
+    capaTargetDate: '2026-11-23',
+    capaPic: 'Ahmad Fauzi (HSE)',
+    note: 'Laporan dikembalikan ke status PRADUGA. Mohon lampirkan foto jelas sambungan flange dan log kalibrasi gas detector.',
+    comments: [
+      { author: 'Bambang Trihatmojo', role: 'Reviewer Dept', text: 'Laporan dikembalikan ke status PRADUGA. Mohon lampirkan foto jelas area sambungan flange dan log kalibrasi detector.', date: '18 Nov 09.00', isRevision: true, requestedEvidence: 'Foto sambungan flange & sertifikat kalibrasi LEL' },
+      { author: 'Ahmad Fauzi', role: 'Teknisi Lapangan', text: 'Siap Pak Bambang, shift pagi sedang mengambil foto close-up flange dan sertifikat kalibrasi MSA Altair.', date: '18 Nov 11.30' }
+    ]
+  },
+  {
+    id: 'RPT-1049',
+    title: 'Deviasi sinyal feedback transmitter FCV-301',
+    asset: 'FCV-301',
+    symptom: 'Deviasi sinyal posisi fisik katup vs indikator monitor 6.5%.',
+    description: 'Sinyal feedback transmitter posisi tidak linier pada bukaan 40% - 60%. Ditemukan kelonggaran pin linkage arm transmitter.',
+    reporter: 'Rina Suryani', // HARD GATE DEMO: Reported by Rina Suryani (No Self-Approval)
+    reporterRole: 'Validator Ahli',
+    dept: 'Piping & Instrumentation',
+    date: '19 Nov 2026 · 11.00',
+    status: 'validation',
+    evidence: 'Data logger sinyal analog 4-20mA',
+    imageUrl: 'assets/synqra-logo-dark.png',
+    priority: 'medium',
+    source: 'text',
+    elapsedHours: 36, // YELLOW SLA (24-48 jam)
+    riskLevel: 'LOW',
+    riskConsequence: 'Minor',
+    riskLikelihood: 'Possible',
+    riskSummary: 'Error pembacaan telemetri tanpa risiko shutdown mendesak.',
+    capaCorrective: 'Penggantian pin linkage stainless steel dan kalibrasi span positioner.',
+    capaPreventive: 'Inspeksi clearance linkage tiap 3 bulan.',
+    capaTargetDate: '2026-12-10',
+    capaPic: 'Rina Suryani',
+    comments: []
+  },
+  {
+    id: 'RPT-1044',
+    title: 'Kebocoran gasket channel E-201',
+    asset: 'E-201',
+    symptom: 'Rembesan pada sambungan channel heat exchanger.',
+    description: 'Ditemukan rembesan di sekitar sambungan channel. Area sudah diamankan dan dilaporkan untuk pemeriksaan.',
+    reporter: 'Dimas Pratama',
+    reporterRole: 'Teknisi Lapangan',
+    dept: 'Process & Thermal',
+    date: '17 Nov 2026 · 13.10',
+    status: 'verified',
+    evidence: 'Foto sambungan channel',
+    imageUrl: 'assets/synqra-logo-light.png',
+    priority: 'medium',
+    source: 'voice',
+    elapsedHours: 12,
+    cause: 'Gasket channel mengeras',
+    solution: 'Penggantian gasket dan pemeriksaan torsi baut sesuai prosedur.',
+    verifiedBy: 'Rina Suryani',
+    comments: []
+  }
 ];
 
 const knowledge = [
@@ -172,12 +324,41 @@ function brandLogo(className = '', forceDarkBg = false) {
 function pageHead(eyebrow, title, desc, actions = '') {
   return `<header class="page-head anim-in"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p>${desc}</p></div>${actions ? `<div class="page-actions">${actions}</div>` : ''}</header>`;
 }
+function calculateSla(report) {
+  const h = report.elapsedHours != null ? report.elapsedHours : 14;
+  if (h < 24) {
+    return { level: 'green', label: `${h}j lalu · Normal`, cls: 'sla-green', isOverdue: false };
+  }
+  if (h <= 48) {
+    return { level: 'yellow', label: `${h}j lalu · Segera Cek`, cls: 'sla-yellow', isOverdue: false };
+  }
+  return { level: 'red', label: `${h}j lalu · Overdue > 48j`, cls: 'sla-red', isOverdue: true };
+}
+
+function renderSlaReminderBanner() {
+  if (!state.user || state.user.key === 'technician') return '';
+  const urgent = reports.filter(r => r.status !== 'verified' && (r.elapsedHours ?? 14) >= 24);
+  const red = urgent.filter(r => (r.elapsedHours ?? 14) > 48);
+  const yellow = urgent.filter(r => (r.elapsedHours ?? 14) <= 48);
+  if (!urgent.length) return '';
+  return `<div class="sla-banner anim-in">
+    <div class="sla-banner-info">
+      <div class="sla-banner-title">${ico('alert', 18)} Sistem Pengingat SLA Otomatis</div>
+      <p class="sla-banner-desc">Sistem mendeteksi <b>${red.length} kasus Overdue (&gt; 48 jam)</b> dan <b>${yellow.length} kasus Segera Cek (24–48 jam)</b> yang membutuhkan evaluasi segera di antrean Anda.</p>
+    </div>
+    <div class="sla-banner-action">
+      <button class="btn btn-primary" data-action="send-sla-reminder">${ico('bell', 16)} Kirim Pengingat SLA (${urgent.length})</button>
+    </div>
+  </div>`;
+}
+
 function statCard(iconName, value, label, delay = 1) {
   return `<div class="card stat-card tilt-card anim-in anim-delay-${delay}"><div class="stat-icon">${ico(iconName, 24)}</div><div><div class="stat-value" data-count="${value}">${value}</div><div class="stat-label">${label}</div></div></div>`;
 }
 function reportRow(report, actionLabel = 'Lihat detail') {
   const asset = assets.find(a => a.id === report.asset) || assets[0];
-  return `<div class="report-row"><div class="report-thumb">${equipmentArt(asset.type)}</div><div class="report-main"><b>${esc(report.title)}</b><small>${esc(report.id)} · ${esc(report.asset)} · ${esc(report.date)}</small></div><div class="report-end">${statusPill(report.status)}<button class="text-link" data-report="${report.id}">${actionLabel} ${ico('chevron', 15)}</button></div></div>`;
+  const sla = calculateSla(report);
+  return `<div class="report-row"><div class="report-thumb">${equipmentArt(asset.type)}</div><div class="report-main"><b>${esc(report.title)}</b><small>${esc(report.id)} · ${esc(report.asset)} · ${esc(report.date)} · <span class="sla-pill ${sla.cls}">${ico('clock', 12)} ${sla.label}</span></small></div><div class="report-end">${statusPill(report.status)}<button class="text-link" data-report="${report.id}">${actionLabel} ${ico('chevron', 15)}</button></div></div>`;
 }
 function userReports() { return reports.filter(r => r.reporter === state.user.name); }
 function reviewerReports() { const s = state.user.scope || [state.user.dept]; return reports.filter(r => s.includes(r.dept)); }
@@ -296,6 +477,7 @@ function renderHome() {
     const returned = scoped.filter(r => r.status === 'more');
     const sent = scoped.filter(r => r.status === 'validation');
     return `${pageHead('RINGKASAN DEPARTEMEN', 'Selamat datang, Pak Bambang.', 'Periksa kelengkapan laporan sebelum diteruskan ke validator.')}
+      ${renderSlaReminderBanner()}
       <div class="grid grid-3">${statCard('inbox', waiting.length, 'Menunggu review', 1)}${statCard('shield', sent.length, 'Diteruskan ke validator', 2)}${statCard('refresh', returned.length, 'Perlu informasi', 3)}</div>
       <div class="grid-main" style="margin-top:22px">
         <section class="card card-pad anim-in anim-delay-2"><div class="card-title"><div><h3>Antrean yang perlu diperiksa</h3><p>Prioritaskan laporan yang baru masuk.</p></div><button class="text-link" data-page="review-queue">Lihat antrean ${ico('chevron', 15)}</button></div>${waiting.length ? waiting.map(r => reportRow(r, 'Review')).join('') : `<div class="empty-state">${ico('checkCircle', 32)}<p>Semua laporan baru sudah diperiksa.</p></div>`}</section>
@@ -306,6 +488,7 @@ function renderHome() {
   const verified = reports.filter(r => r.status === 'verified');
   const rejected = reports.filter(r => r.status === 'rejected');
   return `${pageHead('RINGKASAN VALIDATOR', 'Selamat datang, Ibu Rina.', 'Validasi temuan berdasarkan bukti sebelum disimpan ke Knowledge Base.')}
+    ${renderSlaReminderBanner()}
     <div class="grid grid-3">${statCard('shield', validation.length, 'Menunggu validasi', 1)}${statCard('checkCircle', verified.length, 'Temuan terverifikasi', 2)}${statCard('xCircle', rejected.length, 'Tidak valid', 3)}</div>
     <div class="grid-main" style="margin-top:22px">
       <section class="card card-pad anim-in anim-delay-2"><div class="card-title"><div><h3>Temuan menunggu keputusan</h3><p>Periksa bukti dan laporan sebelum menetapkan hasil.</p></div><button class="text-link" data-page="validation-queue">Semua temuan ${ico('chevron', 15)}</button></div>${validation.length ? validation.map(r => reportRow(r, 'Validasi')).join('') : `<div class="empty-state">${ico('checkCircle', 32)}<p>Tidak ada temuan yang menunggu validasi.</p></div>`}</section>
@@ -376,19 +559,66 @@ function renderNewReport() {
 function renderReportDetail() {
   const r = reports.find(x => x.id === state.activeReport) || reports[0];
   const asset = assets.find(a => a.id === r.asset) || assets[0];
+  const sla = calculateSla(r);
   const backPage = state.user.key === 'technician' ? 'my-reports' : state.user.key === 'reviewer' ? 'review-queue' : 'validation-queue';
   const completeAction = state.user.key === 'technician' && r.reporter === state.user.name && r.status === 'more' ? `<button class="btn btn-primary" data-action="complete-report" data-id="${r.id}">${ico('file', 16)} Lengkapi laporan</button>` : '';
-  return `${pageHead('DETAIL LAPORAN', esc(r.title), `${r.id} · Dilaporkan ${r.date}`, `${completeAction}<button class="btn btn-outline" data-page="${backPage}">${ico('back', 16)} Kembali</button>`)}
+
+  return `${pageHead('DETAIL LAPORAN & INVESTIGASI', esc(r.title), `${r.id} · Dilaporkan ${r.date}`, `${completeAction}<button class="btn btn-outline" data-page="${backPage}">${ico('back', 16)} Kembali</button>`)}
     <div class="detail-grid">
-      <section class="card card-pad anim-in"><div class="card-title"><div><h3>Ringkasan temuan</h3><p>Informasi yang dikirim dari lapangan.</p></div>${statusPill(r.status)}</div>${evidencePreview(r, asset)}<div style="margin-top:20px"><div class="detail-item"><span>Peralatan</span><b>${asset.name} · ${asset.id}</b></div><div class="detail-item"><span>Lokasi</span><b>${asset.area}</b></div><div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div><div class="detail-item"><span>Departemen</span><b>${r.dept}</b></div><div class="detail-item"><span>Metode laporan</span><b>${r.source === 'voice' ? 'Suara (MediaRecorder API)' : 'Teks manual'}</b></div><div class="detail-item"><span>Bukti</span><b>${r.evidence || 'Belum ada lampiran'}</b></div></div></section>
-      <aside class="card card-pad anim-in anim-delay-1"><div class="card-title"><div><h3>7 Entitas Standar Kegagalan</h3><p>Hasil ekstraksi Google Gemini AI.</p></div></div>
+      <section class="card card-pad anim-in">
+        <div class="card-title">
+          <div>
+            <h3>Ringkasan temuan</h3>
+            <p>${r.id} · ${r.date} · <span class="sla-pill ${sla.cls}">${ico('clock', 12)} ${sla.label}</span></p>
+          </div>
+          ${statusPill(r.status)}
+        </div>
+        ${evidencePreview(r, asset)}
+        <div style="margin-top:20px">
+          <div class="detail-item"><span>Peralatan</span><b>${asset.name} · ${asset.id}</b></div>
+          <div class="detail-item"><span>Lokasi</span><b>${asset.area}</b></div>
+          <div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div>
+          <div class="detail-item"><span>Departemen</span><b>${r.dept}</b></div>
+          <div class="detail-item"><span>Metode laporan</span><b>${r.source === 'voice' ? 'Suara (MediaRecorder API)' : 'Teks manual'}</b></div>
+          <div class="detail-item"><span>Bukti</span><b>${r.evidence || 'Belum ada lampiran'}</b></div>
+          ${r.slaReminderCount ? `<div class="detail-item"><span>Pengingat SLA</span><b>${r.slaReminderCount}x terkirim</b></div>` : ''}
+        </div>
+
+        <!-- Risk Report & CAPA Section -->
+        <div class="risk-matrix-card">
+          <div class="risk-head">
+            <b>${ico('shield', 15)} Analisis Risiko & CAPA</b>
+            <span class="risk-tag risk-${r.riskLevel || 'MEDIUM'}">RISIKO: ${r.riskLevel || 'MEDIUM'}</span>
+          </div>
+          <p style="margin:4px 0 8px;font-size:13px;color:var(--ink-soft)"><b>Dampak:</b> ${esc(r.riskSummary || 'Risiko operasional.')}</p>
+          <div class="capa-box">
+            <b>Rencana Tindakan Korektif & Preventif (CAPA)</b>
+            <p style="margin:0 0 4px"><b>Korektif:</b> ${esc(r.capaCorrective || 'Inspeksi dan perbaikan komponen.')}</p>
+            <p style="margin:0"><b>Preventif:</b> ${esc(r.capaPreventive || 'Pencegahan berulang dan pengujian rutin.')}</p>
+            <small style="display:block;margin-top:4px;color:var(--ink-soft)">Target: <b>${r.capaTargetDate || '2026-11-28'}</b> · PIC: <b>${r.capaPic || 'Teknisi & Supervisor'}</b></small>
+          </div>
+        </div>
+
+        <!-- 2-Way Feedback Thread -->
+        <div class="case-thread">
+          <h4 style="margin:0 0 10px;font-family:'Poppins',sans-serif;font-size:13.5px">Catatan Kasus 2 Arah (${(r.comments || []).length})</h4>
+          ${(r.comments || []).map(c => `<div class="comment-card ${c.isRevision ? 'is-revision' : ''}"><div class="comment-head"><b>${esc(c.author)} (${esc(c.role || 'User')})</b>${c.isRevision ? '<span class="revision-tag">Revisi Diminta</span>' : ''}<small>${esc(c.date)}</small></div><p class="comment-body">${esc(c.text)}</p>${c.requestedEvidence ? `<div class="comment-req">Lampiran diminta: ${esc(c.requestedEvidence)}</div>` : ''}</div>`).join('')}
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="control" id="case-comment-input" style="font-size:13px;padding:8px 12px" placeholder="Tulis komentar / tanggapan teknisi..." />
+            <button class="btn btn-primary btn-sm" data-action="add-case-comment" data-id="${r.id}">${ico('send', 14)}</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card card-pad anim-in anim-delay-1">
+        <div class="card-title"><div><h3>7 Entitas Standar Kegagalan</h3><p>Hasil ekstraksi Google Gemini AI.</p></div></div>
         <div class="kb-blocks">
           <div class="kb-block block-symptom"><div class="kb-block-label">1. Identitas & 2. Gejala</div><p class="kb-block-body"><b>${esc(r.identitas_alat || asset.name)}:</b> ${esc(r.gejala || r.symptom || r.description)}</p></div>
           <div class="kb-block block-cause"><div class="kb-block-label">3. Kondisi Operasi & 4. Pemeriksaan Awal</div><p class="kb-block-body"><b>Kondisi:</b> ${esc(r.kondisi_operasi || 'Operasi normal beban unit')}<br><b>Pemeriksaan:</b> ${esc(r.pemeriksaan_awal || 'Inspeksi visual fisik & termografi')}</p></div>
           <div class="kb-block block-solution"><div class="kb-block-label">5. Praduga Penyebab & 6. Usulan Tindakan</div><p class="kb-block-body"><b>Penyebab:</b> ${esc(r.praduga_penyebab || r.cause || 'Dugaan degradasi komponen / keausan mekanikal')}<br><b>Tindakan:</b> ${esc(r.usulan_tindakan || r.solution || 'Inspeksi internal dan penggantian suku cadang')}</p></div>
           <div class="kb-block block-result"><div class="kb-block-label">7. Verifikasi Keberhasilan</div><p class="kb-block-body">${esc(r.verifikasi || 'Uji coba performa dan monitoring parameter stabil')}</p></div>
         </div>
-        ${r.note ? `<div style="padding:14px 16px;border-radius:12px;background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber);font-size:14px;font-weight:600;margin-top:14px"><b>Catatan:</b> ${esc(r.note)}</div>` : ''}
+        ${r.note ? `<div style="padding:14px 16px;border-radius:12px;background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber);font-size:14px;font-weight:600;margin-top:14px"><b>Catatan Revisi:</b> ${esc(r.note)}</div>` : ''}
       </aside>
     </div>`;
 }
@@ -397,14 +627,74 @@ function renderReviewQueue() {
   let list = reviewerReports().filter(r => r.status === 'submitted' || r.status === 'more');
   if (state.queueFilter === 'submitted') list = list.filter(r => r.status === 'submitted');
   if (state.queueFilter === 'more') list = list.filter(r => r.status === 'more');
-  return `${pageHead('ANTREAN DEPARTEMEN', 'Periksa laporan yang masuk.', 'Pastikan informasi dan bukti cukup sebelum kasus diteruskan.')}<div class="filter-row" style="margin-bottom:18px">${[['all', 'Semua'], ['submitted', 'Laporan baru'], ['more', 'Perlu informasi']].map(([v, l]) => `<button class="filter-chip ${state.queueFilter === v ? 'active' : ''}" data-queue-filter="${v}">${l}</button>`).join('')}</div><section class="card card-pad"><div class="card-title"><div><h3>${list.length} laporan perlu perhatian</h3><p>Menampilkan laporan dalam tanggung jawab departemen.</p></div></div>${list.length ? list.map(r => reportRow(r, 'Periksa')).join('') : `<div class="empty-state">${ico('checkCircle', 32)}<p>Antrean kosong.</p></div>`}</section>`;
+  return `${pageHead('TRIAGE DEPARTEMEN', 'Periksa laporan yang masuk.', 'Pastikan informasi dan bukti cukup sebelum kasus diteruskan ke validator.')}
+    ${renderSlaReminderBanner()}
+    <div class="filter-row" style="margin-bottom:18px">${[['all', 'Semua'], ['submitted', 'Laporan baru'], ['more', 'Perlu informasi']].map(([v, l]) => `<button class="filter-chip ${state.queueFilter === v ? 'active' : ''}" data-queue-filter="${v}">${l}</button>`).join('')}</div>
+    <section class="card card-pad">
+      <div class="card-title"><div><h3>${list.length} laporan perlu perhatian</h3><p>Menampilkan laporan dalam tanggung jawab departemen.</p></div></div>
+      ${list.length ? list.map(r => reportRow(r, 'Triage & Investigasi')).join('') : `<div class="empty-state">${ico('checkCircle', 32)}<p>Antrean kosong.</p></div>`}
+    </section>`;
 }
 
 function renderReviewDetail() {
   const r = reports.find(x => x.id === state.activeReport) || reports.find(x => x.status === 'submitted');
   if (!r) return `<div class="empty-state">Tidak ada laporan untuk diperiksa.</div>`;
   const a = assets.find(x => x.id === r.asset) || assets[0];
-  return `${pageHead('REVIEW DEPARTEMEN', 'Periksa kelengkapan laporan.', 'Pastikan laporan dapat dipahami validator.', `<button class="btn btn-outline" data-page="review-queue">${ico('back', 16)} Kembali</button>`)}<div class="detail-grid"><section class="card card-pad"><div class="card-title"><div><h3>${esc(r.title)}</h3><p>${r.id} · ${r.date}</p></div>${statusPill(r.status)}</div>${evidencePreview(r, a)}<div style="margin-top:18px"><div class="detail-item"><span>Equipment</span><b>${a.name} · ${a.id}</b></div><div class="detail-item"><span>Departemen</span><b>${r.dept}</b></div><div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div><div class="detail-item"><span>Bukti foto</span><b>${r.evidence}</b></div></div></section><aside class="card card-pad"><div class="card-title"><div><h3>Isi laporan</h3><p>Uraian dari teknisi lapangan.</p></div></div><p style="font-size:15.5px;line-height:1.8">${esc(r.description)}</p><div class="field" style="margin-top:20px"><label for="review-note">Catatan untuk teknisi (bila dikembalikan)</label><textarea class="control" id="review-note" rows="3" placeholder="Contoh: Mohon tambahkan foto nameplate..."></textarea></div><button class="btn btn-primary btn-full" data-action="forward-report" data-id="${r.id}">${ico('arrow', 17)} Teruskan ke validator</button><button class="btn btn-outline btn-full" style="margin-top:10px" data-action="return-report" data-id="${r.id}">Kembalikan ke teknisi</button></aside></div>`;
+  const sla = calculateSla(r);
+
+  return `${pageHead('TRIAGE DEPARTEMEN & INVESTIGASI', 'Periksa kelengkapan laporan sebelum validasi.', 'Evaluasi kelengkapan 7 entitas, tetapkan SLA & rencana CAPA.', `<button class="btn btn-outline" data-page="review-queue">${ico('back', 16)} Kembali</button>`)}
+    <div class="detail-grid">
+      <section class="card card-pad">
+        <div class="card-title">
+          <div>
+            <h3>${esc(r.title)}</h3>
+            <p>${r.id} · ${r.date} · <span class="sla-pill ${sla.cls}">${ico('clock', 12)} ${sla.label}</span></p>
+          </div>
+          ${statusPill(r.status)}
+        </div>
+        ${evidencePreview(r, a)}
+        <div style="margin-top:18px">
+          <div class="detail-item"><span>Equipment</span><b>${a.name} · ${a.id}</b></div>
+          <div class="detail-item"><span>Departemen</span><b>${r.dept}</b></div>
+          <div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div>
+          <div class="detail-item"><span>Bukti foto</span><b>${r.evidence || 'Belum ada bukti'}</b></div>
+          ${r.slaReminderCount ? `<div class="detail-item"><span>Pengingat SLA</span><b>${r.slaReminderCount}x terkirim</b></div>` : ''}
+        </div>
+
+        <!-- Risk Report & CAPA Section -->
+        <div class="risk-matrix-card">
+          <div class="risk-head">
+            <b>${ico('shield', 15)} Analisis Risiko & CAPA</b>
+            <span class="risk-tag risk-${r.riskLevel || 'MEDIUM'}">RISIKO: ${r.riskLevel || 'MEDIUM'}</span>
+          </div>
+          <p style="margin:4px 0 8px;font-size:13px;color:var(--ink-soft)"><b>Dampak:</b> ${esc(r.riskSummary || 'Risiko operasional.')}</p>
+          <div class="capa-box">
+            <b>Rencana Tindakan Korektif & Preventif (CAPA)</b>
+            <p style="margin:0 0 4px"><b>Korektif:</b> ${esc(r.capaCorrective || 'Inspeksi dan perbaikan komponen.')}</p>
+            <p style="margin:0"><b>Preventif:</b> ${esc(r.capaPreventive || 'Pencegahan berulang dan pengujian rutin.')}</p>
+            <small style="display:block;margin-top:4px;color:var(--ink-soft)">Target: <b>${r.capaTargetDate || '2026-11-28'}</b> · PIC: <b>${r.capaPic || 'Teknisi & Supervisor'}</b></small>
+          </div>
+        </div>
+
+        <!-- 2-Way Feedback Thread -->
+        <div class="case-thread">
+          <h4 style="margin:0 0 10px;font-family:'Poppins',sans-serif;font-size:13.5px">Catatan Kasus 2 Arah (${(r.comments || []).length})</h4>
+          ${(r.comments || []).map(c => `<div class="comment-card ${c.isRevision ? 'is-revision' : ''}"><div class="comment-head"><b>${esc(c.author)} (${esc(c.role || 'User')})</b>${c.isRevision ? '<span class="revision-tag">Revisi Diminta</span>' : ''}<small>${esc(c.date)}</small></div><p class="comment-body">${esc(c.text)}</p>${c.requestedEvidence ? `<div class="comment-req">Lampiran diminta: ${esc(c.requestedEvidence)}</div>` : ''}</div>`).join('')}
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="control" id="case-comment-input" style="font-size:13px;padding:8px 12px" placeholder="Tulis catatan diskusi teknis..." />
+            <button class="btn btn-primary btn-sm" data-action="add-case-comment" data-id="${r.id}">${ico('send', 14)}</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card card-pad">
+        <div class="card-title"><div><h3>Keputusan Triage</h3><p>Evaluasi teknis supervisor.</p></div></div>
+        <p style="font-size:15px;line-height:1.7">${esc(r.description)}</p>
+
+        <button class="btn btn-primary btn-full" style="margin-top:14px" data-action="forward-report" data-id="${r.id}">${ico('arrow', 17)} Teruskan ke Validator Pakar</button>
+        <button class="btn btn-outline btn-full" style="margin-top:10px" data-action="open-revision-modal" data-id="${r.id}">${ico('refresh', 16)} Kembalikan untuk Revisi Bukti (2-Way)</button>
+      </aside>
+    </div>`;
 }
 
 function renderDepartmentCases() {
@@ -414,14 +704,111 @@ function renderDepartmentCases() {
 
 function renderValidationQueue() {
   const list = reports.filter(r => r.status === 'validation');
-  return `${pageHead('VALIDASI AHLI', 'Tentukan validitas temuan.', 'Tinjau bukti lapangan sebelum pengetahuan dimasukkan ke Synqra.')}<section class="card card-pad"><div class="card-title"><div><h3>${list.length} temuan menunggu validasi</h3><p>Hanya laporan yang sudah diperiksa departemen ditampilkan di sini.</p></div></div>${list.length ? list.map(r => reportRow(r, 'Periksa bukti')).join('') : `<div class="empty-state">${ico('checkCircle', 32)}<p>Semua temuan sudah ditinjau.</p></div>`}</section>`;
+  return `${pageHead('GERBANG VALIDASI PAKAR', 'Tentukan validitas temuan.', 'Tinjau bukti nyata sebelum pengetahuan disahkan ke Knowledge Base.')}
+    ${renderSlaReminderBanner()}
+    <section class="card card-pad">
+      <div class="card-title"><div><h3>${list.length} temuan menunggu validasi</h3><p>Hanya laporan dengan bukti valid yang dapat disahkan.</p></div></div>
+      ${list.length ? list.map(r => reportRow(r, 'Periksa bukti (Hard Gate)')).join('') : `<div class="empty-state">${ico('checkCircle', 32)}<p>Semua temuan sudah ditinjau.</p></div>`}
+    </section>`;
 }
 
 function renderValidationDetail() {
   const r = reports.find(x => x.id === state.activeReport) || reports.find(x => x.status === 'validation');
   if (!r) return `<div class="empty-state">Tidak ada temuan untuk divalidasi.</div>`;
   const a = assets.find(x => x.id === r.asset) || assets[0];
-  return `${pageHead('PEMERIKSAAN TEMUAN', 'Apakah temuan ini terbukti?', 'Bandingkan uraian teknisi dengan bukti yang tersedia.', `<button class="btn btn-outline" data-page="validation-queue">${ico('back', 16)} Kembali</button>`)}<div class="detail-grid"><section class="card card-pad"><div class="card-title"><div><h3>${esc(r.title)}</h3><p>${r.id} · ${r.date}</p></div>${statusPill(r.status)}</div>${evidencePreview(r, a)}<div style="margin-top:18px"><div class="detail-item"><span>Equipment</span><b>${a.name} · ${a.id}</b></div><div class="detail-item"><span>Lokasi</span><b>${a.area}</b></div><div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div><div class="detail-item"><span>Bukti terlampir</span><b>${r.evidence}</b></div></div></section><aside class="card card-pad"><div class="card-title"><div><h3>Uraian temuan</h3><p>Konteks dari lapangan.</p></div></div><p style="font-size:15.5px;line-height:1.8">${esc(r.description)}</p><div class="field" style="margin-top:16px"><label for="validator-note">Catatan keputusan</label><textarea class="control" id="validator-note" rows="3" placeholder="Tuliskan alasan singkat dan dasar keputusan..."></textarea></div><button class="decision-card" data-action="decision" data-decision="verified" data-id="${r.id}"><span class="decision-icon">${ico('checkCircle', 20)}</span><span><b>Temuan valid</b><small>Bukti mendukung adanya masalah. Simpan sebagai pengetahuan.</small></span>${ico('chevron', 16)}</button><button class="decision-card" data-action="decision" data-decision="more" data-id="${r.id}"><span class="decision-icon" style="background:var(--amber-bg);color:var(--amber)">${ico('refresh', 20)}</span><span><b>Perlu bukti tambahan</b><small>Kembalikan untuk melengkapi pemeriksaan.</small></span>${ico('chevron', 16)}</button><button class="decision-card" data-action="decision" data-decision="rejected" data-id="${r.id}"><span class="decision-icon" style="background:var(--red-bg);color:var(--red)">${ico('xCircle', 20)}</span><span><b>Temuan tidak valid</b><small>Simpan keputusan tanpa memasukkan ke knowledge base.</small></span>${ico('chevron', 16)}</button></aside></div>`;
+  const sla = calculateSla(r);
+
+  // HARD GATE (ATURAN KERAS) CHECKS:
+  // 1. Evidence check: must have valid imageUrl and not marked as 'belum'
+  const hasEvidence = Boolean(r.imageUrl && r.evidence && !r.evidence.toLowerCase().includes('belum'));
+  // 2. Self-Approval check: Validator cannot approve their own report
+  const isSelfApproval = Boolean(state.user?.name && r.reporter && state.user.name.toLowerCase().trim() === r.reporter.toLowerCase().trim());
+  const isHardGateLocked = !hasEvidence || isSelfApproval;
+
+  let hardGateMessage = '';
+  if (!hasEvidence) {
+    hardGateMessage = '⚠️ <b>Tabel Evidences Kosong:</b> Bukti foto lapangan belum dilampirkan. Sesuai aturan keras HSE, pengesahan terkunci sampai teknisi melampirkan foto inspeksi fisik.';
+  } else if (isSelfApproval) {
+    hardGateMessage = '⛔ <b>Aturan Keras (No Self-Approval):</b> Anda terdaftar sebagai pelapor kasus ini. Pengesahan wajib dilakukan oleh validator independen lain demi integritas audit HSE.';
+  }
+
+  return `${pageHead('PEMERIKSAAN TEMUAN (VALIDASI PAKAR)', 'Apakah temuan ini terbukti?', 'Bandingkan uraian teknisi dengan bukti yang tersedia di bawah Aturan Keras (Hard Gate).', `<button class="btn btn-outline" data-page="validation-queue">${ico('back', 16)} Kembali</button>`)}
+    <div class="detail-grid">
+      <section class="card card-pad">
+        <div class="card-title">
+          <div>
+            <h3>${esc(r.title)}</h3>
+            <p>${r.id} · ${r.date} · <span class="sla-pill ${sla.cls}">${ico('clock', 12)} ${sla.label}</span></p>
+          </div>
+          ${statusPill(r.status)}
+        </div>
+        ${evidencePreview(r, a)}
+        <div style="margin-top:18px">
+          <div class="detail-item"><span>Equipment</span><b>${a.name} · ${a.id}</b></div>
+          <div class="detail-item"><span>Lokasi</span><b>${a.area}</b></div>
+          <div class="detail-item"><span>Pelapor</span><b>${r.reporter}</b></div>
+          <div class="detail-item"><span>Bukti terlampir</span><b>${r.evidence || 'Belum ada bukti'}</b></div>
+          ${r.slaReminderCount ? `<div class="detail-item"><span>Pengingat SLA</span><b>${r.slaReminderCount}x terkirim</b></div>` : ''}
+        </div>
+
+        <!-- Risk Report & CAPA Section -->
+        <div class="risk-matrix-card">
+          <div class="risk-head">
+            <b>${ico('shield', 15)} Analisis Risiko & CAPA</b>
+            <span class="risk-tag risk-${r.riskLevel || 'MEDIUM'}">RISIKO: ${r.riskLevel || 'MEDIUM'}</span>
+          </div>
+          <p style="margin:4px 0 8px;font-size:13px;color:var(--ink-soft)"><b>Dampak:</b> ${esc(r.riskSummary || 'Risiko operasional.')}</p>
+          <div class="capa-box">
+            <b>Rencana Tindakan Korektif & Preventif (CAPA)</b>
+            <p style="margin:0 0 4px"><b>Korektif:</b> ${esc(r.capaCorrective || 'Inspeksi dan perbaikan komponen.')}</p>
+            <p style="margin:0"><b>Preventif:</b> ${esc(r.capaPreventive || 'Pencegahan berulang dan pengujian rutin.')}</p>
+            <small style="display:block;margin-top:4px;color:var(--ink-soft)">Target: <b>${r.capaTargetDate || '2026-11-28'}</b> · PIC: <b>${r.capaPic || 'Teknisi & Supervisor'}</b></small>
+          </div>
+        </div>
+
+        <!-- 2-Way Feedback Thread -->
+        <div class="case-thread">
+          <h4 style="margin:0 0 10px;font-family:'Poppins',sans-serif;font-size:13.5px">Catatan Kasus 2 Arah (${(r.comments || []).length})</h4>
+          ${(r.comments || []).map(c => `<div class="comment-card ${c.isRevision ? 'is-revision' : ''}"><div class="comment-head"><b>${esc(c.author)} (${esc(c.role || 'User')})</b>${c.isRevision ? '<span class="revision-tag">Revisi Diminta</span>' : ''}<small>${esc(c.date)}</small></div><p class="comment-body">${esc(c.text)}</p>${c.requestedEvidence ? `<div class="comment-req">Lampiran diminta: ${esc(c.requestedEvidence)}</div>` : ''}</div>`).join('')}
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="control" id="case-comment-input" style="font-size:13px;padding:8px 12px" placeholder="Tulis komentar tanggapan teknis..." />
+            <button class="btn btn-primary btn-sm" data-action="add-case-comment" data-id="${r.id}">${ico('send', 14)}</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card card-pad">
+        <div class="card-title"><div><h3>Gerbang Keputusan Pakar</h3><p>Aturan Keras (Hard Gate): Bukti foto wajib ada & No Self-Approval.</p></div></div>
+        <p style="font-size:15px;line-height:1.7">${esc(r.description)}</p>
+
+        ${isHardGateLocked ? `
+          <div class="hard-gate-notice anim-in">
+            <b>${ico('alert', 16)} Gerbang Validasi Terkunci (Hard Gate)</b>
+            ${hardGateMessage}
+          </div>
+        ` : ''}
+
+        <div class="field" style="margin-top:16px"><label for="validator-note">Catatan keputusan</label><textarea class="control" id="validator-note" rows="3" placeholder="Tuliskan alasan singkat dan dasar keputusan..."></textarea></div>
+
+        <button class="decision-card ${isHardGateLocked ? 'locked' : ''}" ${isHardGateLocked ? 'data-action="locked-warning"' : `data-action="decision" data-decision="verified" data-id="${r.id}"`}>
+          <span class="decision-icon">${ico(isHardGateLocked ? 'close' : 'checkCircle', 20)}</span>
+          <span><b>Sahkan Temuan (Terverifikasi)</b><small>${isHardGateLocked ? 'Terkunci oleh aturan keras (Hard Gate).' : 'Bukti lengkap & valid. Simpan sebagai pengetahuan terverifikasi.'}</small></span>
+          ${ico(isHardGateLocked ? 'close' : 'chevron', 16)}
+        </button>
+
+        <button class="decision-card" data-action="open-revision-modal" data-id="${r.id}">
+          <span class="decision-icon" style="background:var(--amber-bg);color:var(--amber)">${ico('refresh', 20)}</span>
+          <span><b>Kembalikan untuk Revisi Bukti (2-Way)</b><small>Minta teknisi melampirkan bukti tambahan yang spesifik.</small></span>
+          ${ico('chevron', 16)}
+        </button>
+
+        <button class="decision-card" data-action="decision" data-decision="rejected" data-id="${r.id}">
+          <span class="decision-icon" style="background:var(--red-bg);color:var(--red)">${ico('xCircle', 20)}</span>
+          <span><b>Temuan tidak valid</b><small>Simpan keputusan tanpa memasukkan ke knowledge base.</small></span>
+          ${ico('chevron', 16)}
+        </button>
+      </aside>
+    </div>`;
 }
 
 function renderKnowledge() {
@@ -707,6 +1094,80 @@ document.addEventListener('click', e => {
     if (a === 'complete-report') { const r = reports.find(x => x.id === act.dataset.id); if (!r) return; state.editReportId = r.id; state.selectedAsset = r.asset; state.reportMode = 'text'; state.draftText = r.description; state.page = 'new-report'; render(); return; }
     if (a === 'forward-report') { const r = reports.find(x => x.id === act.dataset.id); if (r) { r.status = 'validation'; state.page = 'review-queue'; render(); showToast('Diteruskan ke validator.'); } return; }
     if (a === 'return-report') { const r = reports.find(x => x.id === act.dataset.id); if (r) { r.status = 'more'; r.note = $('#review-note')?.value.trim() || 'Mohon lengkapi bukti.'; state.page = 'review-queue'; render(); showToast('Dikembalikan ke teknisi.'); } return; }
+    if (a === 'send-sla-reminder') {
+      const urgent = reports.filter(r => r.status !== 'verified' && (r.elapsedHours ?? 14) >= 24);
+      urgent.forEach(r => {
+        r.slaReminderCount = (r.slaReminderCount || 0) + 1;
+      });
+      render();
+      showToast(`🔔 Pengingat SLA otomatis berhasil dikirim ke teknisi pelapor & supervisor untuk ${urgent.length} kasus prioritas!`);
+      return;
+    }
+    if (a === 'add-case-comment') {
+      const r = reports.find(x => x.id === act.dataset.id);
+      const inp = $('#case-comment-input');
+      const txt = inp?.value.trim();
+      if (!txt) return;
+      if (!r.comments) r.comments = [];
+      r.comments.push({
+        author: state.user.name,
+        role: state.user.role,
+        text: txt,
+        date: `${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+      });
+      render();
+      showToast('Catatan kasus berhasil ditambahkan ke thread.');
+      return;
+    }
+    if (a === 'open-revision-modal') {
+      const id = act.dataset.id;
+      $('#modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal">
+        <section class="modal" role="dialog" aria-modal="true">
+          <div class="eyebrow" style="color:var(--amber)">PERMINTAAN REVISI BUKTI (2-WAY FEEDBACK)</div>
+          <h3>Kembalikan Kasus ke PRADUGA</h3>
+          <p>Laporan akan dikembalikan kepada teknisi lapangan dengan instruksi revisi yang spesifik.</p>
+          <div class="field">
+            <label for="rev-evidence">Nama Lampiran Bukti yang Diminta</label>
+            <input id="rev-evidence" class="control" placeholder="Cth: Foto close-up flange & sertifikat kalibrasi..." />
+          </div>
+          <div class="field">
+            <label for="rev-note">Instruksi Catatan Revisi</label>
+            <textarea id="rev-note" class="control" rows="3" placeholder="Tuliskan alasan pengembalian dan tindakan yang harus dilakukan teknisi..."></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-outline" data-action="close-modal">Batal</button>
+            <button class="btn btn-primary" data-action="confirm-revision" data-id="${id}">Kirim & Kembalikan ke PRADUGA</button>
+          </div>
+        </section>
+      </div>`;
+      return;
+    }
+    if (a === 'confirm-revision') {
+      const r = reports.find(x => x.id === act.dataset.id);
+      if (!r) return;
+      const ev = $('#rev-evidence')?.value.trim() || 'Lampiran foto bukti fisik';
+      const note = $('#rev-note')?.value.trim();
+      if (!note || note.length < 5) { showToast('Isi instruksi revisi minimal 5 karakter.'); return; }
+      r.status = 'more'; // PRADUGA / Perlu informasi
+      r.note = note;
+      if (!r.comments) r.comments = [];
+      r.comments.push({
+        author: state.user.name,
+        role: state.user.role,
+        text: note,
+        date: `${nowLabel()} · Revisi`,
+        isRevision: true,
+        requestedEvidence: ev
+      });
+      $('#modal-root').innerHTML = '';
+      render();
+      showToast('Kasus berhasil dikembalikan ke PRADUGA untuk revisi bukti.');
+      return;
+    }
+    if (a === 'locked-warning') {
+      showToast('⛔ Gerbang Validasi Terkunci: Bukti foto wajib ada & pelapor dilarang mengesahkan kasusnya sendiri (No Self-Approval).');
+      return;
+    }
     if (a === 'decision') return openDecisionModal(act.dataset.id, act.dataset.decision, $('#validator-note')?.value || '');
     if (a === 'confirm-decision') return confirmDecision(act.dataset.id, act.dataset.decision);
     if (a === 'close-modal') { if (act.classList.contains('modal-backdrop') || act.tagName === 'BUTTON') $('#modal-root').innerHTML = ''; return; }

@@ -1,4 +1,4 @@
-import { Asset, Report, RoleInfo, UserRole } from '@/types/synqra';
+import { Asset, Report, RoleInfo, UserRole, SlaInfo, CaseComment } from '@/types/synqra';
 
 export const ROLES: Record<UserRole, RoleInfo> = {
   frontline_omi: {
@@ -17,7 +17,7 @@ export const ROLES: Record<UserRole, RoleInfo> = {
     department: 'Mekanik & Rotating',
     initials: 'AW',
     avatarBg: 'bg-blue-600',
-    scope: ['Mekanik & Rotating'],
+    scope: ['Mekanik & Rotating', 'Proses & Operasi'],
   },
   hse_validator: {
     key: 'hse_validator',
@@ -54,66 +54,140 @@ export const INITIAL_ASSETS: Asset[] = [
   },
 ];
 
+/**
+ * SLA Helper: Hitung durasi sejak laporan masuk/diupdate
+ * - Hijau (< 24 jam)
+ * - Kuning (24–48 jam - 'Segera Cek')
+ * - Merah (> 48 jam - 'Overdue / Belum Ditangani')
+ */
+export function calculateSla(dateStr: string): SlaInfo {
+  const parsed = new Date(dateStr).getTime();
+  const now = Date.now();
+  const diffHours = Math.max(0, Math.floor((now - parsed) / (1000 * 60 * 60)));
+
+  if (diffHours < 24) {
+    return {
+      level: 'green',
+      hoursElapsed: diffHours,
+      label: `${diffHours}j lalu · SLA Normal`,
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      isOverdue: false,
+    };
+  }
+
+  if (diffHours <= 48) {
+    return {
+      level: 'yellow',
+      hoursElapsed: diffHours,
+      label: `${diffHours}j lalu · Segera Cek`,
+      badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      isOverdue: false,
+    };
+  }
+
+  return {
+    level: 'red',
+    hoursElapsed: diffHours,
+    label: `${diffHours}j lalu · Overdue / Belum Ditangani`,
+    badgeClass: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+    isOverdue: true,
+  };
+}
+
+// Helper to generate dynamic ISO timestamps for seed data
+const hoursAgo = (h: number) => new Date(Date.now() - h * 3600 * 1000).toISOString();
+
 export const INITIAL_REPORTS: Report[] = [
   {
     id: 'REP-001',
     title: 'Anomali Tekanan & Vibrasi Pompa P-101A',
     asset_id: 'P-101A',
     status: 'INVESTIGATION',
-    identitas_alat: 'Pompa Sentrifugal P-101A',
-    gejala: 'Fluktuasi tekanan discharge 3.2 - 4.1 bar dan vibrasi abnormal di bantalan.',
+    identitas_alat: 'Pompa P-101A (Tag: P-101A)',
+    gejala: 'Fluktuasi tekanan discharge 3.2 - 4.1 bar dan vibrasi abnormal pada bantalan DE.',
     kondisi_operasi: 'Tekanan hisap normal 1.2 bar, temperatur fluida 45°C, debit 110 m³/jam.',
     pemeriksaan_awal: 'Vibrasi terukur 7.8 mm/s di bantalan DE, rembesan ringan mechanical seal.',
     praduga_penyebab: 'Keausan seal chamber dan misalignment kopling poros.',
     usulan_tindakan: 'Alignment laser ulang dan penggantian mechanical seal cartridge.',
     verifikasi: 'Uji jalan 4 jam tanpa kenaikan vibrasi > 3.0 mm/s.',
+    risk_level: 'HIGH',
+    risk_consequence: 'Major',
+    risk_likelihood: 'Possible',
+    risk_summary: 'Risiko tinggi kerusakan bearing katastrofik & potensi unplanned shutdown unit CDU.',
+    capa_corrective: 'Penggantian cartridge mechanical seal dan realign poros dengan laser alignment.',
+    capa_preventive: 'Pemasangan sensor vibration online wireless untuk continuous telemetry monitoring.',
+    capa_target_date: '2026-11-28',
+    capa_pic: 'Dedi Kusnadi (Mekanik)',
     description: 'Tekanan discharge berfluktuasi tajam antara 3.2 - 4.1 bar disertai vibrasi pada bantalan drive end.',
     reporter_name: 'Dedi Kusnadi',
     reporter_role: 'frontline_omi',
     dept: 'Mekanik & Rotating',
     evidence_note: 'Vibrasi 7.8 mm/s, rembesan ringan mechanical seal.',
-    created_at: '2026-11-19T08:30:00Z',
-    updated_at: '2026-11-20T10:15:00Z',
+    image_url: '/assets/synqra-logo-dark.png',
+    sla_reminder_count: 1,
+    sla_last_reminder_at: hoursAgo(6),
+    created_at: hoursAgo(52), // RED SLA (> 48 jam)
+    updated_at: hoursAgo(52),
   },
   {
     id: 'REP-002',
     title: 'Penurunan Efisiensi Termal Heat Exchanger E-201',
     asset_id: 'E-201',
     status: 'VERIFIED',
-    identitas_alat: 'Heat Exchanger E-201',
+    identitas_alat: 'Heat Exchanger E-201 (Tag: E-201)',
     gejala: 'Delta temperatur fluida keluar turun 14°C di bawah baseline standar operasional.',
     kondisi_operasi: 'Laju alir minyak 120 m³/jam, temperatur inlet 145°C.',
     pemeriksaan_awal: 'Pressure drop shell side naik 0.8 bar di atas spesifikasi bersih.',
     praduga_penyebab: 'Akumulasi deposit kerak (fouling) pada dinding tube bundle.',
     usulan_tindakan: 'Backwash sirkulasi kimiawi dan hydro-cleaning berkala.',
     verifikasi: 'Verifikasi efisiensi pertukaran panas kembali ke 92% baseline.',
+    risk_level: 'MEDIUM',
+    risk_consequence: 'Moderate',
+    risk_likelihood: 'Likely',
+    risk_summary: 'Risiko pemborosan konsumsi energi fuel gas furnace akibat hilangnya efisiensi preheat train.',
+    capa_corrective: 'Pembersihan sirkulasi kimiawi (chemical flushing) pada sisi shell & tube bundle.',
+    capa_preventive: 'Pemasangan differential pressure transmitter terkalibrasi dengan high alarm di DCS.',
+    capa_target_date: '2026-12-05',
+    capa_pic: 'Siti Nurhaliza (Proses)',
     description: 'Delta temperatur fluida keluar turun 14°C di bawah baseline standar operasional.',
     reporter_name: 'Siti Nurhaliza',
     reporter_role: 'frontline_omi',
     dept: 'Proses & Operasi',
     evidence_note: 'Log sensor temperatur inlet/outlet dan kurva efisiensi.',
-    created_at: '2026-11-18T14:20:00Z',
-    updated_at: '2026-11-20T09:00:00Z',
+    image_url: '/assets/synqra-logo-light.png',
+    sla_reminder_count: 0,
+    created_at: hoursAgo(18), // GREEN SLA (< 24 jam)
+    updated_at: hoursAgo(2),
   },
   {
     id: 'REP-003',
     title: 'Keterlambatan Respon Stroke FCV-301',
     asset_id: 'FCV-301',
     status: 'TRIAGE',
-    identitas_alat: 'Control Valve FCV-301',
+    identitas_alat: 'Control Valve FCV-301 (Tag: FCV-301)',
     gejala: 'Katup merespon sinyal DCS 4-20mA terlambat 8 detik saat fluktuasi beban operasi.',
     kondisi_operasi: 'Tekanan suplai udara instrumen 4.5 bar stabil.',
     pemeriksaan_awal: 'Stem movement tersendat pada pembukaan 30% - 50%.',
     praduga_penyebab: 'Stem packing mengering dan gesekan berlebih di gland packing.',
     usulan_tindakan: 'Pelumasan packing stem dan kalibrasi smart valve positioner.',
     verifikasi: 'Tes step response stroke waktu buka-tutup di bawah 2 detik.',
+    risk_level: 'HIGH',
+    risk_consequence: 'Major',
+    risk_likelihood: 'Possible',
+    risk_summary: 'Risiko fluktuasi tekanan suplai fuel gas boiler yang memicu fluktuasi steam header.',
+    capa_corrective: 'Pelumasan gland packing dan kalibrasi full stroke 0-100% pada smart positioner.',
+    capa_preventive: 'Jadwal preventive maintenance greasing stem diperketat menjadi per 2 minggu.',
+    capa_target_date: '2026-11-25',
+    capa_pic: 'Budi Santoso (Instrumen)',
     description: 'Katup merespon sinyal DCS 4-20mA terlambat 8 detik saat fluktuasi beban operasi.',
     reporter_name: 'Budi Santoso',
     reporter_role: 'frontline_omi',
     dept: 'Instrumentasi & Kontrol',
     evidence_note: 'Rekaman grafik respon DCS dan posisi fisik stem.',
-    created_at: '2026-11-19T11:45:00Z',
-    updated_at: '2026-11-20T08:30:00Z',
+    image_url: '/assets/synqra-logo-dark.png',
+    sla_reminder_count: 1,
+    created_at: hoursAgo(31), // YELLOW SLA (24–48 jam)
+    updated_at: hoursAgo(31),
   },
   {
     id: 'REP-004',
@@ -127,13 +201,23 @@ export const INITIAL_REPORTS: Report[] = [
     praduga_penyebab: 'Degradasi viskositas pelumas oli atau keausan bearing rollers.',
     usulan_tindakan: 'Pengambilan sampel oli pelumas untuk analisis lab dan penggantian grease.',
     verifikasi: 'Pemantauan suhu berkala pasca pelumasan stabil di bawah 60°C.',
+    risk_level: 'CRITICAL',
+    risk_consequence: 'Catastrophic',
+    risk_likelihood: 'Possible',
+    risk_summary: 'Potensi seizure bearing mendadak yang memicu trip pompa umpan utama dan kebakaran gesekan.',
+    capa_corrective: 'Penggantian oli pelumas sintetik ISO VG 46 dan greasing ulang bantalan.',
+    capa_preventive: 'Uji getaran spektrum demodulasi untuk deteksi dini cacat raceway bearing.',
+    capa_target_date: '2026-11-24',
+    capa_pic: 'Dedi Kusnadi (Mekanik)',
     description: 'Inframerah termografi mendeteksi temperatur rumah bearing mencapai 74°C.',
     reporter_name: 'Dedi Kusnadi',
     reporter_role: 'frontline_omi',
     dept: 'Mekanik & Rotating',
     evidence_note: 'Foto termografi kamera FLIR E5.',
-    created_at: '2026-11-20T07:15:00Z',
-    updated_at: '2026-11-20T07:15:00Z',
+    image_url: '/assets/synqra-logo-dark.png',
+    sla_reminder_count: 0,
+    created_at: hoursAgo(12), // GREEN SLA (< 24 jam)
+    updated_at: hoursAgo(12),
   },
   {
     id: 'REP-005',
@@ -147,13 +231,23 @@ export const INITIAL_REPORTS: Report[] = [
     praduga_penyebab: 'Relaksasi baut flange akibat siklus ekspansi termal berulang.',
     usulan_tindakan: 'Retorque baut flange inlet dengan hydraulic torque wrench terkalibrasi.',
     verifikasi: 'Pemeriksaan ulang LEL setelah retorquing menunjukkan 0% LEL.',
+    risk_level: 'CRITICAL',
+    risk_consequence: 'Catastrophic',
+    risk_likelihood: 'Possible',
+    risk_summary: 'Bahaya kebakaran uap hidrokarbon mudah menyala di area kilang aktif.',
+    capa_corrective: 'Pengencangan baut flange bertahap menggunakan hydraulic torque wrench 450 Nm.',
+    capa_preventive: 'Pemasangan pita deteksi kebocoran termal (thermal leak wraps) di sekeliling sambungan flange.',
+    capa_target_date: '2026-11-23',
+    capa_pic: 'Hadi Purnomo (HSE)',
     description: 'Bau hidrokarbon terdeteksi di sekitar flange inlet nozzle E-201 shift malam.',
     reporter_name: 'Hadi Purnomo',
     reporter_role: 'frontline_omi',
     dept: 'Keselamatan & HSE',
-    evidence_note: 'Pemeriksaan gas detector portabel MSA Altair.',
-    created_at: '2026-11-20T09:30:00Z',
-    updated_at: '2026-11-20T09:30:00Z',
+    evidence_note: 'Bukti foto belum dilampirkan',
+    image_url: undefined, // HARD GATE DEMO: Empty Evidence!
+    sla_reminder_count: 2,
+    created_at: hoursAgo(58), // RED SLA (> 48 jam - Overdue)
+    updated_at: hoursAgo(58),
   },
   {
     id: 'REP-006',
@@ -167,13 +261,23 @@ export const INITIAL_REPORTS: Report[] = [
     praduga_penyebab: 'Aus mekanik pada pin linkage arm transmitter.',
     usulan_tindakan: 'Penggantian pin linkage dan re-zeroing kalibrasi span positioner.',
     verifikasi: 'Verifikasi deviasi sinyal posisi < 0.5% di seluruh rentang 0-100%.',
+    risk_level: 'LOW',
+    risk_consequence: 'Minor',
+    risk_likelihood: 'Possible',
+    risk_summary: 'Error pembacaan telemetri tanpa risiko shutdown proses mendesak.',
+    capa_corrective: 'Penggantian pin linkage stainless steel dan kalibrasi digital span positioner.',
+    capa_preventive: 'Inspeksi clearance linkage setiap 3 bulan.',
+    capa_target_date: '2026-12-10',
+    capa_pic: 'Budi Santoso (Instrumen)',
     description: 'Sinyal feedback transmitter posisi tidak linier pada bukaan 40% - 60%.',
-    reporter_name: 'Budi Santoso',
-    reporter_role: 'frontline_omi',
-    dept: 'Instrumentasi & Kontrol',
+    reporter_name: 'Dr. Rina Suryani', // HARD GATE DEMO: Reported by Dr. Rina (No Self-Approval)
+    reporter_role: 'hse_validator',
+    dept: 'Keselamatan & HSE',
     evidence_note: 'Data logger sinyal analog 4-20mA Yokogawa.',
-    created_at: '2026-11-19T16:00:00Z',
-    updated_at: '2026-11-20T11:20:00Z',
+    image_url: '/assets/synqra-logo-dark.png',
+    sla_reminder_count: 1,
+    created_at: hoursAgo(36), // YELLOW SLA (24–48 jam)
+    updated_at: hoursAgo(36),
   },
   {
     id: 'REP-007',
@@ -187,12 +291,67 @@ export const INITIAL_REPORTS: Report[] = [
     praduga_penyebab: 'Net Positive Suction Head Available (NPSHa) kritis akibat level tangki rendah.',
     usulan_tindakan: 'Kenaikan setpoint level tangki suction dan buka penuh suction valve.',
     verifikasi: 'Verifikasi hilangnya kebisingan akustik kavitasi saat NPSHa naik 2 meter.',
+    risk_level: 'HIGH',
+    risk_consequence: 'Major',
+    risk_likelihood: 'Likely',
+    risk_summary: 'Erosi pitting pada impeler pompa yang dapat menghancurkan sudu dalam jangka menengah.',
+    capa_corrective: 'Penyesuaian interlock level tangki hisap minimal 3.0 meter.',
+    capa_preventive: 'Pemeriksaan ketebalan dinding suction pipe dengan Ultrasonic Thickness Gauge.',
+    capa_target_date: '2026-11-26',
+    capa_pic: 'Dedi Kusnadi (Mekanik)',
     description: 'Terdengar suara dentuman kerikil saat laju alir diturunkan ke 65% beban nominal.',
     reporter_name: 'Dedi Kusnadi',
     reporter_role: 'frontline_omi',
     dept: 'Mekanik & Rotating',
     evidence_note: 'Audio rekaman mikrofon akustik industri.',
-    created_at: '2026-11-20T06:45:00Z',
-    updated_at: '2026-11-20T08:50:00Z',
+    image_url: '/assets/synqra-logo-dark.png',
+    sla_reminder_count: 0,
+    created_at: hoursAgo(26), // YELLOW SLA (24–48 jam)
+    updated_at: hoursAgo(26),
+  },
+];
+
+export const INITIAL_COMMENTS: CaseComment[] = [
+  {
+    id: 'c-101',
+    report_id: 'REP-001',
+    author_name: 'Ir. Agus Wijaya',
+    author_role: 'dept_reviewer',
+    comment: 'Mohon tim mekanik melampirkan data log vibrasi 3 hari terakhir sebelum intervensi overhaul dimulai.',
+    created_at: hoursAgo(24),
+  },
+  {
+    id: 'c-102',
+    report_id: 'REP-001',
+    author_name: 'Dedi Kusnadi',
+    author_role: 'frontline_omi',
+    comment: 'Data spektrum FFT vibration logger sudah kami upload di lampiran evidence tambahan.',
+    created_at: hoursAgo(22),
+  },
+  {
+    id: 'c-201',
+    report_id: 'REP-005',
+    author_name: 'Ir. Agus Wijaya',
+    author_role: 'dept_reviewer',
+    comment: 'Laporan dikembalikan ke status PRADUGA. Mohon lampirkan foto jelas area sambungan nozzle flange dan bukti hasil kalibrasi gas detector MSA Altair sebelum disetujui untuk triage perbaikan.',
+    is_revision_request: true,
+    requested_evidence: 'Foto close-up sambungan flange nozzle & sertifikat kalibrasi LEL gas detector',
+    created_at: hoursAgo(10),
+  },
+  {
+    id: 'c-202',
+    report_id: 'REP-005',
+    author_name: 'Hadi Purnomo',
+    author_role: 'frontline_omi',
+    comment: 'Siap Pak Agus, teknisi shift pagi sedang mengambil foto close-up flange dan melampirkan log detector.',
+    created_at: hoursAgo(8),
+  },
+  {
+    id: 'c-301',
+    report_id: 'REP-006',
+    author_name: 'Dr. Rina Suryani',
+    author_role: 'hse_validator',
+    comment: 'Catatan validator: Deviasi sinyal transmitter ini berulang setiap 3 bulan, investigasi perlu mengecek apakah getaran pipa beresonansi dengan arm positioner.',
+    created_at: hoursAgo(15),
   },
 ];

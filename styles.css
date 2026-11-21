@@ -477,3 +477,49 @@ body.dark-mode .toast { background: #0F284E; border-color: var(--cyan); }
   .bottom-nav button.active { color: var(--cyan-dark); }
 }
 @media (min-width: 781px) { .bottom-nav { display: none; } }
+
+
+/* =========================================================================
+   SYNQRA SLA, RISK REPORT, CAPA, CASE COMMENTS & HARD GATE STYLES
+   ========================================================================= */
+
+.sla-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap; line-height: 1.2; border: 1px solid transparent; }
+.sla-pill svg { width: 12px; height: 12px; }
+.sla-green { background: rgba(16, 185, 129, 0.12); color: #10B981; border-color: rgba(16, 185, 129, 0.3); }
+.sla-yellow { background: rgba(245, 158, 11, 0.12); color: #F59E0B; border-color: rgba(245, 158, 11, 0.35); }
+.sla-red { background: rgba(239, 68, 68, 0.14); color: #EF4444; border-color: rgba(239, 68, 68, 0.4); }
+
+.sla-banner { padding: 20px 24px; border-radius: 18px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.85)); border: 1.5px solid rgba(239, 68, 68, 0.45); margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; box-shadow: var(--shadow); }
+.sla-banner-info { max-width: 650px; }
+.sla-banner-title { display: flex; align-items: center; gap: 9px; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 800; color: #EF4444; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.sla-banner-desc { font-size: 13.5px; color: var(--ink); margin: 0; font-weight: 500; }
+.sla-banner-action { display: flex; gap: 10px; align-items: center; }
+
+/* Hard Gate Protection Notice */
+.hard-gate-notice { padding: 14px 16px; border-radius: 14px; background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.45); color: #EF4444; margin-top: 14px; margin-bottom: 12px; font-size: 13px; line-height: 1.5; }
+.hard-gate-notice b { display: flex; align-items: center; gap: 6px; font-family: 'Poppins', sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
+.decision-card.locked { opacity: 0.55; cursor: not-allowed; border-color: rgba(239, 68, 68, 0.4); filter: grayscale(0.5); }
+.decision-card.locked:hover { transform: none; box-shadow: none; }
+
+/* 2-Way Feedback Comments Thread */
+.case-thread { margin-top: 18px; border-top: 1px solid var(--line-soft); padding-top: 16px; }
+.comment-card { padding: 12px 14px; border-radius: 12px; background: var(--soft); border: 1px solid var(--line); margin-bottom: 10px; font-size: 13px; }
+.comment-card.is-revision { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.4); }
+.comment-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.comment-head b { font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--ink); }
+.comment-head small { font-size: 11px; color: var(--ink-soft); }
+.revision-tag { display: inline-block; font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: #F59E0B; color: #061A38; margin-left: 6px; }
+.comment-body { margin: 0; color: var(--ink); line-height: 1.5; font-weight: 500; }
+.comment-req { margin-top: 6px; font-size: 12px; color: #F59E0B; font-weight: 700; }
+
+/* Risk Report & CAPA Blocks */
+.risk-matrix-card { padding: 14px 16px; border-radius: 14px; background: var(--soft); border: 1px solid var(--line); margin-top: 14px; }
+.risk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.risk-head b { font-family: 'Poppins', sans-serif; font-size: 13.5px; color: var(--ink); }
+.risk-tag { font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; }
+.risk-CRITICAL { background: #EF4444; color: #fff; }
+.risk-HIGH { background: #F59E0B; color: #061A38; }
+.risk-MEDIUM { background: #0284C7; color: #fff; }
+.risk-LOW { background: #10B981; color: #061A38; }
+.capa-box { padding: 12px 14px; border-radius: 12px; background: var(--soft); border: 1px solid var(--line); margin-top: 10px; font-size: 13px; line-height: 1.5; }
+.capa-box b { font-family: 'Poppins', sans-serif; color: var(--cyan-dark); display: block; margin-bottom: 3px; font-size: 12px; text-transform: uppercase; }

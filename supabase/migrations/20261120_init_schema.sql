@@ -1,5 +1,6 @@
 -- =========================================================================
 -- SYNQRA INDUSTRIAL KNOWLEDGE PLATFORM - SUPABASE SCHEMA MIGRATION
+-- (Includes Risk Report, CAPA, SLA Reminders, and Evidence Hard Gate)
 -- =========================================================================
 
 -- 1. ENUMS
@@ -9,6 +10,9 @@ DO $$ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
         CREATE TYPE user_role AS ENUM ('frontline_omi', 'dept_reviewer', 'hse_validator');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'risk_level') THEN
+        CREATE TYPE risk_level AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
     END IF;
 END $$;
 
@@ -22,7 +26,7 @@ CREATE TABLE IF NOT EXISTS public.assets (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. REPORTS TABLE (7 Entitas Kegagalan & Status Kunci PRADUGA)
+-- 3. REPORTS TABLE (7 Entitas Kegagalan, Risk Matrix, CAPA, & SLA)
 CREATE TABLE IF NOT EXISTS public.reports (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -38,23 +42,42 @@ CREATE TABLE IF NOT EXISTS public.reports (
     usulan_tindakan TEXT,
     verifikasi TEXT,
     
+    -- Risk Report (Matrix Consequence x Likelihood):
+    risk_level risk_level DEFAULT 'MEDIUM',
+    risk_consequence VARCHAR(100), -- 'Minor', 'Moderate', 'Major', 'Catastrophic'
+    risk_likelihood VARCHAR(100),  -- 'Rare', 'Possible', 'Likely', 'Frequent'
+    risk_summary TEXT,
+
+    -- CAPA (Corrective and Preventive Actions):
+    capa_corrective TEXT,
+    capa_preventive TEXT,
+    capa_target_date DATE,
+    capa_pic VARCHAR(100),
+
+    -- SLA & Audit:
+    sla_reminder_count INT DEFAULT 0,
+    sla_last_reminder_at TIMESTAMPTZ,
+    
     -- Metadata Pelaporan:
     description TEXT NOT NULL,
     reporter_name VARCHAR(100) NOT NULL,
     reporter_role user_role NOT NULL DEFAULT 'frontline_omi',
     dept VARCHAR(100) NOT NULL,
     evidence_note TEXT,
+    image_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. CASE_COMMENTS TABLE (Catatan Revisi & Feedback per Kasus)
+-- 4. CASE_COMMENTS TABLE (Catatan 2 Arah & Permintaan Revisi Bukti)
 CREATE TABLE IF NOT EXISTS public.case_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     report_id VARCHAR(50) REFERENCES public.reports(id) ON DELETE CASCADE,
     author_name VARCHAR(100) NOT NULL,
     author_role user_role NOT NULL,
     comment TEXT NOT NULL,
+    is_revision_request BOOLEAN DEFAULT FALSE,
+    requested_evidence TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -74,6 +97,7 @@ CREATE TABLE IF NOT EXISTS public.evidences (
 -- 6. INDEXES FOR PERFORMANCE
 CREATE INDEX IF NOT EXISTS idx_reports_status ON public.reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_asset_id ON public.reports(asset_id);
+CREATE INDEX IF NOT EXISTS idx_reports_created_at ON public.reports(created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_report_id ON public.case_comments(report_id);
 CREATE INDEX IF NOT EXISTS idx_evidences_report_id ON public.evidences(report_id);
 
@@ -88,86 +112,98 @@ ON CONFLICT (id) DO UPDATE SET
     area = EXCLUDED.area,
     description = EXCLUDED.description;
 
--- 8. SEED DATA: 7 ENTITAS LAPORAN AWAL
+-- 8. SEED DATA: 7 ENTITAS LAPORAN LENGKAP (Termasuk variasi SLA & Hard Gate Demo)
 INSERT INTO public.reports (
     id, title, asset_id, status, 
     identitas_alat, gejala, kondisi_operasi, pemeriksaan_awal, praduga_penyebab, usulan_tindakan, verifikasi,
-    description, reporter_name, reporter_role, dept, evidence_note
+    risk_level, risk_consequence, risk_likelihood, risk_summary,
+    capa_corrective, capa_preventive, capa_target_date, capa_pic,
+    description, reporter_name, reporter_role, dept, evidence_note, image_url, created_at, updated_at
 ) VALUES
 (
     'REP-001', 'Anomali Tekanan & Vibrasi Pompa P-101A', 'P-101A', 'INVESTIGATION',
     'Pompa P-101A (Tag: P-101A)', 'Fluktuasi tekanan discharge 3.2 - 4.1 bar dan vibrasi abnormal', 'Tekanan hisap normal 1.2 bar, temperatur fluida 45°C', 'Spektrum vibrasi 7.8 mm/s di bantalan DE, rembesan ringan mechanical seal', 'Keausan seal chamber dan misalignment kopling poros', 'Alignment laser ulang dan ganti mechanical seal cartridge', 'Uji jalan 4 jam tanpa kenaikan vibrasi > 3.0 mm/s',
-    'Tekanan discharge berfluktuasi tajam antara 3.2 - 4.1 bar disertai vibrasi pada bantalan drive end.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Vibrasi 7.8 mm/s, rembesan ringan mechanical seal.'
+    'HIGH', 'Major', 'Possible', 'Risiko tinggi kerusakan catastrophic bearing & shutdown CDU.',
+    'Penggantian cartridge mechanical seal dan realign poros dengan laser alignment.', 'Penambahan sensor vibration online wireless untuk pemantauan kontinu.', '2026-11-28', 'Dedi Kusnadi (Mekanik)',
+    'Tekanan discharge berfluktuasi tajam antara 3.2 - 4.1 bar disertai vibrasi pada bantalan drive end.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Vibrasi 7.8 mm/s, rembesan ringan mechanical seal.', 'assets/synqra-logo-dark.png',
+    NOW() - INTERVAL '52 hours', NOW() - INTERVAL '52 hours' -- SLA: RED (> 48 jam)
 ),
 (
     'REP-002', 'Penurunan Efisiensi Termal Heat Exchanger E-201', 'E-201', 'VERIFIED',
     'Heat Exchanger E-201 (Tag: E-201)', 'Penurunan delta temperatur fluida keluar 14°C di bawah baseline standar', 'Laju alir minyak 120 m³/jam, temperatur inlet 145°C', 'Pressure drop shell side naik 0.8 bar di atas spesifikasi bersih', 'Akumulasi deposit kerak (fouling) pada dinding tube bundle', 'Backwash kimiawi dan hydro-cleaning berkala', 'Verifikasi efisiensi pertukaran panas kembali ke 92% baseline',
-    'Delta temperatur fluida keluar turun 14°C di bawah baseline standar operasional.', 'Siti Nurhaliza', 'frontline_omi', 'Proses & Operasi', 'Log sensor temperatur inlet/outlet dan kurva efisiensi.'
+    'MEDIUM', 'Moderate', 'Likely', 'Risiko pemborosan konsumsi energi fuel gas furnace.',
+    'Pembersihan sirkulasi kimiawi (chemical flushing) pada sisi shell & tube bundle.', 'Pemasangan differential pressure transmitter terkalibrasi dengan alarm otomatis di DCS.', '2026-12-05', 'Siti Nurhaliza (Proses)',
+    'Delta temperatur fluida keluar turun 14°C di bawah baseline standar operasional.', 'Siti Nurhaliza', 'frontline_omi', 'Proses & Operasi', 'Log sensor temperatur inlet/outlet dan kurva efisiensi.', 'assets/synqra-logo-light.png',
+    NOW() - INTERVAL '18 hours', NOW() - INTERVAL '2 hours' -- SLA: GREEN (< 24 jam)
 ),
 (
     'REP-003', 'Keterlambatan Respon Stroke FCV-301', 'FCV-301', 'TRIAGE',
     'Control Valve FCV-301 (Tag: FCV-301)', 'Katup merespon sinyal DCS 4-20mA terlambat 8 detik', 'Tekanan suplai udara instrumen 4.5 bar stabil', 'Stem movement tersendat pada pembukaan 30% - 50%', 'Stem packing mengering dan gesekan berlebih di gland packing', 'Pelumasan packing stem dan kalibrasi smart valve positioner', 'Tes step response stroke waktu buka-tutup di bawah 2 detik',
-    'Katup merespon sinyal DCS 4-20mA terlambat 8 detik saat fluktuasi beban operasi.', 'Budi Santoso', 'frontline_omi', 'Instrumentasi & Kontrol', 'Rekaman grafik respon DCS dan posisi fisik stem.'
+    'HIGH', 'Major', 'Possible', 'Risiko kestabilan pembakaran fuel gas boiler tidak terkontrol.',
+    'Pelumasan gland packing dan kalibrasi full stroke 0-100% pada smart positioner.', 'Jadwal preventive maintenance greasing stem diperketat menjadi per 2 minggu.', '2026-11-25', 'Budi Santoso (Instrumen)',
+    'Katup merespon sinyal DCS 4-20mA terlambat 8 detik saat fluktuasi beban operasi.', 'Budi Santoso', 'frontline_omi', 'Instrumentasi & Kontrol', 'Rekaman grafik respon DCS dan posisi fisik stem.', 'assets/synqra-logo-dark.png',
+    NOW() - INTERVAL '31 hours', NOW() - INTERVAL '31 hours' -- SLA: YELLOW (24–48 jam)
 ),
 (
     'REP-004', 'Kenaikan Suhu Bearing Rumah Pompa P-101A', 'P-101A', 'PRADUGA',
     'Pompa P-101A (Tag: P-101A)', 'Temperatur rumah bearing non-drive end terdeteksi 74°C', 'Beban motor 82%, level oli di sight glass 50%', 'Inspeksi termografi FLIR menunjukkan hot spot terisolasi di NDE', 'Degradasi viskositas pelumas oli atau keausan bearing rollers', 'Pengambilan sampel oli pelumas untuk analisis lab dan penambahan grease', 'Pemantauan suhu berkala pasca pelumasan',
-    'Inframerah termografi mendeteksi temperatur rumah bearing mencapai 74°C.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Foto termografi FLIR.'
+    'CRITICAL', 'Catastrophic', 'Possible', 'Potensi seizure bearing mendadak yang memicu trip pompa umpan utama.',
+    'Penggantian oli pelumas sintetik ISO VG 46 dan greasing ulang bantalan.', 'Uji getaran spektrum demodulasi untuk deteksi dini cacat ras bearing.', '2026-11-24', 'Dedi Kusnadi (Mekanik)',
+    'Inframerah termografi mendeteksi temperatur rumah bearing mencapai 74°C.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Foto termografi FLIR E5.', 'assets/synqra-logo-dark.png',
+    NOW() - INTERVAL '12 hours', NOW() - INTERVAL '12 hours' -- SLA: GREEN (< 24 jam)
 ),
 (
     'REP-005', 'Indikasi Rembesan Flange Inlet E-201', 'E-201', 'PRADUGA',
     'Heat Exchanger E-201 (Tag: E-201)', 'Aroma uap hidrokarbon di area nozzle inlet shell E-201', 'Suhu lingkungan 31°C, angin tenang, unit beban 100%', 'Deteksi gas portabel menunjukkan pembacaan LEL 12% pada jarak 15 cm', 'Relaksasi baut flange akibat siklus ekspansi termal berulang', 'Retorque baut flange inlet dengan hydraulic torque wrench terkalibrasi', 'Pemeriksaan ulang LEL setelah retorquing',
-    'Bau hidrokarbon terdeteksi di sekitar flange inlet nozzle E-201 shift malam.', 'Hadi Purnomo', 'frontline_omi', 'Keselamatan & HSE', 'Pemeriksaan gas detector portabel.'
+    'CRITICAL', 'Catastrophic', 'Possible', 'Bahaya kebakaran uap hidrokarbon mudah menyala di area kilang.',
+    'Pengencangan baut flange bertahap menggunakan hydraulic torque wrench 450 Nm.', 'Pemasangan pita deteksi kebocoran termal (thermal leak wraps) di sekeliling sambungan flange.', '2026-11-23', 'Hadi Purnomo (HSE)',
+    'Bau hidrokarbon terdeteksi di sekitar flange inlet nozzle E-201 shift malam.', 'Hadi Purnomo', 'frontline_omi', 'Keselamatan & HSE', 'Bukti foto belum dilampirkan', NULL, -- HARD GATE DEMO: Empty Evidence!
+    NOW() - INTERVAL '58 hours', NOW() - INTERVAL '58 hours' -- SLA: RED (> 48 jam)
 ),
 (
     'REP-006', 'Deviasi Sinyal Feedback Transmitter FCV-301', 'FCV-301', 'INVESTIGATION',
     'Control Valve FCV-301 (Tag: FCV-301)', 'Deviasi sinyal posisi fisik katup vs indikator monitor 6.5%', 'Operasi normal loop kendali debit gas fuel', 'Linkage arm positioner memiliki clearance longgar 1.2 mm', 'Aus mekanik pada pen linkage arm transmitter', 'Penggantian pen linkage dan re-zeroing kalibrasi span', 'Verifikasi deviasi sinyal posisi < 0.5% di seluruh rentang 0-100%',
-    'Sinyal feedback transmitter posisi tidak linier pada bukaan 40% - 60%.', 'Budi Santoso', 'frontline_omi', 'Instrumentasi & Kontrol', 'Data logger sinyal analog 4-20mA.'
+    'LOW', 'Minor', 'Possible', 'Error pembacaan telemetri tanpa risiko shutdown mendesak.',
+    'Penggantian pin linkage stainless steel dan kalibrasi digital span positioner.', 'Inspeksi clearance linkage setiap 3 bulan.', '2026-12-10', 'Budi Santoso (Instrumen)',
+    'Sinyal feedback transmitter posisi tidak linier pada bukaan 40% - 60%.', 'Dr. Rina Suryani', 'hse_validator', 'HSE & Process Safety', 'Data logger sinyal analog 4-20mA.', 'assets/synqra-logo-dark.png', -- HARD GATE DEMO: Reported by Dr. Rina (No Self-Approval)
+    NOW() - INTERVAL '36 hours', NOW() - INTERVAL '36 hours' -- SLA: YELLOW (24–48 jam)
 ),
 (
     'REP-007', 'Suara Kavitasi Suction Pompa P-101A', 'P-101A', 'TRIAGE',
     'Pompa P-101A (Tag: P-101A)', 'Suara berderak kerikil khas kavitasi pada sisi suction impeller', 'Level tangki suction 2.1 m (ambang minimum operasi)', 'Pengukuran tekanan suction turun mendekati tekanan uap jenuh fluida', 'Net Positive Suction Head Available (NPSHa) kritis akibat level tangki', 'Kenaikan setpoint level tangki suction dan buka penuh suction valve', 'Verifikasi hilangnya kebisingan akustik kavitasi',
-    'Terdengar suara dentuman kerikil saat laju alir diturunkan ke 65% beban nominal.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Audio rekaman mikrofon akustik industri.'
+    'HIGH', 'Major', 'Likely', 'Erosi pitting pada impeler pompa yang dapat menghancurkan sudu.',
+    'Penyesuaian interlock level tangki hisap minimal 3.0 meter.', 'Pemeriksaan ketebalan dinding suction pipe dengan Ultrasonic Thickness Gauge.', '2026-11-26', 'Dedi Kusnadi (Mekanik)',
+    'Terdengar suara dentuman kerikil saat laju alir diturunkan ke 65% beban nominal.', 'Dedi Kusnadi', 'frontline_omi', 'Mekanik & Rotating', 'Audio rekaman mikrofon akustik industri.', 'assets/synqra-logo-dark.png',
+    NOW() - INTERVAL '26 hours', NOW() - INTERVAL '26 hours' -- SLA: YELLOW (24–48 jam)
 )
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
     status = EXCLUDED.status,
-    identitas_alat = EXCLUDED.identitas_alat,
-    gejala = EXCLUDED.gejala,
-    kondisi_operasi = EXCLUDED.kondisi_operasi,
-    pemeriksaan_awal = EXCLUDED.pemeriksaan_awal,
-    praduga_penyebab = EXCLUDED.praduga_penyebab,
-    usulan_tindakan = EXCLUDED.usulan_tindakan,
-    verifikasi = EXCLUDED.verifikasi,
-    description = EXCLUDED.description;
+    risk_level = EXCLUDED.risk_level,
+    risk_consequence = EXCLUDED.risk_consequence,
+    risk_likelihood = EXCLUDED.risk_likelihood,
+    risk_summary = EXCLUDED.risk_summary,
+    capa_corrective = EXCLUDED.capa_corrective,
+    capa_preventive = EXCLUDED.capa_preventive,
+    capa_target_date = EXCLUDED.capa_target_date,
+    capa_pic = EXCLUDED.capa_pic,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at;
 
--- 9. SUPABASE STORAGE BUCKET CONFIGURATION
+-- 9. CASE_COMMENTS SEED (2-Way Feedback Thread Demo)
+INSERT INTO public.case_comments (report_id, author_name, author_role, comment, is_revision_request, requested_evidence)
+VALUES
+('REP-005', 'Ir. Agus Wijaya', 'dept_reviewer', 'Laporan dikembalikan ke status PRADUGA. Mohon lampirkan foto area sambungan flange dan hasil log kalibrasi gas detector MSA Altair sebelum diteruskan ke investigasi.', TRUE, 'Foto flange & kalibrasi gas detector'),
+('REP-005', 'Hadi Purnomo', 'frontline_omi', 'Siap Pak Agus, foto nameplate dan hasil pengetesan LEL sedang disiapkan oleh tim shift pagi dan akan segera diunggah.', FALSE, NULL)
+ON CONFLICT DO NOTHING;
+
+-- 10. STORAGE BUCKET CONFIGURATION
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
     'synqra-evidences',
     'synqra-evidences',
     true,
-    10485760, -- 10MB limit
+    10485760,
     ARRAY['image/jpeg', 'image/png', 'image/webp', 'audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/ogg']
 )
-ON CONFLICT (id) DO UPDATE SET 
-    public = true,
-    file_size_limit = 10485760;
-
--- 10. ROW LEVEL SECURITY (RLS) POLICIES
-ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.case_comments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.evidences ENABLE ROW LEVEL SECURITY;
-
--- Allow public read & insert for demo application:
-CREATE POLICY "Public read assets" ON public.assets FOR SELECT USING (true);
-CREATE POLICY "Public read reports" ON public.reports FOR SELECT USING (true);
-CREATE POLICY "Public insert reports" ON public.reports FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public update reports" ON public.reports FOR UPDATE USING (true);
-
-CREATE POLICY "Public read comments" ON public.case_comments FOR SELECT USING (true);
-CREATE POLICY "Public insert comments" ON public.case_comments FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Public read evidences" ON public.evidences FOR SELECT USING (true);
-CREATE POLICY "Public insert evidences" ON public.evidences FOR INSERT WITH CHECK (true);
+ON CONFLICT (id) DO UPDATE SET public = true;

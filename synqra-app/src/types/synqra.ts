@@ -2,6 +2,18 @@ export type ReportStatus = 'PRADUGA' | 'TRIAGE' | 'INVESTIGATION' | 'VERIFIED';
 
 export type UserRole = 'frontline_omi' | 'dept_reviewer' | 'hse_validator';
 
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type RiskConsequence = 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
+export type RiskLikelihood = 'Rare' | 'Possible' | 'Likely' | 'Frequent';
+
+export interface SlaInfo {
+  level: 'green' | 'yellow' | 'red';
+  hoursElapsed: number;
+  label: string;
+  badgeClass: string;
+  isOverdue: boolean;
+}
+
 export interface RoleInfo {
   key: UserRole;
   name: string;
@@ -30,7 +42,21 @@ export interface FailureEntities {
   verifikasi: string;
 }
 
-export interface Report extends FailureEntities {
+export interface RiskReport {
+  risk_level: RiskLevel;
+  risk_consequence: RiskConsequence;
+  risk_likelihood: RiskLikelihood;
+  risk_summary: string;
+}
+
+export interface CapaData {
+  capa_corrective: string;
+  capa_preventive: string;
+  capa_target_date: string;
+  capa_pic: string;
+}
+
+export interface Report extends FailureEntities, Partial<RiskReport>, Partial<CapaData> {
   id: string;
   title: string;
   asset_id: string;
@@ -41,6 +67,8 @@ export interface Report extends FailureEntities {
   dept: string;
   evidence_note?: string;
   image_url?: string;
+  sla_reminder_count?: number;
+  sla_last_reminder_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +79,8 @@ export interface CaseComment {
   author_name: string;
   author_role: UserRole;
   comment: string;
+  is_revision_request?: boolean;
+  requested_evidence?: string;
   created_at: string;
 }
 
