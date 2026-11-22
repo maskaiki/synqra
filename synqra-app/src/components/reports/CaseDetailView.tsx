@@ -524,54 +524,74 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
               </div>
             ) : (
               <div className="space-y-2.5">
-                {evidences.map((ev, idx) => (
-                  <div
-                    key={ev.id}
-                    className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <span
-                        style={{
-                          backgroundColor: 'var(--green-bg)',
-                          color: 'var(--green)',
-                        }}
-                        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      >
-                        <FileCheck2 className="w-5 h-5" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="font-heading font-bold text-sm text-[var(--ink)] truncate">
-                          {ev.file_name}
-                        </div>
-                        <div className="text-sm text-[var(--ink-soft)]">
-                          {ev.caption || 'Lampiran bukti inspeksi'} · Oleh {ev.uploaded_by}
+                {evidences.map((ev, idx) => {
+                  const openPreview = () =>
+                    onPreviewEvidence({
+                      index: idx + 1,
+                      reportId: report.id,
+                      status: report.status,
+                      assetId: report.asset_id,
+                      title: report.title,
+                      evidenceName: ev.file_name,
+                      evidenceUrl: ev.public_url,
+                      gejala: report.gejala,
+                      praduga_penyebab: report.praduga_penyebab,
+                      usulan_tindakan: report.usulan_tindakan,
+                      verifiedBy: report.verified_by,
+                    });
+
+                  return (
+                    <div
+                      key={ev.id}
+                      className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        {ev.public_url ? (
+                          <button
+                            type="button"
+                            onClick={openPreview}
+                            title={`Pratinjau ${ev.file_name}`}
+                            className="w-16 h-12 rounded-lg overflow-hidden border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] shrink-0"
+                          >
+                            <img
+                              src={ev.public_url}
+                              alt={ev.file_name}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              backgroundColor: 'var(--green-bg)',
+                              color: 'var(--green)',
+                            }}
+                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                          >
+                            <FileCheck2 className="w-5 h-5" />
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-heading font-bold text-sm text-[var(--ink)] truncate">
+                            {ev.file_name}
+                          </div>
+                          <div className="text-sm text-[var(--ink-soft)]">
+                            {ev.caption || 'Lampiran bukti inspeksi'} · Oleh {ev.uploaded_by}
+                          </div>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={openPreview}
+                        className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-1.5 shrink-0"
+                      >
+                        <Eye className="w-4 h-4 text-[var(--cyan-dark)]" />
+                        <span>Pratinjau</span>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onPreviewEvidence({
-                          index: idx + 1,
-                          reportId: report.id,
-                          status: report.status,
-                          assetId: report.asset_id,
-                          title: report.title,
-                          evidenceName: ev.file_name,
-                          evidenceUrl: ev.public_url,
-                          gejala: report.gejala,
-                          praduga_penyebab: report.praduga_penyebab,
-                          usulan_tindakan: report.usulan_tindakan,
-                          verifiedBy: report.verified_by,
-                        })
-                      }
-                      className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-1.5 shrink-0"
-                    >
-                      <Eye className="w-4 h-4 text-[var(--cyan-dark)]" />
-                      <span>Pratinjau</span>
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

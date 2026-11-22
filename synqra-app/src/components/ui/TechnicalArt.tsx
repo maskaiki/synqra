@@ -1,27 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { EQUIPMENT_MEDIA } from '@/lib/mediaAssets';
 
 interface TechnicalArtProps {
   type?: string;
   className?: string;
   darkMode?: boolean;
 }
-
-const EQUIPMENT_IMAGE_MAP: Record<string, { src: string; alt: string }> = {
-  pump: {
-    src: '/assets/equipment/pump-p101a.png',
-    alt: 'Pompa Sentrifugal P-101A',
-  },
-  heat: {
-    src: '/assets/equipment/heat-e201.png',
-    alt: 'Heat Exchanger E-201',
-  },
-  valve: {
-    src: '/assets/equipment/valve-fcv301.png',
-    alt: 'Control Valve FCV-301',
-  },
-};
 
 export const TechnicalArt: React.FC<TechnicalArtProps> = ({
   type = 'pump',
@@ -34,13 +20,16 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
     setImgError(false);
   }, [type]);
 
-  const equipmentImage = EQUIPMENT_IMAGE_MAP[type];
+  const equipmentImage = EQUIPMENT_MEDIA[type];
   if (equipmentImage && !imgError) {
     return (
       <img
         src={equipmentImage.src}
         alt={equipmentImage.alt}
+        width={equipmentImage.width}
+        height={equipmentImage.height}
         loading="eager"
+        decoding="async"
         draggable={false}
         onError={() => setImgError(true)}
         className={`object-contain select-none transition-transform duration-300 ease-out group-hover:scale-[1.06] ${

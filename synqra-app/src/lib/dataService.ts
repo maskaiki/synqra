@@ -5,6 +5,7 @@ import {
   INITIAL_EVIDENCES,
   INITIAL_REPORTS,
 } from '@/lib/constants';
+import { resolveBuiltInEvidenceUrl } from '@/lib/mediaAssets';
 import { Asset, CaseComment, Evidence, Report } from '@/types/synqra';
 
 const STORAGE_KEYS = {
@@ -46,6 +47,13 @@ function writeLocal<T>(key: string, data: T): void {
   }
 }
 
+function hydrateBuiltInEvidences(list: Evidence[]): Evidence[] {
+  return list.map((ev) => {
+    const builtInUrl = resolveBuiltInEvidenceUrl(ev);
+    return builtInUrl ? { ...ev, public_url: builtInUrl } : ev;
+  });
+}
+
 export async function loadWorkspaceData(): Promise<WorkspaceSnapshot> {
   if (isSupabaseConfigured && supabase) {
     try {
@@ -66,23 +74,25 @@ export async function loadWorkspaceData(): Promise<WorkspaceSnapshot> {
               }))
             : INITIAL_ASSETS;
 
-        const mappedEvidences = ((evidencesRes.data as Evidence[]) || []).map((ev) => {
-          if (
-            !ev.public_url &&
-            ev.storage_path &&
-            ev.mime_type?.toLowerCase().startsWith('image/') &&
-            supabase
-          ) {
-            const { data: pub } = supabase.storage
-              .from('synqra-evidences')
-              .getPublicUrl(ev.storage_path);
-            return {
-              ...ev,
-              public_url: pub.publicUrl,
-            };
-          }
-          return ev;
-        });
+        const mappedEvidences = hydrateBuiltInEvidences(
+          ((evidencesRes.data as Evidence[]) || []).map((ev) => {
+            if (
+              !ev.public_url &&
+              ev.storage_path &&
+              ev.mime_type?.toLowerCase().startsWith('image/') &&
+              supabase
+            ) {
+              const { data: pub } = supabase.storage
+                .from('synqra-evidences')
+                .getPublicUrl(ev.storage_path);
+              return {
+                ...ev,
+                public_url: pub.publicUrl,
+              };
+            }
+            return ev;
+          })
+        );
 
         return {
           assets: mappedAssets,
@@ -101,7 +111,9 @@ export async function loadWorkspaceData(): Promise<WorkspaceSnapshot> {
     assets: INITIAL_ASSETS,
     reports: readLocal<Report[]>(STORAGE_KEYS.reports, INITIAL_REPORTS),
     comments: readLocal<CaseComment[]>(STORAGE_KEYS.comments, INITIAL_COMMENTS),
-    evidences: readLocal<Evidence[]>(STORAGE_KEYS.evidences, INITIAL_EVIDENCES),
+    evidences: hydrateBuiltInEvidences(
+      readLocal<Evidence[]>(STORAGE_KEYS.evidences, INITIAL_EVIDENCES)
+    ),
     source: 'local',
   };
 }

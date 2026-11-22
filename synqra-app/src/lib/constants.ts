@@ -11,6 +11,7 @@ import {
   SlaInfo,
   UserRole,
 } from '@/types/synqra';
+import { EVIDENCE_MEDIA_BY_ID } from '@/lib/mediaAssets';
 
 export const ROLES: Record<UserRole, RoleInfo> = {
   frontline_omi: {
@@ -205,6 +206,7 @@ export const INITIAL_REPORTS: Report[] = [
     reporter_role: 'frontline_omi',
     dept: 'Mekanik & Rotating',
     evidence_note: 'Foto rembesan mechanical seal & log vibration analyzer 7,8 mm/s.',
+    image_url: EVIDENCE_MEDIA_BY_ID['ev-001'].src,
     sla_reminder_count: 1,
     sla_last_reminder_at: hoursAgo(6),
     created_at: hoursAgo(54),
@@ -237,6 +239,7 @@ export const INITIAL_REPORTS: Report[] = [
     reporter_role: 'frontline_omi',
     dept: 'Proses & Operasi',
     evidence_note: 'Foto hasil borescope tube bundle & log trend ΔP pasca-cleaning.',
+    image_url: EVIDENCE_MEDIA_BY_ID['ev-003'].src,
     verified_by: 'Dr. Rina Suryani',
     created_at: hoursAgo(120),
     updated_at: hoursAgo(96),
@@ -268,6 +271,7 @@ export const INITIAL_REPORTS: Report[] = [
     reporter_role: 'frontline_omi',
     dept: 'Instrumentasi & Kontrol',
     evidence_note: 'Grafik tren perbandingan setpoint DCS vs feedback posisi katup.',
+    image_url: EVIDENCE_MEDIA_BY_ID['ev-005'].src,
     sla_reminder_count: 0,
     created_at: hoursAgo(30),
     updated_at: hoursAgo(30),
@@ -363,6 +367,7 @@ export const INITIAL_REPORTS: Report[] = [
     reporter_role: 'hse_validator',
     dept: 'HSE & Process Safety',
     evidence_note: 'Foto indikator mekanis lokal vs layar DCS.',
+    image_url: EVIDENCE_MEDIA_BY_ID['ev-006'].src,
     created_at: hoursAgo(18),
     updated_at: hoursAgo(18),
   },
@@ -748,6 +753,7 @@ export const INITIAL_EVIDENCES: Evidence[] = [
     caption: 'Rembesan oli tipis pada area mechanical seal & pembacaan vibration pen 7,8 mm/s.',
     uploaded_by: 'Dedi Kusnadi',
     created_at: hoursAgo(53),
+    public_url: EVIDENCE_MEDIA_BY_ID['ev-001'].src,
   },
   {
     id: 'ev-002',
@@ -758,6 +764,7 @@ export const INITIAL_EVIDENCES: Evidence[] = [
     caption: 'Log rekaman spektrum vibrasi 3 hari terakhir (puncak 1X & 2X misalignment).',
     uploaded_by: 'Dedi Kusnadi',
     created_at: hoursAgo(22),
+    public_url: EVIDENCE_MEDIA_BY_ID['ev-002'].src,
   },
   {
     id: 'ev-003',
@@ -768,6 +775,7 @@ export const INITIAL_EVIDENCES: Evidence[] = [
     caption: 'Foto borescope deposit kerak karbon 4 mm di permukaan dalam tube E-201.',
     uploaded_by: 'Dedi Kusnadi',
     created_at: hoursAgo(115),
+    public_url: EVIDENCE_MEDIA_BY_ID['ev-003'].src,
   },
   {
     id: 'ev-004',
@@ -778,6 +786,7 @@ export const INITIAL_EVIDENCES: Evidence[] = [
     caption: 'Verifikasi pemulihan ΔT dari 226°C kembali ke 239°C pasca-cleaning.',
     uploaded_by: 'Ir. Agus Wijaya',
     created_at: hoursAgo(98),
+    public_url: EVIDENCE_MEDIA_BY_ID['ev-004'].src,
   },
   {
     id: 'ev-005',
@@ -788,6 +797,7 @@ export const INITIAL_EVIDENCES: Evidence[] = [
     caption: 'Perbandingan sinyal setpoint DCS 60% vs aktual valve tertinggal 8 detik.',
     uploaded_by: 'Dedi Kusnadi',
     created_at: hoursAgo(29),
+    public_url: EVIDENCE_MEDIA_BY_ID['ev-005'].src,
   },
   {
     id: 'ev-006',
@@ -798,6 +808,7 @@ export const INITIAL_EVIDENCES: Evidence[] = [
     caption: 'Foto indikator mekanis lokal 70% dibanding tampilan DCS 75%.',
     uploaded_by: 'Dr. Rina Suryani',
     created_at: hoursAgo(17),
+    public_url: EVIDENCE_MEDIA_BY_ID['ev-006'].src,
   },
   {
     id: 'ev-007',

@@ -94,7 +94,8 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
               <img
                 src={citation.evidenceUrl}
                 alt={citation.evidenceName}
-                className="w-full max-h-72 object-contain rounded-xl border border-[var(--line)] bg-[var(--surface)]"
+                decoding="async"
+                className="w-full max-h-80 object-contain rounded-xl border border-[var(--line)] bg-[var(--surface)]"
               />
             ) : (
               <div className="p-6 rounded-xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center space-y-2">
