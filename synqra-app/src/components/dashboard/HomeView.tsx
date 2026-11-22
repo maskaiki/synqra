@@ -3,6 +3,7 @@
 import React from 'react';
 import { Asset, MainPage, Report, RoleInfo } from '@/types/synqra';
 import { calculateSla, detectEarlyWarnings } from '@/lib/constants';
+import { BRAND_MEDIA } from '@/lib/mediaAssets';
 import { SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { SlaReminderBanner } from '@/components/sla/SlaReminderBanner';
@@ -115,13 +116,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
         onSelectReport={onOpenReport}
       />
 
-      <section className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-gradient-to-r from-[#091B3D] via-[#123D68] to-[#0C5F7D] text-white border border-cyan-400/25 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div className="pointer-events-none absolute -right-16 -top-28 w-72 h-72 rounded-full border border-cyan-300/25" />
+      <section className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-[#091B3D] text-white border border-cyan-400/25 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <img
+          src={BRAND_MEDIA.loginHeroOilRig.src}
+          alt=""
+          aria-hidden="true"
+          width={BRAND_MEDIA.loginHeroOilRig.width}
+          height={BRAND_MEDIA.loginHeroOilRig.height}
+          loading="eager"
+          decoding="async"
+          className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[60%_56%] scale-[1.03] opacity-55 select-none"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#06152F]/95 via-[#0B2A52]/78 to-[#084C68]/65"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#06152F]/65 via-transparent to-[#06152F]/35"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-28 w-72 h-72 rounded-full border border-cyan-300/20"
+        />
         <div className="relative z-10 max-w-2xl">
-          <h2 className="font-heading text-2xl sm:text-[26px] font-bold text-white mb-2">
+          <h2 className="font-heading text-2xl sm:text-[26px] font-bold text-white mb-2 drop-shadow-[0_2px_10px_rgba(4,13,31,0.65)]">
             Temuan kecil di lapangan mencegah unplanned shutdown.
           </h2>
-          <p className="text-[15px] text-white/90 leading-relaxed m-0">
+          <p className="text-[15px] text-white/95 leading-relaxed m-0 drop-shadow-[0_1px_6px_rgba(4,13,31,0.75)]">
             Laporan awal berstatus <b className="text-amber-300">PRADUGA</b> hingga bukti disahkan pakar.
           </p>
         </div>

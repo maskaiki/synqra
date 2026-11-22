@@ -56,17 +56,15 @@ export const Topbar: React.FC<TopbarProps> = ({
       </div>
 
       <div className="flex items-center gap-2.5">
-        <span
-          title={
-            dataSource === 'supabase'
-              ? 'Terhubung ke Supabase PostgreSQL Live'
-              : 'Mode Persistensi Lokal Browser (siap sambung Supabase via .env.local)'
-          }
-          className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 font-heading text-xs font-bold text-[var(--cyan-dark)]"
-        >
-          <Database className="w-3.5 h-3.5" />
-          <span>{dataSource === 'supabase' ? 'SUPABASE LIVE' : 'DEMO · LOCAL DB'}</span>
-        </span>
+        {dataSource === 'supabase' && (
+          <span
+            title="Terhubung ke Supabase PostgreSQL Live"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 font-heading text-xs font-bold text-[var(--cyan-dark)]"
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>SUPABASE LIVE</span>
+          </span>
+        )}
 
         {dataSource === 'supabase' && (
           <button
@@ -89,8 +87,8 @@ export const Topbar: React.FC<TopbarProps> = ({
           <button
             type="button"
             onClick={onResetDemo}
-            title="Reset data demo ke kondisi awal"
-            aria-label="Reset data demo"
+            title="Reset data awal"
+            aria-label="Reset data awal"
             className="group w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
           >
             <RotateCcw className="w-4 h-4 transition-transform duration-300 group-hover:-rotate-90" />

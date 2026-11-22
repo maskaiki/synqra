@@ -18,7 +18,7 @@ import {
 interface SidebarProps {
   activePage: MainPage;
   onNavigate: (page: MainPage) => void;
-  roleInfo: RoleInfo;
+  roleInfo?: RoleInfo;
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onLogout: () => void;
@@ -29,7 +29,6 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activePage,
   onNavigate,
-  roleInfo,
   isDarkMode,
   onToggleTheme,
   onLogout,
@@ -112,20 +111,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[var(--soft)] border border-[var(--line)] mb-6">
-          <span className="w-10 h-10 rounded-xl bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] font-heading font-extrabold text-sm flex items-center justify-center shrink-0">
-            {roleInfo.initials}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="font-heading font-bold text-sm text-[var(--ink)] truncate">
-              {roleInfo.name}
-            </div>
-            <div className="text-xs font-semibold text-[var(--ink-soft)] truncate">
-              {roleInfo.shortRole}
-            </div>
-          </div>
-        </div>
-
         <div className="font-heading text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--ink)] px-3 pb-2.5">
           WORKSPACE
         </div>
@@ -197,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="font-heading font-bold text-[15px] text-white mb-1">
             Temuan baru di lapangan?
           </div>
-          <p className="text-[13px] text-slate-100/90 leading-relaxed mb-3">
+          <p className="text-sm text-white/90 leading-relaxed mb-3">
             Rekam suara 2 menit atau scan nameplate alat, AI merapikan 7 entitas otomatis.
           </p>
           <button
@@ -223,9 +208,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
             <span className="flex-1 text-left">
               {isDarkMode ? 'Mode Terang' : 'Mode Gelap'}
-            </span>
-            <span className="px-2 py-0.5 rounded-[6px] bg-[var(--soft)] border border-[var(--line)] font-heading text-[11px] font-bold text-[var(--cyan-dark)]">
-              {isDarkMode ? 'DARK' : 'LIGHT'}
             </span>
           </button>
 
