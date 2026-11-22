@@ -74,7 +74,7 @@ export const Topbar: React.FC<TopbarProps> = ({
             onClick={() => onSyncData?.()}
             disabled={isSyncing}
             title="Sinkronkan Data terbaru dari Supabase"
-            className="px-3 py-2 rounded-[7px] border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-1.5 text-[var(--ink)] font-heading text-xs font-bold transition-colors disabled:opacity-60"
+            className="min-h-[44px] px-3 py-2 rounded-[7px] border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-1.5 text-[var(--ink)] font-heading text-xs font-bold disabled:opacity-60"
           >
             <RefreshCw
               className={`w-4 h-4 text-[var(--cyan-dark)] ${isSyncing ? 'animate-spin' : ''}`}
@@ -90,9 +90,10 @@ export const Topbar: React.FC<TopbarProps> = ({
             type="button"
             onClick={onResetDemo}
             title="Reset data demo ke kondisi awal"
-            className="w-10 h-10 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)] transition-colors"
+            aria-label="Reset data demo"
+            className="group w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4 transition-transform duration-300 group-hover:-rotate-90" />
           </button>
         )}
 
@@ -100,13 +101,16 @@ export const Topbar: React.FC<TopbarProps> = ({
           type="button"
           onClick={onToggleTheme}
           title="Ubah Mode Terang / Gelap"
-          className="w-10 h-10 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)] transition-colors"
+          aria-label="Ubah Mode Terang / Gelap"
+          className="w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
         >
-          {isDarkMode ? (
-            <Sun className="w-4 h-4 text-amber-400" />
-          ) : (
-            <Moon className="w-4 h-4 text-[#0B1F44]" />
-          )}
+          <span key={isDarkMode ? 'sun' : 'moon'} className="animate-spin-in inline-flex">
+            {isDarkMode ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-[#0B1F44]" />
+            )}
+          </span>
         </button>
 
         <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />

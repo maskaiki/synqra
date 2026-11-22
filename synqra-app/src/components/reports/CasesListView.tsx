@@ -36,6 +36,10 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
 
   const earlyWarnings = detectEarlyWarnings(reports, assets);
 
+  // Postel's law: terima input yang longgar ("p101a", "P 101 A", atau "rep004")
+  // agar tetap cocok dengan "P-101A" / "REP-004" (abaikan huruf besar, spasi & tanda hubung).
+  const normalize = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '');
+
   const filtered = reports.filter((r) => {
     const matchAsset = assetFilter === 'ALL' || r.asset_id === assetFilter;
     const matchStatus = statusFilter === 'ALL' || r.status === statusFilter;
@@ -48,13 +52,12 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
         (sla.level === 'red' || sla.level === 'yellow'));
 
     const q = query.trim().toLowerCase();
+    const nq = normalize(q);
+    const fields = [r.id, r.title, r.asset_id, r.gejala, r.reporter_name];
     const matchQuery =
       !q ||
-      r.id.toLowerCase().includes(q) ||
-      r.title.toLowerCase().includes(q) ||
-      r.asset_id.toLowerCase().includes(q) ||
-      r.gejala.toLowerCase().includes(q) ||
-      r.reporter_name.toLowerCase().includes(q);
+      fields.some((f) => f.toLowerCase().includes(q)) ||
+      (nq.length > 0 && fields.some((f) => normalize(f).includes(nq)));
 
     return matchAsset && matchStatus && matchSla && matchQuery;
   });
@@ -73,9 +76,9 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
         <button
           type="button"
           onClick={onCreateNew}
-          className="px-5 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 self-start sm:self-auto"
+          className="group px-5 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 self-start sm:self-auto"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.5] spin-on-hover" />
           <span>Buat Laporan</span>
         </button>
       </header>
@@ -118,14 +121,14 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nomor laporan, tag alat, gejala, atau nama pelapor..."
-              className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:border-[var(--cyan)]"
+              className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:border-[var(--cyan)] focus:ring-4 focus:ring-[#00B8D9]/20 transition-[border-color,box-shadow] duration-200"
             />
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setAssetFilter('ALL')}
-              className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold transition-colors ${
+              className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold ${
                 assetFilter === 'ALL'
                   ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] border-transparent'
                   : 'bg-[var(--soft)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
@@ -138,7 +141,7 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                 key={a.id}
                 type="button"
                 onClick={() => setAssetFilter(a.id)}
-                className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold transition-colors ${
+                className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold ${
                   assetFilter === a.id
                     ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] border-transparent'
                     : 'bg-[var(--soft)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
@@ -165,7 +168,7 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                 key={key}
                 type="button"
                 onClick={() => setStatusFilter(key)}
-                className={`px-3.5 py-1.5 rounded-lg border font-heading text-xs font-bold transition-colors ${
+                className={`hit-area px-3.5 py-1.5 rounded-lg border font-heading text-xs font-bold ${
                   statusFilter === key
                     ? 'bg-[var(--cyan-pale)] border-[var(--cyan)] text-[var(--cyan-dark)]'
                     : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
@@ -188,7 +191,7 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                 key={key}
                 type="button"
                 onClick={() => setSlaFilter(key)}
-                className={`px-3 py-1.5 rounded-lg border font-heading text-xs font-bold transition-colors ${
+                className={`hit-area px-3 py-1.5 rounded-lg border font-heading text-xs font-bold ${
                   slaFilter === key
                     ? 'bg-[#B42318] text-white border-transparent'
                     : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
@@ -201,8 +204,8 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
         </div>
       </section>
 
-      <section className="space-y-3.5">
-        {filtered.map((report) => {
+      <section className="space-y-3.5 stagger">
+        {filtered.map((report, idx) => {
           const asset = assets.find((a) => a.id === report.asset_id) || assets[0];
           const sla = calculateSla(report.updated_at || report.created_at);
           const evCount = evidences.filter((e) => e.report_id === report.id).length;
@@ -212,8 +215,18 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
           return (
             <article
               key={report.id}
+              role="button"
+              tabIndex={0}
+              // Staggering dibatasi 6 item agar daftar panjang tetap terasa instan.
+              style={{ '--i': Math.min(idx, 6) } as React.CSSProperties}
               onClick={() => onSelectReport(report)}
-              className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] shadow-sm transition-all cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectReport(report);
+                }
+              }}
+              className="group lift p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] shadow-sm cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-4 min-w-0 flex-1">
                 <div className="w-16 h-16 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex items-center justify-center p-1.5 shrink-0">
@@ -273,9 +286,9 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
               </div>
 
               <div className="shrink-0">
-                <span className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] font-heading font-bold text-sm text-[var(--ink)] inline-flex items-center gap-2">
+                <span className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] group-hover:border-[var(--cyan)] group-hover:bg-[var(--cyan-pale)] transition-colors duration-200 font-heading font-bold text-sm text-[var(--ink)] inline-flex items-center gap-2">
                   <span>Buka Detail</span>
-                  <ArrowRight className="w-4 h-4 text-[var(--cyan-dark)]" />
+                  <ArrowRight className="w-4 h-4 text-[var(--cyan-dark)] nudge-x" />
                 </span>
               </div>
             </article>
@@ -283,7 +296,7 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
         })}
 
         {filtered.length === 0 && (
-          <div className="p-12 rounded-2xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center">
+          <div className="p-12 rounded-2xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center animate-fade-in">
             <p className="text-base font-bold text-[var(--ink-soft)]">
               Tidak ada kasus yang cocok dengan filter pencarian saat ini.
             </p>

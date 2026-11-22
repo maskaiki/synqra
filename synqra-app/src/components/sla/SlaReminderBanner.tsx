@@ -74,12 +74,12 @@ export const SlaReminderBanner: React.FC<SlaReminderBannerProps> = ({
             style={{ color: accentColor }}
             className="w-10 h-10 rounded-xl bg-[var(--surface)] border border-[var(--line)] flex items-center justify-center shrink-0"
           >
-            <BellRing className="w-5 h-5" />
+            <BellRing className={`w-5 h-5 ${isRed ? 'animate-bell' : ''}`} />
           </div>
           <div>
             <h3 style={{ color: accentColor }} className="font-heading font-bold text-base">
               Pengingat SLA: {redCount} Kasus Overdue (&gt;48 jam)
-              {yellowCount > 0 ? ` · ${yellowCount} Segera Cek (24–48 jam)` : ''}
+              {yellowCount > 0 ? ` · ${yellowCount} Segera Cek (24-48 jam)` : ''}
             </h3>
             <p className="text-sm font-medium text-[var(--ink-soft)] mt-0.5">
               {currentUserRole === 'frontline_omi'
@@ -102,19 +102,20 @@ export const SlaReminderBanner: React.FC<SlaReminderBannerProps> = ({
           )}
           <button
             type="button"
+            aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
-            className="px-3.5 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] font-heading font-bold text-sm flex items-center gap-1.5 hover:border-[var(--cyan)] transition-colors"
+            className="px-3.5 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] font-heading font-bold text-sm flex items-center gap-1.5 hover:border-[var(--cyan)]"
           >
             <span>{expanded ? 'Sembunyikan' : 'Lihat Daftar'}</span>
             <ChevronDown
-              className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
             />
           </button>
         </div>
       </div>
 
       {expanded && (
-        <div className="mt-4 pt-4 border-t border-[var(--line)] space-y-2.5">
+        <div className="mt-4 pt-4 border-t border-[var(--line)] space-y-2.5 animate-reveal">
           {overdueItems.map(({ report, sla }) => (
             <div
               key={report.id}
@@ -135,10 +136,10 @@ export const SlaReminderBanner: React.FC<SlaReminderBannerProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectReport(report)}
-                className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-1.5 shrink-0"
+                className="group px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-1.5 shrink-0"
               >
                 <span>Buka Kasus</span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 nudge-x" />
               </button>
             </div>
           ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Asset,
   CaseComment,
@@ -87,6 +87,31 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
   const hasEvidence = evidences.length > 0;
   const isSelfReporter = report.reporter_name === roleInfo.name;
   const isVerified = report.status === 'VERIFIED';
+
+  // Peak-end rule: momen kasus disahkan adalah puncak alur kerja validator,
+  // maka cap "Disahkan" diberi perayaan singkat hanya saat transisi terjadi,
+  // bukan setiap kali kasus terverifikasi dibuka (frequency of use).
+  const prevStatusRef = useRef({ id: report.id, status: report.status });
+  const [justVerified, setJustVerified] = useState(false);
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = { id: report.id, status: report.status };
+    if (prev.id === report.id && prev.status !== 'VERIFIED' && report.status === 'VERIFIED') {
+      setJustVerified(true);
+      const t = setTimeout(() => setJustVerified(false), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [report.id, report.status]);
+
+  // Jakob's law: tekan Esc untuk menutup form revisi inline.
+  useEffect(() => {
+    if (!showRevisionForm) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowRevisionForm(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showRevisionForm]);
 
   // Hard Gate Validation Rules
   const canVerifyRole = roleInfo.key === 'hse_validator';
@@ -217,9 +242,9 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center gap-2 font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline"
+              className="group hit-area inline-flex items-center gap-2 font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 nudge-back" />
               <span>Kembali ke Daftar Kasus</span>
             </button>
             <div className="flex flex-wrap items-center gap-2">
@@ -249,9 +274,14 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                   borderLeftColor: 'var(--green)',
                   color: 'var(--green)',
                 }}
-                className="px-4 py-2.5 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-sm inline-flex items-center gap-2"
+                className={`px-4 py-2.5 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-sm inline-flex items-center gap-2 ${
+                  justVerified ? 'animate-celebrate' : ''
+                }`}
               >
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <CheckCircle2
+                  className={`w-4 h-4 shrink-0 ${justVerified ? 'animate-pop' : ''}`}
+                  style={justVerified ? { animationDelay: '160ms' } : undefined}
+                />
                 <span>Disahkan: {report.verified_by || 'Dr. Rina Suryani'}</span>
               </div>
             ) : (
@@ -284,9 +314,10 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowRevisionForm((prev) => !prev)}
-                        className="px-3.5 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--amber)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-1.5 transition-colors"
+                        aria-expanded={showRevisionForm}
+                        className="group px-3.5 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--amber)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-1.5"
                       >
-                        <RotateCcw className="w-4 h-4 text-[var(--amber)]" />
+                        <RotateCcw className="w-4 h-4 text-[var(--amber)] transition-transform duration-300 group-hover:-rotate-90" />
                         <span>Minta Revisi</span>
                       </button>
                     </>
@@ -297,10 +328,10 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                     disabled={Boolean(verifyBlockedReason)}
                     title={verifyBlockedReason || 'Sahkan kasus ke Knowledge Base'}
                     onClick={() => handleChangeStatus('VERIFIED')}
-                    className={`px-4 py-2.5 rounded-xl font-heading font-bold text-sm inline-flex items-center gap-2 transition-all ${
+                    className={`px-4 py-2.5 rounded-xl font-heading font-bold text-sm inline-flex items-center gap-2 ${
                       verifyBlockedReason
                         ? 'bg-[var(--soft)] border border-[var(--line)] text-[var(--ink-soft)] opacity-75 cursor-not-allowed'
-                        : 'bg-[#087F5B] hover:bg-[#066346] text-white shadow-sm'
+                        : 'bg-[#087F5B] hover:bg-[#066346] text-white shadow-sm hover:shadow-md'
                     }`}
                   >
                     {verifyBlockedReason ? (
@@ -332,9 +363,10 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
         {/* Form Ringkas Minta Revisi */}
         {showRevisionForm && !isVerified && roleInfo.key !== 'frontline_omi' && (
-          <div className="pt-4 border-t border-[var(--line-soft)] flex flex-col sm:flex-row gap-2.5">
+          <div className="pt-4 border-t border-[var(--line-soft)] flex flex-col sm:flex-row gap-2.5 animate-reveal">
             <input
               type="text"
+              autoFocus
               value={revisionNote}
               onChange={(e) => setRevisionNote(e.target.value)}
               placeholder="Sebutkan bukti fisik apa yang wajib dilengkapi pelapor..."
@@ -374,7 +406,8 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
             key={id}
             type="button"
             onClick={() => setActiveTab(id)}
-            className={`px-4 py-2 rounded-xl font-heading text-sm font-bold transition-colors ${
+            aria-pressed={activeTab === id}
+            className={`px-4 py-2 rounded-xl font-heading text-sm font-bold ${
               activeTab === id
                 ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830]'
                 : 'text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--soft)]'
@@ -387,9 +420,9 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
       {/* Tab 1: Ringkasan & 7 Entitas */}
       {activeTab === 'summary' && (
-        <div className="space-y-5">
+        <div className="space-y-5 animate-step-in">
           {/* Strip Konteks Aset Ringkas */}
-          <section className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <section className="group p-4 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
               <div className="w-14 h-14 rounded-xl bg-[var(--soft)] border border-[var(--line-soft)] flex items-center justify-center p-1.5 shrink-0">
                 <TechnicalArt type={asset.type} darkMode={isDarkMode} className="w-12 h-12" />
@@ -455,7 +488,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
       {/* Tab 2: Bukti & Diskusi */}
       {activeTab === 'evidence_discussion' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start animate-step-in">
           {/* Galeri & Unggah Bukti (7 cols) */}
           <section className="xl:col-span-7 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
             <div>
@@ -659,7 +692,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
       {/* Tab 3: Risiko & CAPA */}
       {activeTab === 'risk_capa' && (
-        <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-6">
+        <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-6 animate-step-in">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-heading text-lg font-bold text-[var(--ink)]">

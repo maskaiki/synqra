@@ -105,10 +105,122 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   letter-spacing: -0.02em;
 }
 
+/* ==========================================================================
+   SYNQRA MOTION SYSTEM
+   Prinsip UX & Animasi yang diterapkan (lihat komentar per blok):
+   timing cepat, slow-in/slow-out, squash & stretch, anticipation,
+   follow-through, staggering, origin awareness, staging, peak-end,
+   frequency of use, interruptible motion, Fitts's law (hit area).
+   ========================================================================== */
+
+:root {
+  /* Snappy timing: elemen UI tidak pernah > 400ms (Doherty threshold). */
+  --dur-instant: 90ms;
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 340ms;
+
+  /* Slow in & slow out: kurva standar untuk semua perpindahan. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Follow-through: sedikit overshoot lalu menetap. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Squash & stretch + exaggerated feedback: setiap tombol "tertekan" saat
+   diklik. Memakai transition (bukan keyframe) agar interruptible: tombol
+   langsung memantul balik saat dilepas di tengah animasi.
+   Spesifisitas (0,1,1) sengaja mengungguli utilitas transition-colors. */
+button:not([data-no-press]) {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+button:not([data-no-press]):not(:disabled):active {
+  transform: scale(0.97);
+  transition-duration: var(--dur-instant);
+}
+
+/* Elemen besar (kartu, tombol full-width) cukup squash halus. */
+.press-soft:not(:disabled):active {
+  transform: scale(0.99) !important;
+}
+
+/* Staging the focus: fokus keyboard selalu terlihat jelas. */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* Fitts's law / bigger hit areas: perluas area klik tanpa mengubah
+   tampilan elemen kecil (chip filter, tautan teks, tombol tutup). */
+.hit-area {
+  position: relative;
+}
+.hit-area::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+/* Solid drawing: kartu interaktif terangkat dengan bayangan konsisten. */
+.lift {
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: var(--dur-base);
+  transition-timing-function: var(--ease-out);
+}
+@media (hover: hover) {
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -14px rgba(11, 31, 68, 0.35);
+  }
+}
+.lift:active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: var(--dur-instant);
+}
+
+/* Secondary action + anticipation: ikon panah menarik mundur saat ditekan
+   (wind-up) lalu meluncur maju saat hover. */
+.nudge-x {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+.group:hover .nudge-x {
+  transform: translateX(3px);
+}
+.group:active .nudge-x {
+  transform: translateX(-2px);
+  transition-duration: var(--dur-instant);
+}
+.nudge-back {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+.group:hover .nudge-back {
+  transform: translateX(-3px);
+}
+
+/* Secondary action: ikon berputar kecil saat tombol induk di-hover. */
+.spin-on-hover {
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+.group:hover .spin-on-hover {
+  transform: rotate(90deg);
+}
+
+/* Moving in arcs / follow-through: indikator navigasi meluncur dengan pegas. */
+.nav-indicator {
+  transition:
+    transform var(--dur-slow) var(--ease-spring),
+    height var(--dur-slow) var(--ease-spring),
+    opacity var(--dur-fast) var(--ease-out);
+  will-change: transform;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -116,8 +228,205 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   }
 }
 
+/* Frequency of use: perpindahan halaman terjadi puluhan kali per shift,
+   maka dibuat sangat singkat dan halus (bukan efek dramatis). */
 .animate-fade-in {
-  animation: fadeInUp 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: fadeInUp var(--dur-base) var(--ease-out) backwards;
+}
+
+/* Staggering: anak-anak list muncul berurutan. Set --i per item
+   (dibatasi di komponen agar total < 300ms). */
+.stagger > * {
+  /* fill-mode backwards: transform dilepas setelah masuk agar .lift:hover tetap bekerja. */
+  animation: fadeInUp var(--dur-slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* Origin awareness: dropdown tumbuh dari tombol pemicunya. */
+@keyframes scaleInOrigin {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-pop-origin {
+  transform-origin: var(--origin, top right);
+  animation: scaleInOrigin var(--dur-base) var(--ease-spring) both;
+}
+
+/* Staging the focus: modal masuk dari tengah, latar meredup terpisah. */
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-backdrop {
+  animation: backdropIn var(--dur-base) var(--ease-out) both;
+}
+.animate-modal {
+  animation: modalIn var(--dur-slow) var(--ease-spring) both;
+}
+
+/* Squash & stretch: centang / badge "meletup" saat terpilih. */
+@keyframes popIn {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-pop {
+  animation: popIn var(--dur-slow) var(--ease-out) both;
+}
+
+/* Exaggerated feedback: error menggeleng singkat. */
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+.animate-shake {
+  animation: shakeX 0.36s var(--ease-out) both;
+}
+
+/* Peak-end rule: momen puncak (kasus disahkan) diberi perayaan singkat. */
+@keyframes celebrate {
+  0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(8, 127, 91, 0.55); }
+  45% { transform: scale(1.06); }
+  70% { transform: scale(0.98); }
+  100% { transform: scale(1); box-shadow: 0 0 0 14px rgba(8, 127, 91, 0); }
+}
+.animate-celebrate {
+  animation: celebrate 0.7s var(--ease-out) both;
+}
+
+/* Von Restorff: badge overdue menarik perhatian sekali, lalu diam. */
+@keyframes pingOnce {
+  0% { box-shadow: 0 0 0 0 rgba(180, 35, 24, 0.45); }
+  100% { box-shadow: 0 0 0 8px rgba(180, 35, 24, 0); }
+}
+.animate-ping-once {
+  animation: pingOnce 0.9s var(--ease-out) 0.4s 2 both;
+}
+
+/* Moving in arcs: toast masuk melengkung, dengan sumbu X dan Y memakai kurva
+   berbeda sehingga lintasannya busur, bukan garis lurus. */
+@keyframes arcX {
+  from { transform: translateX(48px); }
+  to { transform: translateX(0); }
+}
+@keyframes arcY {
+  from { transform: translateY(28px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes toastOut {
+  to { transform: translateY(12px) scale(0.97); opacity: 0; }
+}
+.toast-arc-x {
+  animation: arcX var(--dur-slow) var(--ease-out) both;
+}
+.toast-arc-y {
+  animation: arcY var(--dur-slow) var(--ease-spring) both;
+}
+.toast-leave {
+  animation: toastOut var(--dur-base) var(--ease-in-out) both;
+}
+
+/* Exaggerated feedback: ikon tema berputar saat diganti. */
+@keyframes spinIn {
+  from { transform: rotate(-120deg) scale(0.5); opacity: 0; }
+  to { transform: rotate(0) scale(1); opacity: 1; }
+}
+.animate-spin-in {
+  animation: spinIn var(--dur-slow) var(--ease-spring) both;
+}
+
+/* Doherty threshold: kerangka (skeleton) muncul seketika saat AI berpikir. */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.skeleton {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--soft) 0%,
+    var(--hover-bg) 40%,
+    var(--soft) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Reveal: panel yang dibuka (form revisi) meluncur turun. */
+@keyframes revealDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-reveal {
+  animation: revealDown var(--dur-base) var(--ease-out) both;
+}
+
+/* Pose-to-pose: transisi langkah wizard, tab, dan panel fokus kasus. */
+@keyframes stepIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-step-in {
+  animation: stepIn var(--dur-base) var(--ease-out) backwards;
+}
+
+/* Secondary action: ayunan lembut 1x ikon lonceng pada peringatan SLA overdue. */
+@keyframes bellSwing {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(12deg); }
+  45% { transform: rotate(-10deg); }
+  70% { transform: rotate(6deg); }
+  85% { transform: rotate(-3deg); }
+}
+.animate-bell {
+  transform-origin: top center;
+  animation: bellSwing 0.75s var(--ease-out) 0.25s 1 both;
+}
+
+/* Solid drawing 2D: kedalaman bayangan gambar alat di Mode Terang & Gelap. */
+.asset-render-light {
+  filter: drop-shadow(0 8px 14px rgba(11, 31, 68, 0.18)) drop-shadow(0 2px 4px rgba(11, 31, 68, 0.12));
+}
+.asset-render-dark {
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(0, 184, 217, 0.18));
+}
+
+/* Aksesibilitas: hormati preferensi kurangi gerakan. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes waveBar {

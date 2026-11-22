@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 
 interface TechnicalArtProps {
   type?: string;
@@ -6,11 +8,48 @@ interface TechnicalArtProps {
   darkMode?: boolean;
 }
 
+const EQUIPMENT_IMAGE_MAP: Record<string, { src: string; alt: string }> = {
+  pump: {
+    src: '/assets/equipment/pump-p101a.png',
+    alt: 'Pompa Sentrifugal P-101A',
+  },
+  heat: {
+    src: '/assets/equipment/heat-e201.png',
+    alt: 'Heat Exchanger E-201',
+  },
+  valve: {
+    src: '/assets/equipment/valve-fcv301.png',
+    alt: 'Control Valve FCV-301',
+  },
+};
+
 export const TechnicalArt: React.FC<TechnicalArtProps> = ({
   type = 'pump',
   className = 'w-full h-24',
   darkMode = false,
 }) => {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [type]);
+
+  const equipmentImage = EQUIPMENT_IMAGE_MAP[type];
+  if (equipmentImage && !imgError) {
+    return (
+      <img
+        src={equipmentImage.src}
+        alt={equipmentImage.alt}
+        loading="eager"
+        draggable={false}
+        onError={() => setImgError(true)}
+        className={`object-contain select-none transition-transform duration-300 ease-out group-hover:scale-[1.06] ${
+          darkMode ? 'asset-render-dark' : 'asset-render-light'
+        } ${className}`}
+      />
+    );
+  }
+
   const strokeColor = darkMode ? '#7CC0FF' : '#1E4B6B';
   const fillColor = darkMode ? '#102A4C' : '#F8FCFD';
   const highlightColor = '#00B8D9';

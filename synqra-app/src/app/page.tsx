@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Asset,
   CaseComment,
@@ -56,14 +56,29 @@ export default function SynqraApp() {
 
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState<CitationItem | null>(null);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ id: number; msg: string; leaving: boolean } | null>(
+    null
+  );
+  const toastTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Interruptible motion: toast baru langsung menggantikan yang lama
+  // (timer lama dibatalkan), lalu keluar dengan animasi singkat.
+  const dismissToast = (id: number) => {
+    setToast((prev) => (prev && prev.id === id ? { ...prev, leaving: true } : prev));
+    toastTimers.current.push(
+      setTimeout(() => setToast((prev) => (prev && prev.id === id ? null : prev)), 220)
+    );
+  };
 
   const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => {
-      setToastMsg((prev) => (prev === msg ? null : prev));
-    }, 3800);
+    toastTimers.current.forEach(clearTimeout);
+    toastTimers.current = [];
+    const id = Date.now();
+    setToast({ id, msg, leaving: false });
+    toastTimers.current.push(setTimeout(() => dismissToast(id), 3600));
   };
+
+  useEffect(() => () => toastTimers.current.forEach(clearTimeout), []);
 
   // Load saved theme & workspace data on mount
   useEffect(() => {
@@ -397,6 +412,7 @@ export default function SynqraApp() {
               evidences={evidences}
               comments={comments}
               roleInfo={roleInfo}
+              isDarkMode={isDarkMode}
               onOpenReport={handleOpenReport}
             />
           )}
@@ -410,15 +426,26 @@ export default function SynqraApp() {
       />
 
       {/* Toast Notification */}
-      {toastMsg && (
+      {/* Moving in arcs + peak-end: toast meluncur melengkung dari pojok kanan bawah,
+          ikon centang meletup sebagai penutup aksi. Klik untuk menutup lebih cepat. */}
+      {toast && (
         <div
+          key={toast.id}
           role="status"
-          className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 max-w-md px-4 py-3.5 rounded-xl bg-[#0B1F44] dark:bg-[#0F284E] text-white border border-cyan-400/50 shadow-xl flex items-center gap-3 animate-fade-in"
+          aria-live="polite"
+          className={`fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 max-w-md ${
+            toast.leaving ? 'toast-leave' : 'toast-arc-x'
+          }`}
         >
-          <span className="w-7 h-7 rounded-lg bg-[#00B8D9]/20 text-[#38D6F0] flex items-center justify-center shrink-0">
-            <Check className="w-4 h-4 stroke-[2.5]" />
-          </span>
-          <p className="text-sm font-heading font-semibold m-0 leading-snug">{toastMsg}</p>
+          <div
+            onClick={() => dismissToast(toast.id)}
+            className="toast-arc-y cursor-pointer px-4 py-3.5 rounded-xl bg-[#0B1F44] dark:bg-[#0F284E] text-white border border-cyan-400/50 shadow-xl flex items-center gap-3"
+          >
+            <span className="w-7 h-7 rounded-lg bg-[#00B8D9]/20 text-[#38D6F0] flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4 stroke-[2.5] animate-pop" style={{ animationDelay: '120ms' }} />
+            </span>
+            <p className="text-sm font-heading font-semibold m-0 leading-snug">{toast.msg}</p>
+          </div>
         </div>
       )}
     </div>

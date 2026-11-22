@@ -474,10 +474,26 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
 
           {/* Indikator Loading Saat AI Berpikir */}
           {isLoading && (
-            <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] border-l-[4px] border-l-[var(--cyan)] shadow-sm flex items-center gap-3 animate-pulse">
-              <Bot className="w-5 h-5 text-[var(--cyan-dark)] animate-spin" />
-              <div className="text-sm font-semibold text-[var(--ink)]">
-                Mencocokkan arsip pengetahuan & menyusun jawaban berbasis bukti...
+            // Doherty threshold: kerangka jawaban tampil seketika (< 400ms) sehingga
+            // menunggu AI terasa sebagai progres, bukan layar diam.
+            <div
+              aria-busy="true"
+              className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] border-l-[4px] border-l-[var(--cyan)] shadow-sm space-y-3.5 animate-fade-in"
+            >
+              <div className="flex items-center gap-3">
+                <Bot className="w-5 h-5 text-[var(--cyan-dark)] animate-spin" />
+                <div className="text-sm font-semibold text-[var(--ink)]">
+                  Mencocokkan arsip pengetahuan & menyusun jawaban berbasis bukti...
+                </div>
+              </div>
+              <div className="space-y-2.5" aria-hidden>
+                <div className="skeleton h-3.5 w-[92%]" />
+                <div className="skeleton h-3.5 w-[78%]" />
+                <div className="skeleton h-3.5 w-[64%]" />
+                <div className="flex gap-2 pt-1">
+                  <div className="skeleton h-7 w-24 rounded-[7px]" />
+                  <div className="skeleton h-7 w-24 rounded-[7px]" />
+                </div>
               </div>
             </div>
           )}
@@ -511,7 +527,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Tulis pertanyaan teknis lanjutan atau anomali baru..."
               disabled={isLoading}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-[15px] font-medium focus:outline-none focus:border-[var(--cyan)] transition-colors"
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-[15px] font-medium focus:outline-none focus:border-[var(--cyan)] focus:ring-4 focus:ring-[#00B8D9]/20 transition-[border-color,box-shadow] duration-200"
             />
           </div>
 
@@ -532,7 +548,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
           <button
             type="submit"
             disabled={isLoading || !question.trim()}
-            className="px-6 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 transition-colors shadow-sm"
+            className="group px-6 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 shadow-sm"
           >
             {isLoading ? (
               <>
@@ -541,7 +557,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
               </>
             ) : (
               <>
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4 nudge-x" />
                 <span>Kirim</span>
               </>
             )}

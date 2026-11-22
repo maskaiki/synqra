@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CitationItem } from '@/types/synqra';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CheckCircle2, FileCheck2, ShieldAlert, X } from 'lucide-react';
@@ -14,6 +14,28 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
   citation,
   onClose,
 }) => {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const isOpen = Boolean(citation);
+
+  // Jakob's law + staging: Esc menutup, fokus langsung ke tombol tutup,
+  // dan halaman di belakang tidak ikut ter-scroll selama modal terbuka.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current();
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    closeRef.current?.focus({ preventScroll: true });
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   if (!citation) return null;
 
   const isVerified = citation.status === 'VERIFIED';
@@ -21,11 +43,14 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-[#051024]/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 z-50 bg-[#051024]/70 backdrop-blur-sm flex items-center justify-center p-4 animate-backdrop"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={citation.title}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-2xl overflow-hidden"
+        className="w-full max-w-2xl rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-2xl overflow-hidden animate-modal"
       >
         {/* Header */}
         <div className="p-5 border-b border-[var(--line)] flex items-start justify-between gap-4">
@@ -45,11 +70,12 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
           </div>
           <button
             type="button"
+            ref={closeRef}
             onClick={onClose}
             aria-label="Tutup pratinjau"
-            className="w-9 h-9 rounded-xl border border-[var(--line)] bg-[var(--soft)] flex items-center justify-center text-[var(--ink)] hover:border-[var(--cyan)] shrink-0"
+            className="group w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--soft)] flex items-center justify-center text-[var(--ink)] hover:border-[var(--cyan)] shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 spin-on-hover" />
           </button>
         </div>
 
@@ -128,9 +154,9 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
           >
             {isVerified ? (
               <>
-                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 shrink-0 animate-pop" style={{ animationDelay: '180ms' }} />
                 <span>
-                  Disahkan oleh Pakar Validator ({citation.verifiedBy || 'Dr. Rina Suryani'}) — Siap dijadikan acuan teknis.
+                  Disahkan oleh Pakar Validator ({citation.verifiedBy || 'Dr. Rina Suryani'}). Siap dijadikan acuan teknis.
                 </span>
               </>
             ) : (

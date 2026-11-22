@@ -50,17 +50,25 @@ export const LoginView: React.FC<LoginViewProps> = ({
           </div>
         </div>
 
-        <div className="relative z-10 max-w-xl my-8 space-y-5">
-          <h1 className="font-heading text-4xl xl:text-5xl font-bold leading-tight text-white">
+        <div className="relative z-10 max-w-xl my-8 space-y-5 stagger">
+          <h1
+            style={{ '--i': 0 } as React.CSSProperties}
+            className="font-heading text-4xl xl:text-5xl font-bold leading-tight text-white"
+          >
             Dari temuan lapangan,
             <br />
             <span className="text-cyan-300">menjadi pengetahuan.</span>
           </h1>
-          <p className="text-base text-white/90 leading-relaxed font-medium">
+          <p
+            style={{ '--i': 2 } as React.CSSProperties}
+            className="text-base text-white/90 leading-relaxed font-medium"
+          >
             Hubungkan laporan suara, validasi bukti pakar, dan peta pengetahuan aset.
           </p>
 
-          <div className="mt-6 p-5 rounded-2xl bg-[#071630]/65 border border-cyan-300/25 backdrop-blur-md">
+          <div
+            style={{ '--i': 4 } as React.CSSProperties}
+            className="mt-6 p-5 rounded-2xl bg-[#071630]/65 border border-cyan-300/25 backdrop-blur-md">
             <div className="flex items-center justify-between mb-3">
               <span className="font-heading text-xs font-bold uppercase tracking-wider text-cyan-300">
                 Aset Terpantau
@@ -70,17 +78,17 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </span>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center">
-                <TechnicalArt type="pump" darkMode={true} className="w-full h-16" />
-                <div className="font-heading text-xs font-bold text-white mt-1">P-101A</div>
+              <div className="group lift p-3 rounded-xl bg-gradient-to-b from-cyan-400/10 to-white/[0.03] border border-cyan-300/20 hover:border-cyan-300/45 text-center">
+                <TechnicalArt type="pump" darkMode={true} className="w-full h-20" />
+                <div className="font-heading text-xs font-bold text-white mt-1.5">P-101A</div>
               </div>
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center">
-                <TechnicalArt type="heat" darkMode={true} className="w-full h-16" />
-                <div className="font-heading text-xs font-bold text-white mt-1">E-201</div>
+              <div className="group lift p-3 rounded-xl bg-gradient-to-b from-cyan-400/10 to-white/[0.03] border border-cyan-300/20 hover:border-cyan-300/45 text-center">
+                <TechnicalArt type="heat" darkMode={true} className="w-full h-20" />
+                <div className="font-heading text-xs font-bold text-white mt-1.5">E-201</div>
               </div>
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center">
-                <TechnicalArt type="valve" darkMode={true} className="w-full h-16" />
-                <div className="font-heading text-xs font-bold text-white mt-1">FCV-301</div>
+              <div className="group lift p-3 rounded-xl bg-gradient-to-b from-cyan-400/10 to-white/[0.03] border border-cyan-300/20 hover:border-cyan-300/45 text-center">
+                <TechnicalArt type="valve" darkMode={true} className="w-full h-20" />
+                <div className="font-heading text-xs font-bold text-white mt-1.5">FCV-301</div>
               </div>
             </div>
           </div>
@@ -97,9 +105,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
           type="button"
           onClick={onToggleTheme}
           title="Ubah Mode Terang / Gelap"
-          className="absolute top-6 right-6 w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)] transition-colors"
+          aria-label="Ubah Mode Terang / Gelap"
+          className="absolute top-6 right-6 w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
         >
-          {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[#0B1F44]" />}
+          <span key={isDarkMode ? 'sun' : 'moon'} className="animate-spin-in inline-flex">
+            {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[#0B1F44]" />}
+          </span>
         </button>
 
         <div className="w-full max-w-md animate-fade-in">
@@ -129,15 +140,18 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <label className="block text-sm font-bold text-[var(--ink)] mb-2.5">
                 Pilih Persona Demo
               </label>
-              <div className="space-y-2.5">
-                {Object.values(ROLES).map((r) => {
+              <div className="space-y-2.5 stagger" role="radiogroup" aria-label="Pilih Persona Demo">
+                {Object.values(ROLES).map((r, idx) => {
                   const isActive = roleChoice === r.key;
                   return (
                     <button
                       key={r.key}
                       type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      style={{ '--i': idx + 1 } as React.CSSProperties}
                       onClick={() => setRoleChoice(r.key)}
-                      className={`w-full flex items-center gap-3.5 p-3.5 rounded-2xl border-2 text-left transition-all ${
+                      className={`press-soft w-full flex items-center gap-3.5 p-3.5 rounded-2xl border-2 text-left ${
                         isActive
                           ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
                           : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)]/60 hover:bg-[var(--hover-bg)]'
@@ -155,13 +169,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
                         </div>
                       </div>
                       <span
-                        className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 ${
+                        className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors duration-200 ${
                           isActive
                             ? 'bg-[var(--cyan-dark)] border-[var(--cyan-dark)] text-white dark:bg-[var(--cyan)] dark:border-[var(--cyan)] dark:text-[#061830]'
                             : 'border-[var(--line)]'
                         }`}
                       >
-                        {isActive && <Check className="w-4 h-4 stroke-[3]" />}
+                        {isActive && <Check className="w-4 h-4 stroke-[3] animate-pop" />}
                       </span>
                     </button>
                   );
@@ -196,10 +210,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
             <button
               type="submit"
-              className="w-full py-3.5 px-5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-[15px] flex items-center justify-center gap-2.5 shadow-md transition-all"
+              className="group press-soft w-full py-3.5 px-5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-[15px] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg"
             >
               <span>Masuk ke Workspace</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-5 h-5 nudge-x" />
             </button>
           </form>
 

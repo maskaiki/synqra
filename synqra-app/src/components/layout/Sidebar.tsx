@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MainPage, RoleInfo } from '@/types/synqra';
 import {
   Radar,
@@ -76,6 +76,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return activePage === id;
   };
 
+  // Follow-through / moving in arcs: satu indikator aktif yang meluncur
+  // antar menu (bukan muncul-hilang), sehingga mata mengikuti perpindahan.
+  const navRef = useRef<HTMLElement>(null);
+  const itemRefs = useRef<Partial<Record<MainPage, HTMLButtonElement | null>>>({});
+  const [indicator, setIndicator] = useState<{ top: number; height: number } | null>(null);
+  const activeNavId: MainPage = activePage === 'case-detail' ? 'cases' : activePage;
+
+  useEffect(() => {
+    const measure = () => {
+      const el = itemRefs.current[activeNavId];
+      if (el) setIndicator({ top: el.offsetTop, height: el.offsetHeight });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [activeNavId, overdueCount, verifiedCount]);
+
   return (
     <>
       <aside className="hidden lg:flex lg:flex-col w-[274px] shrink-0 bg-[var(--sidebar-bg)] border-r border-[var(--line)] px-4 py-6 sticky top-0 h-screen overflow-y-auto transition-colors">
@@ -113,24 +130,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
           WORKSPACE
         </div>
 
-        <nav className="space-y-1.5">
+        <nav ref={navRef} className="relative space-y-1.5">
+          {indicator && (
+            <span
+              aria-hidden
+              className="nav-indicator pointer-events-none absolute left-0 right-0 top-0 rounded-xl bg-[var(--cyan-pale)] border border-[var(--cyan)]/40"
+              style={{
+                transform: `translateY(${indicator.top}px)`,
+                height: indicator.height,
+              }}
+            >
+              <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[var(--cyan-dark)]" />
+            </span>
+          )}
           {navItems.map((item) => {
             const active = isNavActive(item.id);
             return (
               <button
                 key={item.id}
+                ref={(el) => {
+                  itemRefs.current[item.id] = el;
+                }}
                 type="button"
+                aria-current={active ? 'page' : undefined}
                 onClick={() => onNavigate(item.id)}
-                className={`relative w-full flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold text-[14.5px] transition-all text-left ${
+                className={`relative z-[1] w-full flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold text-[14.5px] text-left border border-transparent ${
                   active
-                    ? 'bg-[var(--cyan-pale)] text-[var(--ink)] border border-[var(--cyan)]/40'
-                    : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] border border-transparent'
+                    ? 'text-[var(--ink)]'
+                    : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
                 }`}
               >
-                {active && (
-                  <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[var(--cyan-dark)]" />
-                )}
-                <span className={active ? 'text-[var(--cyan-dark)]' : ''}>{item.icon}</span>
+                <span
+                  className={`transition-colors duration-200 ${active ? 'text-[var(--cyan-dark)]' : ''}`}
+                >
+                  {item.icon}
+                </span>
                 <span className="flex-1 truncate">{item.label}</span>
                 {item.badge && (
                   <span
@@ -147,7 +181,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             borderColor: 'var(--green-border)',
                           }
                     }
-                    className="px-2 py-0.5 rounded-[6px] border font-heading text-[11px] font-bold"
+                    className={`px-2 py-0.5 rounded-[6px] border font-heading text-[11px] font-bold ${
+                      item.badgeTone === 'red' ? 'animate-ping-once' : ''
+                    }`}
                   >
                     {item.badge}
                   </span>
@@ -167,9 +203,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('lapor')}
-            className="w-full py-2.5 px-3 rounded-xl bg-[#00B8D9] hover:bg-[#22D3EE] text-[#061A38] font-heading font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            className="group press-soft w-full py-2.5 px-3 rounded-xl bg-[#00B8D9] hover:bg-[#22D3EE] text-[#061A38] font-heading font-bold text-sm flex items-center justify-center gap-2"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2.5] spin-on-hover" />
             <span>Buat Laporan</span>
           </button>
         </div>
@@ -182,7 +218,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleTheme}
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] font-bold text-sm transition-colors"
           >
-            {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[#0B1F44]" />}
+            <span key={isDarkMode ? 'sun' : 'moon'} className="animate-spin-in inline-flex">
+              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[#0B1F44]" />}
+            </span>
             <span className="flex-1 text-left">
               {isDarkMode ? 'Mode Terang' : 'Mode Gelap'}
             </span>
@@ -202,19 +240,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </aside>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--topbar-bg)] backdrop-blur-md border-t border-[var(--line)] flex justify-around py-2 px-1">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--topbar-bg)] backdrop-blur-md border-t border-[var(--line)] flex py-1 px-1">
         {navItems.map((item) => {
           const active = isNavActive(item.id);
           return (
             <button
               key={item.id}
               type="button"
+              aria-current={active ? 'page' : undefined}
               onClick={() => onNavigate(item.id)}
-              className={`flex flex-col items-center gap-1 px-2 py-1 rounded-lg font-heading text-[11px] font-bold transition-colors ${
-                active ? 'text-[var(--cyan-dark)]' : 'text-[var(--ink-soft)]'
+              className={`relative flex-1 min-h-[56px] flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl font-heading text-[11px] font-bold ${
+                active ? 'text-[var(--cyan-dark)] bg-[var(--cyan-pale)]' : 'text-[var(--ink-soft)]'
               }`}
             >
-              {item.icon}
+              <span key={active ? 'on' : 'off'} className={active ? 'animate-pop inline-flex' : 'inline-flex'}>
+                {item.icon}
+              </span>
               <span>{item.label.split(' ')[0]}</span>
             </button>
           );

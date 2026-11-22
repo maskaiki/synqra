@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
 import { detectEarlyWarnings } from '@/lib/constants';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -36,6 +36,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   const [selectedAssetId, setSelectedAssetId] = useState<string>(assets[0]?.id || 'P-101A');
   const [showAllStatuses, setShowAllStatuses] = useState(false);
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
+  const [hoveredReportId, setHoveredReportId] = useState<string | null>(null);
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) || assets[0];
   const assetReports = selectedAsset
@@ -51,9 +52,22 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
     : -1;
   const focusedReport = focusedIndex >= 0 ? visibleReports[focusedIndex] : null;
 
+  // Jakob's law: Esc mengembalikan pengguna dari Panel Fokus Kasus ke Peta Simpul.
+  useEffect(() => {
+    if (!focusedReport) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFocusedReportId(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [focusedReport]);
+
   const handleSelectAsset = (assetId: string) => {
     setSelectedAssetId(assetId);
     setFocusedReportId(null);
+    setHoveredReportId(null);
   };
 
   if (!selectedAsset) {
@@ -72,13 +86,14 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           </p>
         </div>
 
-        <label className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] cursor-pointer text-sm font-bold text-[var(--ink)] select-none self-start sm:self-auto">
+        <label className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)]/60 cursor-pointer text-sm font-bold text-[var(--ink)] select-none self-start sm:self-auto transition-colors">
           <input
             type="checkbox"
             checked={showAllStatuses}
             onChange={(e) => {
               setShowAllStatuses(e.target.checked);
               setFocusedReportId(null);
+              setHoveredReportId(null);
             }}
             className="w-4 h-4 accent-[#00B8D9]"
           />
@@ -87,8 +102,8 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
       </header>
 
       {/* Asset Selector Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {assets.map((asset) => {
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+        {assets.map((asset, idx) => {
           const isSelected = asset.id === selectedAsset.id;
           const verifiedTotal = reports.filter(
             (r) => r.asset_id === asset.id && r.status === 'VERIFIED'
@@ -99,14 +114,15 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             <button
               key={asset.id}
               type="button"
+              style={{ '--i': idx } as React.CSSProperties}
               onClick={() => handleSelectAsset(asset.id)}
-              className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
+              className={`group lift press-soft p-4 rounded-2xl border-2 text-left flex items-center gap-4 ${
                 isSelected
                   ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
                   : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)]/60'
               }`}
             >
-              <div className="w-16 h-16 rounded-xl bg-[var(--soft)] border border-[var(--line-soft)] flex items-center justify-center p-1.5 shrink-0">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-[var(--soft)] to-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-1.5 shrink-0">
                 <TechnicalArt type={asset.type} darkMode={isDarkMode} className="w-14 h-14" />
               </div>
               <div className="min-w-0 flex-1">
@@ -132,7 +148,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             borderColor: 'var(--amber-border)',
             borderLeftColor: 'var(--amber)',
           }}
-          className="p-4 rounded-2xl border border-l-[4px] flex items-start gap-3"
+          className="p-4 rounded-2xl border border-l-[4px] flex items-start gap-3 animate-fade-in"
         >
           <AlertTriangle
             className="w-5 h-5 shrink-0 mt-0.5"
@@ -147,14 +163,17 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 
       {focusedReport ? (
         /* Panel Fokus Kasus: Tampilan rantai sebab-akibat 5 lapis yang lega */
-        <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-6 animate-fade-in">
+        <section
+          key={focusedReport.id}
+          className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-6 animate-step-in"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--line-soft)]">
             <button
               type="button"
               onClick={() => setFocusedReportId(null)}
-              className="inline-flex items-center gap-2 font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline self-start"
+              className="group hit-area inline-flex items-center gap-2 font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline self-start"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 nudge-back" />
               <span>Kembali ke Peta</span>
             </button>
 
@@ -181,7 +200,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         verifiedBy: focusedReport.verified_by,
                       })
                     }
-                    className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-2 transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-2"
                   >
                     <Eye className="w-4 h-4 text-[var(--cyan-dark)]" />
                     <span>Lihat Bukti</span>
@@ -192,10 +211,10 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenReport(focusedReport)}
-                className="px-4 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                className="group px-4 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading text-sm font-bold inline-flex items-center gap-2 shadow-sm hover:shadow-md"
               >
                 <span>Buka Detail Lengkap</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 nudge-x" />
               </button>
             </div>
           </div>
@@ -249,9 +268,9 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             ];
 
             return (
-              <div className="space-y-0">
-                {chainNodes.map((node) => (
-                  <div key={node.tier}>
+              <div className="space-y-0 stagger">
+                {chainNodes.map((node, idx) => (
+                  <div key={node.tier} style={{ '--i': idx } as React.CSSProperties}>
                     <div
                       style={{ borderLeftColor: node.accent }}
                       className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[4px]"
@@ -272,10 +291,11 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 
                 <div
                   style={{
+                    '--i': 4,
                     backgroundColor: 'var(--green-bg)',
                     borderColor: 'var(--green-border)',
                     borderLeftColor: 'var(--green)',
-                  }}
+                  } as React.CSSProperties}
                   className="p-4 rounded-xl border border-l-[4px] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-3 min-w-0">
@@ -325,7 +345,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         </section>
       ) : (
         /* Overview Mode: Peta Simpul Visual + Daftar Kasus 1 Baris */
-        <div className="space-y-6">
+        <div className="space-y-6 animate-step-in">
           {/* Bagian 1: Peta Simpul Visual Ringkas */}
           <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -351,14 +371,14 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[240px_72px_1fr] items-stretch gap-4 lg:gap-0">
+              <div className="grid grid-cols-1 lg:grid-cols-[248px_76px_1fr] items-stretch gap-4 lg:gap-0">
                 {/* Simpul Aset Pusat */}
-                <div className="p-4 rounded-2xl bg-[var(--soft)] border-2 border-[var(--cyan)] flex flex-col justify-between gap-3">
-                  <div className="h-28 rounded-xl bg-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2">
+                <div className="group p-4 rounded-2xl bg-[var(--soft)] border-2 border-[var(--cyan)] flex flex-col justify-between gap-3">
+                  <div className="h-32 rounded-xl bg-gradient-to-b from-[var(--cyan-pale)]/55 to-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2.5">
                     <TechnicalArt
                       type={selectedAsset.type}
                       darkMode={isDarkMode}
-                      className="w-full h-24"
+                      className="w-full h-28"
                     />
                   </div>
                   <div>
@@ -377,7 +397,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 {/* Garis Penghubung Visual (Desktop) */}
                 <div className="hidden lg:block w-full h-full min-h-[160px]" aria-hidden="true">
                   <svg
-                    viewBox="0 0 72 100"
+                    viewBox="0 0 76 100"
                     preserveAspectRatio="none"
                     className="w-full h-full"
                   >
@@ -385,15 +405,19 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                       const targetY = ((idx + 0.5) / visibleReports.length) * 100;
                       const strokeColor =
                         rep.status === 'VERIFIED' ? 'var(--cyan)' : 'var(--amber)';
+                      const isActive = hoveredReportId === rep.id;
+                      const opacity = hoveredReportId ? (isActive ? 1 : 0.2) : 0.65;
+                      const width = isActive ? 2.6 : 1.75;
                       return (
                         <path
                           key={rep.id}
-                          d={`M 0 50 C 36 50, 36 ${targetY}, 72 ${targetY}`}
+                          d={`M 0 50 C 38 50, 38 ${targetY}, 76 ${targetY}`}
                           fill="none"
                           stroke={strokeColor}
-                          strokeWidth="1.75"
-                          strokeOpacity="0.65"
+                          strokeWidth={width}
+                          strokeOpacity={opacity}
                           vectorEffect="non-scaling-stroke"
+                          style={{ transition: 'stroke-opacity 180ms ease, stroke-width 180ms ease' }}
                         />
                       );
                     })}
@@ -401,18 +425,26 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 </div>
 
                 {/* Kelompok Simpul Gejala / Kasus */}
-                <div className="grid auto-rows-fr gap-2.5">
-                  {visibleReports.map((rep) => {
+                <div className="grid auto-rows-fr gap-2.5 stagger">
+                  {visibleReports.map((rep, idx) => {
                     const isVer = rep.status === 'VERIFIED';
                     return (
                       <button
                         key={rep.id}
                         type="button"
-                        onClick={() => setFocusedReportId(rep.id)}
-                        style={{
-                          borderLeftColor: isVer ? 'var(--green)' : 'var(--amber)',
+                        onClick={() => {
+                          setHoveredReportId(null);
+                          setFocusedReportId(rep.id);
                         }}
-                        className="w-full px-4 py-3 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] hover:border-[var(--cyan)] text-left transition-all flex items-center justify-between gap-3 group"
+                        onMouseEnter={() => setHoveredReportId(rep.id)}
+                        onMouseLeave={() => setHoveredReportId(null)}
+                        onFocus={() => setHoveredReportId(rep.id)}
+                        onBlur={() => setHoveredReportId(null)}
+                        style={{
+                          '--i': Math.min(idx, 5),
+                          borderLeftColor: isVer ? 'var(--green)' : 'var(--amber)',
+                        } as React.CSSProperties}
+                        className="group lift w-full px-4 py-3 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] hover:border-[var(--cyan)] text-left flex items-center justify-between gap-3"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -427,7 +459,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                             {rep.gejala}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--cyan-dark)] shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        <ChevronRight className="w-4 h-4 text-[var(--cyan-dark)] shrink-0 nudge-x" />
                       </button>
                     );
                   })}
@@ -443,15 +475,21 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 Daftar Kasus Terkait ({visibleReports.length})
               </h2>
 
-              <div className="space-y-2.5">
-                {visibleReports.map((rep) => {
+              <div className="space-y-2.5 stagger">
+                {visibleReports.map((rep, idx) => {
                   const evCount = evidences.filter((e) => e.report_id === rep.id).length;
                   return (
                     <button
                       key={rep.id}
                       type="button"
-                      onClick={() => setFocusedReportId(rep.id)}
-                      className="w-full p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] hover:border-[var(--cyan)] transition-all flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-left group"
+                      style={{ '--i': Math.min(idx, 5) } as React.CSSProperties}
+                      onClick={() => {
+                        setHoveredReportId(null);
+                        setFocusedReportId(rep.id);
+                      }}
+                      onMouseEnter={() => setHoveredReportId(rep.id)}
+                      onMouseLeave={() => setHoveredReportId(null)}
+                      className="group lift w-full p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] hover:border-[var(--cyan)] flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-left"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)] shrink-0">
@@ -469,7 +507,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         </span>
                         <span className="inline-flex items-center gap-1 font-heading text-sm font-bold text-[var(--cyan-dark)]">
                           <span>Rantai</span>
-                          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                          <ChevronRight className="w-4 h-4 nudge-x" />
                         </span>
                       </div>
                     </button>

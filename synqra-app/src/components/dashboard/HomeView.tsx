@@ -101,9 +101,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <button
           type="button"
           onClick={() => onNavigate('tanya')}
-          className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2 transition-colors self-start sm:self-auto"
+          className="group px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2 self-start sm:self-auto"
         >
-          <Sparkles className="w-4 h-4 text-[var(--cyan-dark)]" />
+          <Sparkles className="w-4 h-4 text-[var(--cyan-dark)] spin-on-hover" />
           <span>Tanya SYNQRA AI</span>
         </button>
       </header>
@@ -129,16 +129,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('lapor')}
-            className="w-full md:w-auto px-6 py-3.5 rounded-xl bg-[#00B8D9] hover:bg-[#22D3EE] text-[#061A38] font-heading font-bold text-[15px] inline-flex items-center justify-center gap-2 shadow-lg transition-colors"
+            className="group press-soft w-full md:w-auto px-6 py-3.5 rounded-xl bg-[#00B8D9] hover:bg-[#22D3EE] text-[#061A38] font-heading font-bold text-[15px] inline-flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
           >
-            <Plus className="w-5 h-5 stroke-[2.5]" />
+            <Plus className="w-5 h-5 stroke-[2.5] spin-on-hover" />
             <span>Laporkan Temuan</span>
           </button>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] flex items-center gap-4 shadow-sm">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger">
+        <div
+          style={{ '--i': 0 } as React.CSSProperties}
+          className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] flex items-center gap-4 shadow-sm"
+        >
           <div className="w-12 h-12 rounded-xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6" />
           </div>
@@ -152,7 +155,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] flex items-center gap-4 shadow-sm">
+        <div
+          style={{ '--i': 1 } as React.CSSProperties}
+          className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] flex items-center gap-4 shadow-sm"
+        >
           <div
             style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber)' }}
             className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
@@ -169,7 +175,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] flex items-center gap-4 shadow-sm">
+        <div
+          style={{ '--i': 2 } as React.CSSProperties}
+          className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] flex items-center gap-4 shadow-sm"
+        >
           <div
             style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green)' }}
             className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
@@ -201,25 +210,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('cases')}
-              className="font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline inline-flex items-center gap-1 shrink-0"
+              className="group hit-area font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline inline-flex items-center gap-1 shrink-0"
             >
               <span>Lihat semua</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 nudge-x" />
             </button>
           </div>
 
-          <div className="divide-y divide-[var(--line-soft)]">
-            {recentReports.map((report) => {
+          <div className="divide-y divide-[var(--line-soft)] stagger">
+            {recentReports.map((report, idx) => {
               const asset = assets.find((a) => a.id === report.asset_id) || assets[0];
               const sla = calculateSla(report.updated_at || report.created_at);
 
               return (
                 <div
                   key={report.id}
+                  role="button"
+                  tabIndex={0}
+                  style={{ '--i': idx + 2 } as React.CSSProperties}
                   onClick={() => onOpenReport(report)}
-                  className="py-4 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-[var(--hover-bg)] -mx-3 px-3 rounded-xl cursor-pointer transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onOpenReport(report);
+                    }
+                  }}
+                  className="group py-4 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-[var(--hover-bg)] active:scale-[0.995] -mx-3 px-3 rounded-xl cursor-pointer transition-[background-color,transform] duration-150"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex items-center justify-center shrink-0 p-1">
+                  <div className="w-14 h-14 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex items-center justify-center shrink-0 p-1.5">
                     <TechnicalArt
                       type={asset?.type || 'pump'}
                       darkMode={isDarkMode}
@@ -237,6 +255,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <StatusBadge status={report.status} size="sm" />
                     {report.status !== 'VERIFIED' && <SlaBadge sla={sla} compact />}
+                    <ChevronRight className="hidden sm:block w-4 h-4 text-[var(--cyan-dark)] opacity-0 group-hover:opacity-100 nudge-x" />
                   </div>
                 </div>
               );
@@ -258,7 +277,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('lapor')}
-              className="w-full p-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-3.5 text-left transition-colors"
+              className="group lift press-soft w-full p-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-3.5 text-left"
             >
               <span className="w-11 h-11 rounded-xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
                 <Mic className="w-5 h-5" />
@@ -271,13 +290,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   AI menyusun 7 entitas otomatis
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-[var(--cyan-dark)] shrink-0" />
+              <ChevronRight className="w-5 h-5 text-[var(--cyan-dark)] shrink-0 nudge-x" />
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate('lapor')}
-              className="w-full p-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-3.5 text-left transition-colors"
+              className="group lift press-soft w-full p-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-3.5 text-left"
             >
               <span className="w-11 h-11 rounded-xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
                 <Scan className="w-5 h-5" />
@@ -290,7 +309,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   Deteksi kode tag via kamera
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-[var(--cyan-dark)] shrink-0" />
+              <ChevronRight className="w-5 h-5 text-[var(--cyan-dark)] shrink-0 nudge-x" />
             </button>
           </div>
 
@@ -310,7 +329,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   key={idx}
                   onClick={() => pt.report && onOpenReport(pt.report)}
                   className={`p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] ${
-                    pt.report ? 'cursor-pointer hover:border-[var(--cyan)]' : ''
+                    pt.report ? 'lift cursor-pointer hover:border-[var(--cyan)]' : ''
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
