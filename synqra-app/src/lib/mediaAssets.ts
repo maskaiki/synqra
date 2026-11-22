@@ -1,3 +1,4 @@
+import loginHeroOilRigImg from '@/assets/branding/login-hero-oil-rig.webp';
 import pumpImg from '@/assets/equipment/centrifugal-pump-p101a.webp';
 import heatImg from '@/assets/equipment/heat-exchanger-e201.webp';
 import valveImg from '@/assets/equipment/control-valve-fcv301.webp';
@@ -18,6 +19,15 @@ export interface MediaAssetEntry {
 export interface EquipmentMediaEntry extends MediaAssetEntry {
   alt: string;
 }
+
+export const BRAND_MEDIA = {
+  loginHeroOilRig: {
+    src: loginHeroOilRigImg.src,
+    width: loginHeroOilRigImg.width,
+    height: loginHeroOilRigImg.height,
+    alt: 'Latar belakang kilang dan pompa angguk migas saat senja',
+  },
+};
 
 export const EQUIPMENT_MEDIA: Record<string, EquipmentMediaEntry> = {
   pump: {

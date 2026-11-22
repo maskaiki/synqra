@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { ROLES } from '@/lib/constants';
+import { BRAND_MEDIA } from '@/lib/mediaAssets';
 import { UserRole } from '@/types/synqra';
-import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { ArrowRight, Check, Moon, ShieldCheck, Sun } from 'lucide-react';
 
 interface LoginViewProps {
@@ -30,71 +30,75 @@ export const LoginView: React.FC<LoginViewProps> = ({
   return (
     <main className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-[var(--surface)]">
       {/* Left Hero Visual Panel */}
-      <section className="hidden lg:flex lg:col-span-6 xl:col-span-7 relative overflow-hidden flex-col justify-between p-12 xl:p-16 bg-gradient-to-br from-[#07152F] via-[#0E2B52] to-[#084E69] text-white">
-        <div className="pointer-events-none absolute -right-44 top-12 w-[560px] h-[560px] rounded-full border border-cyan-300/20" />
-        <div className="pointer-events-none absolute -right-24 top-32 w-[380px] h-[380px] rounded-full border border-cyan-300/15" />
+      <section className="hidden lg:flex lg:col-span-6 xl:col-span-7 relative overflow-hidden flex-col justify-between p-12 xl:p-16 bg-[#07152F] text-white">
+        {/* Foto Latar Oil Rig Senja (WebP teroptimasi) */}
+        <img
+          src={BRAND_MEDIA.loginHeroOilRig.src}
+          alt=""
+          aria-hidden="true"
+          width={BRAND_MEDIA.loginHeroOilRig.width}
+          height={BRAND_MEDIA.loginHeroOilRig.height}
+          loading="eager"
+          decoding="async"
+          className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[52%_62%] scale-[1.02] select-none"
+        />
+
+        {/* Lapisan Gradasi Biru Navy & Teal untuk Keharmonisan Warna & Kontras Teks */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#051026]/90 via-[#0A2245]/68 to-[#063A52]/62"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#040D1F]/88 via-transparent to-[#040D1F]/60"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-28 top-1/4 w-[420px] h-[420px] rounded-full bg-[#00B8D9]/15 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-44 top-12 w-[560px] h-[560px] rounded-full border border-cyan-300/15"
+        />
 
         <div className="relative z-10 flex items-center gap-4">
           <img
             src="/assets/synqra-logo-dark.png"
             alt="Logo SYNQRA"
-            className="w-14 h-14 object-contain rounded-xl p-1.5 bg-white/10 border border-white/20"
+            className="w-14 h-14 object-contain rounded-xl p-1.5 bg-[#071630]/75 border border-white/20 backdrop-blur-md shadow-lg"
           />
           <div>
             <div className="font-heading font-extrabold text-2xl tracking-wider text-white">
               SYNQRA
             </div>
-            <div className="text-xs font-semibold tracking-widest uppercase text-cyan-200/90">
+            <div className="text-xs font-semibold tracking-widest uppercase text-cyan-200/95">
               Intelligence, Connected by Evidence
             </div>
           </div>
         </div>
 
-        <div className="relative z-10 max-w-xl my-8 space-y-5 stagger">
-          <h1
+        <div className="relative z-10 max-w-xl my-auto py-12 space-y-5 stagger">
+          <div
             style={{ '--i': 0 } as React.CSSProperties}
-            className="font-heading text-4xl xl:text-5xl font-bold leading-tight text-white"
+            className="w-12 h-[3px] rounded-[2px] bg-[#00B8D9]"
+          />
+          <h1
+            style={{ '--i': 1 } as React.CSSProperties}
+            className="font-heading text-4xl xl:text-5xl font-bold leading-tight text-white drop-shadow-[0_4px_20px_rgba(4,13,31,0.75)]"
           >
             Dari temuan lapangan,
             <br />
-            <span className="text-cyan-300">menjadi pengetahuan.</span>
+            <span className="text-[#38D6F0]">menjadi pengetahuan.</span>
           </h1>
           <p
             style={{ '--i': 2 } as React.CSSProperties}
-            className="text-base text-white/90 leading-relaxed font-medium"
+            className="text-base xl:text-lg text-white/95 leading-relaxed font-medium max-w-lg drop-shadow-[0_2px_12px_rgba(4,13,31,0.85)]"
           >
             Hubungkan laporan suara, validasi bukti pakar, dan peta pengetahuan aset.
           </p>
-
-          <div
-            style={{ '--i': 4 } as React.CSSProperties}
-            className="mt-6 p-5 rounded-2xl bg-[#071630]/65 border border-cyan-300/25 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-heading text-xs font-bold uppercase tracking-wider text-cyan-300">
-                Aset Terpantau
-              </span>
-              <span className="text-xs font-semibold text-emerald-300">
-                P-101A · E-201 · FCV-301
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="group lift p-3 rounded-xl bg-gradient-to-b from-cyan-400/10 to-white/[0.03] border border-cyan-300/20 hover:border-cyan-300/45 text-center">
-                <TechnicalArt type="pump" darkMode={true} className="w-full h-20" />
-                <div className="font-heading text-xs font-bold text-white mt-1.5">P-101A</div>
-              </div>
-              <div className="group lift p-3 rounded-xl bg-gradient-to-b from-cyan-400/10 to-white/[0.03] border border-cyan-300/20 hover:border-cyan-300/45 text-center">
-                <TechnicalArt type="heat" darkMode={true} className="w-full h-20" />
-                <div className="font-heading text-xs font-bold text-white mt-1.5">E-201</div>
-              </div>
-              <div className="group lift p-3 rounded-xl bg-gradient-to-b from-cyan-400/10 to-white/[0.03] border border-cyan-300/20 hover:border-cyan-300/45 text-center">
-                <TechnicalArt type="valve" darkMode={true} className="w-full h-20" />
-                <div className="font-heading text-xs font-bold text-white mt-1.5">FCV-301</div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <div className="relative z-10 text-sm text-white/80 font-medium">
+        <div className="relative z-10 text-sm text-white/85 font-medium">
           © 2026 SYNQRA · Evidence-Based Reliability &amp; Process Safety Platform
         </div>
       </section>
@@ -109,7 +113,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
           className="absolute top-6 right-6 w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
         >
           <span key={isDarkMode ? 'sun' : 'moon'} className="animate-spin-in inline-flex">
-            {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[#0B1F44]" />}
+            {isDarkMode ? (
+              <Sun className="w-5 h-5 text-amber-400" />
+            ) : (
+              <Moon className="w-5 h-5 text-[#0B1F44]" />
+            )}
           </span>
         </button>
 
@@ -137,9 +145,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-[var(--ink)] mb-2.5">
+              <div className="block text-sm font-bold text-[var(--ink)] mb-2.5">
                 Pilih Persona Demo
-              </label>
+              </div>
               <div className="space-y-2.5 stagger" role="radiogroup" aria-label="Pilih Persona Demo">
                 {Object.values(ROLES).map((r, idx) => {
                   const isActive = roleChoice === r.key;
@@ -183,12 +191,16 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-bold text-[var(--ink)] mb-1.5">
+                <label
+                  htmlFor="synqra-login-email"
+                  className="block text-sm font-bold text-[var(--ink)] mb-1.5"
+                >
                   Email Perusahaan
                 </label>
                 <input
+                  id="synqra-login-email"
                   type="email"
                   readOnly
                   value={currentRoleInfo.email}
@@ -196,10 +208,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-[var(--ink)] mb-1.5">
+                <label
+                  htmlFor="synqra-login-dept"
+                  className="block text-sm font-bold text-[var(--ink)] mb-1.5"
+                >
                   Departemen
                 </label>
                 <input
+                  id="synqra-login-dept"
                   type="text"
                   readOnly
                   value={currentRoleInfo.department}
