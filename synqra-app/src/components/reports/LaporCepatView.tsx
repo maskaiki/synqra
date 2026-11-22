@@ -48,10 +48,15 @@ interface NameplateScanViewState {
   thumbnailUrl: string;
   assetTag: string;
   matchedAssetId: string;
+  equipmentType?: string;
   manufacturer: string;
   model: string;
   serialNumber: string;
   specifications: string;
+  visualObservation?: string;
+  hasVisibleAnomaly?: boolean;
+  suggestedNarrative?: string;
+  metadataSource?: 'nameplate-ocr' | 'asset-catalog';
   confidence: number;
   engine: 'gemini-live' | 'local-fallback';
   usedModel?: string;
@@ -59,10 +64,32 @@ interface NameplateScanViewState {
   isUnknownAsset?: boolean;
   originalKb: number;
   compressedKb: number;
+  scannedFile: File;
 }
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const MAX_NAMEPLATE_IMAGE_BYTES = 4 * 1024 * 1024;
+
+const INVALID_SPEC_VALUES = new Set([
+  '',
+  '-',
+  'n/a',
+  'na',
+  'none',
+  'null',
+  'undefined',
+  'unknown',
+  'tidak tertera',
+  'tidak diketahui',
+  'tidak terlihat',
+  'tidak terbaca',
+  'tidak ada',
+]);
+
+function isValidSpecValue(value?: string): boolean {
+  if (!value) return false;
+  return !INVALID_SPEC_VALUES.has(value.trim().toLowerCase());
+}
 
 const SAMPLE_PROMPTS: Record<string, string> = {
   'P-101A':
@@ -342,10 +369,15 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
         data?: {
           matchedAssetId?: string;
           assetTag?: string;
+          equipmentType?: string;
           manufacturer?: string;
           model?: string;
           serialNumber?: string;
           specifications?: string;
+          visualObservation?: string;
+          hasVisibleAnomaly?: boolean;
+          suggestedNarrative?: string;
+          metadataSource?: 'nameplate-ocr' | 'asset-catalog';
           confidence?: number;
           engine?: 'gemini-live' | 'local-fallback';
           usedModel?: string;
@@ -370,19 +402,39 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       const d = json.data;
       const isUnknown = Boolean(d.isUnknownAsset ?? json.isUnknownAsset);
       const matched = d.matchedAssetId || '';
+      const scanPhotoFile = new File(
+        [compressed.blob],
+        `foto-scan-${(matched || 'alat').toLowerCase()}.jpg`,
+        { type: 'image/jpeg' }
+      );
 
       if (!isUnknown && matched && assets.some((a) => a.id === matched)) {
         setSelectedAssetId(matched);
+      }
+
+      if (!photoFile) {
+        if (photoPreviewRef.current) {
+          URL.revokeObjectURL(photoPreviewRef.current);
+        }
+        const nextPhotoUrl = URL.createObjectURL(compressed.blob);
+        photoPreviewRef.current = nextPhotoUrl;
+        setPhotoFile(scanPhotoFile);
+        setPhotoPreview(nextPhotoUrl);
       }
 
       setScanResult({
         thumbnailUrl: nextThumbUrl,
         assetTag: d.assetTag || matched || 'Tidak Teridentifikasi',
         matchedAssetId: matched,
-        manufacturer: d.manufacturer || 'Tidak Tertera',
-        model: d.model || 'Tidak Tertera',
-        serialNumber: d.serialNumber || 'Tidak Tertera',
-        specifications: d.specifications || 'Data terbaca dari foto nameplate.',
+        equipmentType: d.equipmentType || '',
+        manufacturer: d.manufacturer || '',
+        model: d.model || '',
+        serialNumber: d.serialNumber || '',
+        specifications: d.specifications || 'Data terbaca dari foto lapangan.',
+        visualObservation: d.visualObservation || '',
+        hasVisibleAnomaly: Boolean(d.hasVisibleAnomaly),
+        suggestedNarrative: d.suggestedNarrative || '',
+        metadataSource: d.metadataSource,
         confidence: typeof d.confidence === 'number' ? d.confidence : 0.92,
         engine: d.engine || json.engine || 'local-fallback',
         usedModel: d.usedModel || json.usedModel,
@@ -390,6 +442,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
         isUnknownAsset: isUnknown,
         originalKb: compressed.originalKb,
         compressedKb: compressed.compressedKb,
+        scannedFile: scanPhotoFile,
       });
     } catch (err: unknown) {
       if (nextThumbUrl) {
@@ -402,6 +455,38 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       setIsScanning(false);
       if (nameplateInputRef.current) nameplateInputRef.current.value = '';
     }
+  };
+
+  const handleApplyScanToFinding = () => {
+    if (!scanResult) return;
+    const text = (
+      scanResult.suggestedNarrative ||
+      scanResult.visualObservation ||
+      ''
+    ).trim();
+
+    setInputMode('text');
+    if (text) {
+      setNarrative(text);
+      if (
+        scanResult.hasVisibleAnomaly &&
+        /rembes|bocor|leak|retak|asap|api|overheat|panas|kritis|bahaya/i.test(text)
+      ) {
+        setUrgency('Mendesak');
+      }
+    }
+
+    if (!photoFile && scanResult.scannedFile) {
+      if (photoPreviewRef.current) {
+        URL.revokeObjectURL(photoPreviewRef.current);
+      }
+      const nextPhotoUrl = URL.createObjectURL(scanResult.scannedFile);
+      photoPreviewRef.current = nextPhotoUrl;
+      setPhotoFile(scanResult.scannedFile);
+      setPhotoPreview(nextPhotoUrl);
+    }
+
+    goToStep(2);
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -698,85 +783,220 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
             </div>
           )}
 
-          {scanResult && (
-            <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-2.5 animate-fade-in">
-              <div className="flex flex-col sm:flex-row gap-3.5">
-                <img
-                  src={scanResult.thumbnailUrl}
-                  alt={`Foto nameplate ${scanResult.assetTag}`}
-                  className="w-20 h-20 rounded-xl object-cover border border-[var(--line)] bg-[var(--surface)] shrink-0"
-                />
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-heading font-bold text-base text-[var(--ink)]">
-                      Hasil Scan: {scanResult.assetTag}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {scanResult.engine === 'gemini-live' ? (
-                        <span
-                          style={{
-                            backgroundColor: 'var(--green-bg)',
-                            color: 'var(--green)',
-                            borderColor: 'var(--green-border)',
-                            borderLeftColor: 'var(--green)',
-                          }}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>
-                            {(scanResult.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE
+          {scanResult && (() => {
+            const matchedCatalogAsset =
+              !scanResult.isUnknownAsset && scanResult.matchedAssetId
+                ? assets.find((a) => a.id === scanResult.matchedAssetId)
+                : undefined;
+
+            const specParts = (
+              [
+                ['Pabrikan', scanResult.manufacturer],
+                ['Model', scanResult.model],
+                ['No. Seri', scanResult.serialNumber],
+              ] as const
+            ).filter(([, val]) => isValidSpecValue(val));
+
+            const equipmentHeading =
+              scanResult.equipmentType ||
+              matchedCatalogAsset?.name ||
+              'Peralatan Industri';
+
+            const canApplyObservation = Boolean(
+              scanResult.visualObservation || scanResult.suggestedNarrative
+            );
+
+            return (
+              <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-3 animate-fade-in">
+                <div className="flex flex-col sm:flex-row gap-3.5">
+                  <img
+                    src={scanResult.thumbnailUrl}
+                    alt={`Foto nameplate ${scanResult.assetTag}`}
+                    className="w-20 h-20 rounded-xl object-cover border border-[var(--line)] bg-[var(--surface)] shrink-0"
+                  />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-heading font-bold text-base text-[var(--ink)]">
+                        Hasil Scan: {scanResult.assetTag}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {scanResult.engine === 'gemini-live' ? (
+                          <span
+                            style={{
+                              backgroundColor: 'var(--green-bg)',
+                              color: 'var(--green)',
+                              borderColor: 'var(--green-border)',
+                              borderLeftColor: 'var(--green)',
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>
+                              {(scanResult.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE
+                            </span>
                           </span>
+                        ) : (
+                          <span
+                            style={{
+                              backgroundColor: 'var(--amber-bg)',
+                              color: 'var(--amber)',
+                              borderColor: 'var(--amber-border)',
+                              borderLeftColor: 'var(--amber)',
+                            }}
+                            title={scanResult.errorReason}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
+                          >
+                            <Cpu className="w-3.5 h-3.5" />
+                            <span>LOCAL FALLBACK</span>
+                          </span>
+                        )}
+                        <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)] font-heading text-xs font-bold">
+                          {Math.round(scanResult.confidence * 100)}%
                         </span>
-                      ) : (
-                        <span
-                          style={{
+                      </div>
+                    </div>
+
+                    {matchedCatalogAsset && (
+                      <div
+                        style={{
+                          backgroundColor: 'var(--green-bg)',
+                          borderColor: 'var(--green-border)',
+                          borderLeftColor: 'var(--green)',
+                        }}
+                        className="px-3 py-2 rounded-[7px] border border-l-[3.5px] flex items-start gap-2 text-sm"
+                      >
+                        <CheckCircle2
+                          className="w-4 h-4 shrink-0 mt-0.5"
+                          style={{ color: 'var(--green)' }}
+                        />
+                        <div className="min-w-0">
+                          <div className="font-heading font-bold text-[var(--ink)]">
+                            Cocok Katalog: {matchedCatalogAsset.id} · {matchedCatalogAsset.name}
+                          </div>
+                          <div className="text-sm text-[var(--ink-soft)]">
+                            {matchedCatalogAsset.area}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {specParts.length > 0 ? (
+                      <div className="text-sm text-[var(--ink-soft)]">
+                        {specParts.map(([label, val], idx) => (
+                          <React.Fragment key={label}>
+                            {idx > 0 && ' · '}
+                            <span className="font-semibold text-[var(--ink)]">
+                              {label}:
+                            </span>{' '}
+                            {val}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-[var(--ink-soft)]">
+                        <span className="font-semibold text-[var(--ink)]">
+                          {equipmentHeading}
+                        </span>
+                        {' · '}Pelat tag lapangan (kompresi {scanResult.originalKb} KB ke{' '}
+                        {scanResult.compressedKb} KB)
+                      </div>
+                    )}
+
+                    <div className="text-sm text-[var(--ink-soft)] leading-relaxed">
+                      {scanResult.specifications}
+                      {specParts.length > 0 &&
+                        ` (${scanResult.originalKb} KB ke ${scanResult.compressedKb} KB)`}
+                    </div>
+                  </div>
+                </div>
+
+                {scanResult.visualObservation && (
+                  <div
+                    style={
+                      scanResult.hasVisibleAnomaly
+                        ? {
                             backgroundColor: 'var(--amber-bg)',
-                            color: 'var(--amber)',
                             borderColor: 'var(--amber-border)',
                             borderLeftColor: 'var(--amber)',
-                          }}
-                          title={scanResult.errorReason}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                        >
-                          <Cpu className="w-3.5 h-3.5" />
-                          <span>LOCAL FALLBACK</span>
-                        </span>
+                          }
+                        : {
+                            backgroundColor: 'var(--surface)',
+                            borderColor: 'var(--line)',
+                            borderLeftColor: 'var(--cyan)',
+                          }
+                    }
+                    className="p-3 rounded-[7px] border border-l-[3.5px] space-y-1"
+                  >
+                    <div className="flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-wide">
+                      {scanResult.hasVisibleAnomaly ? (
+                        <>
+                          <AlertTriangle
+                            className="w-4 h-4 shrink-0"
+                            style={{ color: 'var(--amber)' }}
+                          />
+                          <span style={{ color: 'var(--amber)' }}>
+                            Observasi Visual AI · Anomali Terdeteksi
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 shrink-0 text-[var(--cyan-dark)]" />
+                          <span className="text-[var(--cyan-dark)]">
+                            Observasi Visual AI
+                          </span>
+                        </>
                       )}
-                      <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)] font-heading text-xs font-bold">
-                        {Math.round(scanResult.confidence * 100)}%
+                    </div>
+                    <p className="text-sm text-[var(--ink)] leading-relaxed m-0">
+                      {scanResult.visualObservation}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+                  {photoFile && (
+                    <div className="text-sm text-[var(--ink-soft)] inline-flex items-center gap-1.5">
+                      <Camera className="w-4 h-4 text-[var(--cyan-dark)] shrink-0" />
+                      <span>
+                        Foto scan otomatis siap dilampirkan sebagai Foto Bukti Awal di Langkah 3.
                       </span>
                     </div>
-                  </div>
-                  <div className="text-sm text-[var(--ink-soft)]">
-                    <b className="text-[var(--ink)]">{scanResult.manufacturer}</b> ({scanResult.model})
-                    {' · '}No. Seri: {scanResult.serialNumber}
-                  </div>
-                  <div className="text-sm text-[var(--ink-soft)]">
-                    {scanResult.specifications} ({scanResult.originalKb} KB ke {scanResult.compressedKb} KB)
-                  </div>
-                </div>
-              </div>
+                  )}
 
-              {scanResult.isUnknownAsset && (
-                <div
-                  style={{
-                    backgroundColor: 'var(--amber-bg)',
-                    borderColor: 'var(--amber-border)',
-                    borderLeftColor: 'var(--amber)',
-                  }}
-                  className="p-3 rounded-[7px] border border-l-[4px] flex items-center gap-2 text-sm font-semibold text-[var(--ink)]"
-                >
-                  <AlertTriangle
-                    className="w-4 h-4 shrink-0"
-                    style={{ color: 'var(--amber)' }}
-                  />
-                  <span>
-                    Tag &ldquo;{scanResult.assetTag}&rdquo; tidak ada di daftar utama. Pilih kartu alat secara manual di atas.
-                  </span>
+                  {scanResult.hasVisibleAnomaly && canApplyObservation && (
+                    <button
+                      type="button"
+                      onClick={handleApplyScanToFinding}
+                      className="group px-3.5 py-2 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm shrink-0"
+                    >
+                      <Sparkles className="w-4 h-4 shrink-0" />
+                      <span>Pakai Observasi AI ke Narasi Temuan</span>
+                      <ArrowRight className="w-4 h-4 nudge-x shrink-0" />
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
+
+                {scanResult.isUnknownAsset && (
+                  <div
+                    style={{
+                      backgroundColor: 'var(--amber-bg)',
+                      borderColor: 'var(--amber-border)',
+                      borderLeftColor: 'var(--amber)',
+                    }}
+                    className="p-3 rounded-[7px] border border-l-[4px] flex items-center gap-2 text-sm font-semibold text-[var(--ink)]"
+                  >
+                    <AlertTriangle
+                      className="w-4 h-4 shrink-0"
+                      style={{ color: 'var(--amber)' }}
+                    />
+                    <span>
+                      Tag &ldquo;{scanResult.assetTag}&rdquo; tidak ada di daftar utama. Pilih kartu alat secara manual di atas.
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {errorMsg && (
             <div

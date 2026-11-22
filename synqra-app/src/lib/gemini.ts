@@ -27,7 +27,7 @@ export interface LaporCepatExtractionResult {
 }
 
 export const SYSTEM_PROMPT_LAPOR_CEPAT = `Anda adalah asisten AI Industrial Engineering & Reliability untuk platform SYNQRA (Industri Pengolahan Minyak & Gas).
-Tugas Anda adalah menganalisis transkrip audio lapangan atau teks narasi campuran Bahasa Indonesia–Inggris dari teknisi pabrik, lalu mengekstrak 7 entitas kegagalan peralatan beserta judul & urgensi dalam format JSON murni:
+Tugas Anda adalah menganalisis transkrip audio lapangan atau teks narasi campuran Bahasa Indonesia-Inggris dari teknisi pabrik, lalu mengekstrak 7 entitas kegagalan peralatan beserta judul & urgensi dalam format JSON murni:
 
 1. identitas_alat: Tag/nama alat (misal: "Pompa Sentrifugal P-101A", "Heat Exchanger E-201", "Control Valve FCV-301").
 2. gejala: Gejala anomali yang teramati langsung (vibrasi, kebocoran, penurunan suhu, respons lambat).
@@ -36,7 +36,7 @@ Tugas Anda adalah menganalisis transkrip audio lapangan atau teks narasi campura
 5. praduga_penyebab: Praduga awal akar masalah (tetap bersifat dugaan, bukan vonis final).
 6. usulan_tindakan: Usulan tindakan awal atau mitigasi aman segera.
 7. verifikasi: Tolok ukur verifikasi setelah perbaikan (isi "Menunggu perbaikan & verifikasi fisik" bila baru melapor).
-8. suggestedTitle: Judul singkat laporan (5–9 kata) dalam Bahasa Indonesia teknis yang merangkum gejala utama dan kode tag aset.
+8. suggestedTitle: Judul singkat laporan (5-9 kata) dalam Bahasa Indonesia teknis yang merangkum gejala utama dan kode tag aset.
 9. suggestedUrgency: Isi "Mendesak" jika terdapat kebocoran/rembesan, panas ekstrem/overheating, vibrasi kritis/tinggi, tekanan berbahaya, asap/api, atau near miss; selain itu isi "Normal".
 
 ATURAN WAJIB:
@@ -304,15 +304,66 @@ export async function extractFromAudio(
 export interface NameplateScanResult {
   assetTag: string;
   matchedAssetId: string;
+  equipmentType?: string;
   manufacturer: string;
   model: string;
   serialNumber: string;
   specifications: string;
+  visualObservation?: string;
+  hasVisibleAnomaly?: boolean;
+  suggestedNarrative?: string;
+  metadataSource?: 'nameplate-ocr' | 'asset-catalog';
   confidence: number;
   engine: 'gemini-live' | 'local-fallback';
   usedModel?: string;
   errorReason?: string;
   isUnknownAsset?: boolean;
+}
+
+const CATALOG_ASSET_SPECS: Record<
+  string,
+  { equipmentType: string; specifications: string }
+> = {
+  'P-101A': {
+    equipmentType: 'Pompa Sentrifugal Umpan Mentah',
+    specifications:
+      'Pompa sentrifugal multistage transfer fluida hidrokarbon berat bertekanan tinggi.',
+  },
+  'E-201': {
+    equipmentType: 'Heat Exchanger Pre-Heat Train',
+    specifications:
+      'Shell & tube heat exchanger perpindahan panas minyak mentah menuju kolom distilasi.',
+  },
+  'FCV-301': {
+    equipmentType: 'Pneumatic Flow Control Valve',
+    specifications:
+      'Katup kontrol aliran gas bertekanan tinggi dilengkapi pneumatic actuator & smart positioner.',
+  },
+};
+
+const PLACEHOLDER_VISION_VALUES = new Set([
+  '',
+  '-',
+  'n/a',
+  'na',
+  'none',
+  'null',
+  'undefined',
+  'unknown',
+  'tidak tertera',
+  'tidak diketahui',
+  'tidak terlihat',
+  'tidak terbaca',
+  'tidak ada',
+]);
+
+function cleanVisionField(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.replace(/[—–]/g, '-').trim();
+  if (PLACEHOLDER_VISION_VALUES.has(trimmed.toLowerCase())) {
+    return '';
+  }
+  return trimmed;
 }
 
 export async function scanNameplateFromImage(
@@ -322,10 +373,15 @@ export async function scanNameplateFromImage(
   const defaultResult: NameplateScanResult = {
     assetTag: 'P-101A',
     matchedAssetId: 'P-101A',
+    equipmentType: CATALOG_ASSET_SPECS['P-101A'].equipmentType,
     manufacturer: 'Sulzer Pumps Ltd.',
     model: 'OH2 Centrifugal Multistage',
     serialNumber: 'SN-2024-8849-CDU',
-    specifications: 'Head 142m · Flow 125 m³/h · Motor 75 kW · 2950 RPM',
+    specifications: CATALOG_ASSET_SPECS['P-101A'].specifications,
+    visualObservation: 'Mode simulasi lokal aktif. Pilih atau unggah ulang foto saat layanan Vision aktif.',
+    hasVisibleAnomaly: false,
+    suggestedNarrative: '',
+    metadataSource: 'asset-catalog',
     confidence: 0.95,
     engine: 'local-fallback',
     isUnknownAsset: false,
@@ -352,13 +408,18 @@ export async function scanNameplateFromImage(
         },
       });
 
-      const prompt = `Analisis foto nameplate atau label kode tag peralatan industri ini dan kembalikan JSON murni:
+      const prompt = `Anda adalah engineer reliability migas yang menganalisis foto nameplate ATAU foto lapangan peralatan industri (mungkin hanya menampilkan pelat kode tag logam seperti P-101A tanpa pabrikan/no. seri, atau foto peralatan dengan kondisi fisik tertentu).
+Periksa foto fisik peralatannya secara cermat (abaikan tombol/UI kamera layar ponsel bila ini foto layar) dan kembalikan JSON murni dengan skema berikut:
 {
-  "assetTag": "Kode tag persis seperti tertulis (misal P-101A, E-201, FCV-301, atau tag lain yang terlihat)",
-  "manufacturer": "Nama pabrikan atau 'Tidak Tertera'",
-  "model": "Model atau jenis peralatan atau 'Tidak Tertera'",
-  "serialNumber": "Nomor seri atau 'Tidak Tertera'",
-  "specifications": "Spesifikasi teknis ringkas yang terbaca",
+  "assetTag": "Kode tag persis seperti tertulis pada pelat tag/label/casing (misal P-101A, E-201, FCV-301, atau tag lain yang terlihat). Isi 'Tidak Teridentifikasi' hanya jika benar-benar tidak ada kode tag.",
+  "equipmentType": "Jenis peralatan yang terlihat secara visual dalam Bahasa Indonesia singkat (misal 'Pompa Sentrifugal', 'Heat Exchanger', 'Control Valve')",
+  "manufacturer": "Nama pabrikan HANYA jika tercetak fisik pada plat/casing; jika tidak tercetak kembalikan string kosong '' (JANGAN tulis 'Tidak Tertera')",
+  "model": "Nomor/kode model HANYA jika tercetak fisik pada plat; jika tidak tercetak kembalikan ''",
+  "serialNumber": "Nomor seri HANYA jika tercetak fisik pada plat; jika tidak tercetak kembalikan ''",
+  "specifications": "Spesifikasi teknis ringkas yang terbaca dari plat atau ciri mekanis yang terlihat pada foto",
+  "visualObservation": "1-2 kalimat teknis ringkas dalam Bahasa Indonesia tentang kondisi fisik aktual peralatan pada foto (misal rembesan/kebocoran oli atau cairan di area mechanical seal/flange, korosi/karat pada baut atau casing, kerusakan gasket/gauge, atau kondisi fisik tampak normal).",
+  "hasVisibleAnomaly": true,
+  "suggestedNarrative": "Jika hasVisibleAnomaly true, tulis 1-2 kalimat laporan temuan lapangan siap pakai dalam Bahasa Indonesia yang menyebut kode tag alat dan gejala fisik yang terlihat pada foto; jika false, kembalikan string kosong ''",
   "confidence": 0.95
 }`;
 
@@ -377,11 +438,40 @@ export async function scanNameplateFromImage(
       ) as Partial<NameplateScanResult>;
 
       const knownTags = ['P-101A', 'E-201', 'FCV-301'];
-      const rawTag = (parsed.assetTag || '').trim().toUpperCase();
-      const matched = knownTags.find(
-        (t) => rawTag.includes(t) || rawTag.includes(t.replace('-', ''))
-      );
+      const rawTag = cleanVisionField(parsed.assetTag).toUpperCase();
+      const rawTagAlnum = rawTag.replace(/[^A-Z0-9]/g, '');
+      const matched = knownTags.find((t) => {
+        const stripped = t.replace(/[^A-Z0-9]/g, '');
+        return rawTag.includes(t) || rawTagAlnum.includes(stripped);
+      });
       const isUnknownAsset = !matched;
+
+      const manufacturer = cleanVisionField(parsed.manufacturer);
+      const modelCode = cleanVisionField(parsed.model);
+      const serialNumber = cleanVisionField(parsed.serialNumber);
+      const catalogSpec = matched ? CATALOG_ASSET_SPECS[matched] : undefined;
+
+      const equipmentType =
+        cleanVisionField(parsed.equipmentType) ||
+        catalogSpec?.equipmentType ||
+        '';
+      const specifications =
+        cleanVisionField(parsed.specifications) ||
+        catalogSpec?.specifications ||
+        'Data terbaca dari foto lapangan.';
+      const visualObservation = cleanVisionField(parsed.visualObservation);
+      const hasVisibleAnomaly = Boolean(
+        parsed.hasVisibleAnomaly && visualObservation
+      );
+      const suggestedNarrative = hasVisibleAnomaly
+        ? cleanVisionField(parsed.suggestedNarrative) || visualObservation
+        : '';
+      const metadataSource: 'nameplate-ocr' | 'asset-catalog' =
+        manufacturer || modelCode || serialNumber
+          ? 'nameplate-ocr'
+          : matched
+            ? 'asset-catalog'
+            : 'nameplate-ocr';
 
       let confidence =
         typeof parsed.confidence === 'number' && !Number.isNaN(parsed.confidence)
@@ -391,13 +481,18 @@ export async function scanNameplateFromImage(
       confidence = Math.max(0, Math.min(1, confidence));
 
       return {
-        assetTag: parsed.assetTag?.trim() || matched || 'Tidak Teridentifikasi',
+        assetTag:
+          cleanVisionField(parsed.assetTag) || matched || 'Tidak Teridentifikasi',
         matchedAssetId: matched || '',
-        manufacturer: parsed.manufacturer?.trim() || 'Tidak Tertera',
-        model: parsed.model?.trim() || 'Tidak Tertera',
-        serialNumber: parsed.serialNumber?.trim() || 'Tidak Tertera',
-        specifications:
-          parsed.specifications?.trim() || 'Data terbaca dari foto nameplate lapangan.',
+        equipmentType,
+        manufacturer,
+        model: modelCode,
+        serialNumber,
+        specifications,
+        visualObservation,
+        hasVisibleAnomaly,
+        suggestedNarrative,
+        metadataSource,
         confidence,
         engine: 'gemini-live',
         usedModel: modelName,
@@ -449,7 +544,7 @@ export function generateLocalFallbackEntities(text: string): FailureEntities {
       text.trim().length > 15
         ? text.trim()
         : 'Anomali operasional teramati di lapangan saat patroli shift.',
-    kondisi_operasi: 'Unit beroperasi kontinu pada kapasitas 85%–95% beban normal.',
+    kondisi_operasi: 'Unit beroperasi kontinu pada kapasitas 85%-95% beban normal.',
     pemeriksaan_awal:
       'Observasi visual awal & pengecekan alat ukur portabel di lapangan.',
     praduga_penyebab:
@@ -460,6 +555,6 @@ export function generateLocalFallbackEntities(text: string): FailureEntities {
           : 'Praduga awal: gesekan packing stem atau deviasi kalibrasi smart positioner.',
     usulan_tindakan:
       'Lakukan verifikasi fisik di lapangan, amankan area, dan siapkan rencana inspeksi departemen.',
-    verifikasi: 'Kosong — menunggu tindakan perbaikan dan verifikasi fisik.',
+    verifikasi: 'Kosong, menunggu tindakan perbaikan dan verifikasi fisik.',
   };
 }
