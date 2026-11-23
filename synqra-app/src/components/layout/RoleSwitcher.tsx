@@ -40,21 +40,21 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
         onClick={() => setIsOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-left"
+        className="flex items-center gap-2 sm:gap-2.5 p-0.5 sm:pl-1.5 sm:pr-3.5 sm:py-1.5 rounded-full surface-card hover:border-[var(--cyan)] text-left"
       >
-        <span className="w-9 h-9 rounded-lg bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] font-heading font-extrabold text-xs flex items-center justify-center shrink-0">
+        <span className="w-8 h-8 rounded-full pop-btn font-heading font-extrabold text-xs flex items-center justify-center shrink-0">
           {activeRole.initials}
         </span>
         <div className="hidden sm:block leading-tight">
           <div className="font-heading font-bold text-sm text-[var(--ink)]">
             {activeRole.name}
           </div>
-          <div className="text-xs font-semibold text-[var(--ink-soft)]">
+          <div className="text-[11.5px] font-semibold text-[var(--ink-soft)]">
             {activeRole.shortRole}
           </div>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-[var(--ink-soft)] ml-1 transition-transform duration-200 ${
+          className={`hidden sm:block w-4 h-4 text-[var(--ink-soft)] ml-0.5 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -63,11 +63,11 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-xl p-3 z-40 animate-pop-origin">
-            <div className="font-heading text-xs font-extrabold uppercase tracking-wider text-[var(--cyan-dark)] px-2 pb-2 mb-2 border-b border-[var(--line-soft)]">
-              Ganti Peran Demo Cepat
+          <div className="absolute right-0 mt-2.5 w-80 rounded-3xl bg-[var(--surface-elevated)] border border-[var(--line)] shadow-[0_24px_60px_-15px_rgba(9,19,38,0.38)] p-3 z-40 animate-pop-origin">
+            <div className="font-heading text-[11px] font-extrabold uppercase tracking-wider text-[var(--cyan-dark)] px-2.5 pb-2 mb-1.5 border-b border-[var(--line-soft)]">
+              Ganti Peran
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {Object.values(ROLES).map((r) => {
                 const isSelected = r.key === currentRole;
                 return (
@@ -78,13 +78,13 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
                       onRoleChange(r.key);
                       setIsOpen(false);
                     }}
-                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl border text-left ${
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-2xl text-left transition-colors ${
                       isSelected
-                        ? 'bg-[var(--cyan-pale)] border-[var(--cyan)]/50'
-                        : 'bg-[var(--soft)] border-transparent hover:border-[var(--line)] hover:bg-[var(--hover-bg)]'
+                        ? 'bg-[var(--cyan-pale)]'
+                        : 'hover:bg-[var(--hover-bg)]'
                     }`}
                   >
-                    <span className="w-9 h-9 rounded-lg bg-[var(--surface)] border border-[var(--line)] flex items-center justify-center shrink-0">
+                    <span className="w-9 h-9 rounded-full bg-[var(--surface-elevated)] flex items-center justify-center shrink-0 shadow-sm">
                       {renderIcon(r.key)}
                     </span>
                     <div className="flex-1 min-w-0">

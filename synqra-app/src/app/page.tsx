@@ -310,7 +310,7 @@ export default function SynqraApp() {
     assets.find((a) => a.id === activeReport.asset_id) || assets[0];
 
   return (
-    <div className="min-h-screen flex bg-[var(--canvas)] text-[var(--ink)]">
+    <div className="min-h-screen flex text-[var(--ink)]">
       {/* Left Sidebar + Mobile Bottom Nav */}
       <Sidebar
         activePage={activePage}
@@ -338,9 +338,14 @@ export default function SynqraApp() {
           onResetDemo={handleResetDemo}
           onSyncData={handleSyncData}
           isSyncing={isSyncing}
+          reports={reports}
+          assets={assets}
+          onSelectReport={handleOpenReport}
+          onSendSlaReminder={handleSendSlaReminder}
         />
 
-        <main className="w-full max-w-[1380px] mx-auto px-4 sm:px-8 py-7">
+        <main className="w-full max-w-[1380px] mx-auto px-4 sm:px-8 py-6">
+          <div key={`${activePage}-${selectedReportId || ''}`} className="page-transition-enter">
           {activePage === 'home' && (
             <HomeView
               roleInfo={roleInfo}
@@ -425,6 +430,7 @@ export default function SynqraApp() {
               onOpenReport={handleOpenReport}
             />
           )}
+          </div>
         </main>
       </div>
 

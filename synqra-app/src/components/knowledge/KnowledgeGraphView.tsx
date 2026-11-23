@@ -2,12 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
-import { detectEarlyWarnings } from '@/lib/constants';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
@@ -59,7 +57,6 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
     ? assetReports
     : assetReports.filter((r) => r.status === 'VERIFIED');
 
-  const warnings = selectedAsset ? detectEarlyWarnings(reports, [selectedAsset]) : [];
   const focusedIndex = focusedReportId
     ? visibleReports.findIndex((r) => r.id === focusedReportId)
     : -1;
@@ -89,17 +86,12 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--ink)]">
-            Peta Pengetahuan Aset
-          </h1>
-          <p className="text-[15px] text-[var(--ink-soft)] mt-1">
-            Telusuri hubungan aset, gejala, dan bukti per peralatan.
-          </p>
-        </div>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="font-heading text-3xl font-bold text-[var(--ink)] m-0">
+          Knowledge Graph
+        </h1>
 
-        <label className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)]/60 cursor-pointer text-sm font-bold text-[var(--ink)] select-none self-start sm:self-auto transition-colors">
+        <label className="surface-card inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full cursor-pointer text-sm font-bold text-[var(--ink)] select-none self-start sm:self-auto">
           <input
             type="checkbox"
             checked={showAllStatuses}
@@ -110,7 +102,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             }}
             className="w-4 h-4 accent-[#00B8D9]"
           />
-          <span>Sertakan Praduga / Investigasi</span>
+          <span>Sertakan Praduga</span>
         </label>
       </header>
 
@@ -132,32 +124,12 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
               compact
               style={{ '--i': idx } as React.CSSProperties}
               badgeText={`${verifiedTotal} Verified`}
-              metaText={`${allTotal} Total Kasus · ${asset.area.split(' · ')[0]}`}
+              metaText={`${allTotal} Kasus · ${asset.area.split(' · ')[0]}`}
               onClick={() => handleSelectAsset(asset.id)}
             />
           );
         })}
       </section>
-
-      {warnings.length > 0 && (
-        <div
-          style={{
-            backgroundColor: 'var(--amber-bg)',
-            borderColor: 'var(--amber-border)',
-            borderLeftColor: 'var(--amber)',
-          }}
-          className="p-4 rounded-2xl border border-l-[4px] flex items-start gap-3 animate-fade-in"
-        >
-          <AlertTriangle
-            className="w-5 h-5 shrink-0 mt-0.5"
-            style={{ color: 'var(--amber)' }}
-          />
-          <div className="text-sm font-semibold text-[var(--ink)]">
-            <b style={{ color: 'var(--amber)' }}>Sinyal Dini {selectedAsset.id}: </b>
-            {warnings[0].summary || warnings[0].message}
-          </div>
-        </div>
-      )}
 
       {focusedReport ? (
         /* Panel Fokus Kasus: Tampilan rantai sebab-akibat 5 lapis yang lega */
@@ -269,10 +241,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
               <div className="space-y-0 stagger">
                 {chainNodes.map((node, idx) => (
                   <div key={node.tier} style={{ '--i': idx } as React.CSSProperties}>
-                    <div
-                      style={{ borderLeftColor: node.accent }}
-                      className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[4px]"
-                    >
+                    <div className="p-4 rounded-2xl bg-[var(--soft)]">
                       <div
                         style={{ color: node.accent }}
                         className="font-heading text-xs font-extrabold uppercase tracking-wider mb-1"
@@ -283,7 +252,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         {node.text}
                       </div>
                     </div>
-                    <div className="w-[2px] h-4 bg-[var(--line)] ml-6" />
+                    <div className="w-[2px] h-3.5 bg-[var(--line)] ml-6" />
                   </div>
                 ))}
 
@@ -291,10 +260,8 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                   style={{
                     '--i': 4,
                     backgroundColor: 'var(--green-bg)',
-                    borderColor: 'var(--green-border)',
-                    borderLeftColor: 'var(--green)',
                   } as React.CSSProperties}
-                  className="p-4 rounded-xl border border-l-[4px] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-3 min-w-0">
                     <FileCheck2
@@ -359,7 +326,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             </div>
 
             {visibleReports.length === 0 ? (
-              <div className="p-10 rounded-2xl bg-[var(--soft)] border border-dashed border-[var(--line)] text-center space-y-2">
+              <div className="p-10 rounded-3xl bg-[var(--soft)] text-center space-y-2">
                 <CheckCircle2 className="w-8 h-8 mx-auto text-[var(--cyan-dark)]" />
                 <div className="font-heading font-bold text-base text-[var(--ink)]">
                   Belum ada kasus TERVERIFIKASI pada aset {selectedAsset.id}
@@ -369,34 +336,32 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[256px_76px_1fr] items-stretch gap-4 lg:gap-0 pt-4">
-                {/* Simpul Aset Pusat dengan efek breakout seamless */}
-                <div className="group pt-5">
-                  <div className="h-full p-4 rounded-2xl bg-[var(--soft)] border-2 border-[var(--cyan)] shadow-sm flex flex-col justify-between gap-3 overflow-visible">
+              <div className="grid grid-cols-1 lg:grid-cols-[260px_76px_1fr] items-center gap-5 lg:gap-0 pt-6">
+                {/* Simpul Aset Pusat seamless kompak tanpa kotak border cyan tebal */}
+                <div className="group pt-6 min-w-0">
+                  <div
+                    style={{ background: 'var(--stage-gradient-active)' }}
+                    className="rounded-3xl p-5 flex flex-col items-center text-center gap-3 overflow-visible"
+                  >
+                    <TechnicalArt
+                      type={selectedAsset.type}
+                      darkMode={isDarkMode}
+                      breakout
+                      className="w-full h-36 -mt-12 relative z-10"
+                    />
                     <div
-                      className="rounded-xl flex flex-col items-center justify-end px-2 pb-2 pt-1 overflow-visible"
-                      style={{ background: 'var(--stage-gradient-active)' }}
-                    >
-                      <TechnicalArt
-                        type={selectedAsset.type}
-                        darkMode={isDarkMode}
-                        breakout
-                        className="w-full h-32 -mt-9 relative z-10"
-                      />
-                      <div
-                        aria-hidden="true"
-                        className="w-3/4 h-3 -mt-1.5 rounded-[50%]"
-                        style={{ background: 'var(--stage-floor)' }}
-                      />
-                    </div>
-                    <div>
-                      <div className="font-heading text-xl font-bold text-[var(--ink)]">
+                      aria-hidden="true"
+                      className="w-3/4 h-3 -mt-2 rounded-[50%]"
+                      style={{ background: 'var(--stage-floor)' }}
+                    />
+                    <div className="space-y-0.5 pt-1">
+                      <div className="font-heading text-xl font-extrabold text-[var(--ink)]">
                         {selectedAsset.id}
                       </div>
                       <div className="font-heading font-bold text-sm text-[var(--cyan-dark)]">
                         {selectedAsset.name}
                       </div>
-                      <div className="text-sm text-[var(--ink-soft)] mt-1">
+                      <div className="text-sm text-[var(--ink-soft)]">
                         {selectedAsset.area}
                       </div>
                     </div>
@@ -404,7 +369,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 </div>
 
                 {/* Garis Penghubung Visual (Desktop) */}
-                <div className="hidden lg:block w-full h-full min-h-[160px]" aria-hidden="true">
+                <div className="hidden lg:block w-full h-full min-h-[220px]" aria-hidden="true">
                   <svg
                     viewBox="0 0 76 100"
                     preserveAspectRatio="none"
@@ -433,58 +398,52 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                   </svg>
                 </div>
 
-                {/* Kelompok Simpul Gejala / Kasus */}
-                <div className="grid auto-rows-fr gap-2.5 stagger">
-                  {visibleReports.map((rep, idx) => {
-                    const isVer = rep.status === 'VERIFIED';
-                    return (
-                      <button
-                        key={rep.id}
-                        type="button"
-                        onClick={() => {
-                          setHoveredReportId(null);
-                          setFocusedReportId(rep.id);
-                        }}
-                        onMouseEnter={() => setHoveredReportId(rep.id)}
-                        onMouseLeave={() => setHoveredReportId(null)}
-                        onFocus={() => setHoveredReportId(rep.id)}
-                        onBlur={() => setHoveredReportId(null)}
-                        style={{
-                          '--i': Math.min(idx, 5),
-                          borderLeftColor: isVer ? 'var(--green)' : 'var(--amber)',
-                        } as React.CSSProperties}
-                        className="group lift w-full px-4 py-3 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] hover:border-[var(--cyan)] text-left flex items-center justify-between gap-3"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)] shrink-0">
-                              {rep.id}
-                            </span>
-                            <span className="font-heading font-bold text-sm text-[var(--ink)] truncate">
-                              {rep.title}
-                            </span>
-                          </div>
-                          <p className="text-sm text-[var(--ink-soft)] truncate m-0 mt-0.5">
-                            {rep.gejala}
-                          </p>
+                {/* Kelompok Simpul Gejala / Kasus (Tanpa border kiri/luar) */}
+                <div className="min-w-0 grid auto-rows-fr gap-2.5 stagger">
+                  {visibleReports.map((rep, idx) => (
+                    <button
+                      key={rep.id}
+                      type="button"
+                      onClick={() => {
+                        setHoveredReportId(null);
+                        setFocusedReportId(rep.id);
+                      }}
+                      onMouseEnter={() => setHoveredReportId(rep.id)}
+                      onMouseLeave={() => setHoveredReportId(null)}
+                      onFocus={() => setHoveredReportId(rep.id)}
+                      onBlur={() => setHoveredReportId(null)}
+                      style={{ '--i': Math.min(idx, 5) } as React.CSSProperties}
+                      className="group lift w-full min-w-0 max-w-full overflow-hidden px-4 py-3.5 rounded-2xl bg-[var(--soft)] hover:bg-[var(--hover-bg)] text-left flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)] shrink-0">
+                            {rep.id}
+                          </span>
+                          <span className="font-heading font-bold text-sm text-[var(--ink)] truncate">
+                            {rep.title}
+                          </span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--cyan-dark)] shrink-0 nudge-x" />
-                      </button>
-                    );
-                  })}
+                        <p className="text-sm text-[var(--ink-soft)] truncate m-0 mt-0.5">
+                          {rep.gejala}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-[var(--cyan-dark)] shrink-0 nudge-x" />
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
           </section>
 
-          {/* Bagian 2: Daftar Kartu Kasus 1 Baris */}
+          {/* Bagian 2: Daftar Kasus Terkait (Clean Divider List tanpa kotak-dalam-kotak) */}
           {visibleReports.length > 0 && (
-            <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-3">
-              <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
-                Daftar Kasus Terkait ({visibleReports.length})
+            <section className="surface-card p-6 rounded-3xl space-y-2">
+              <h2 className="font-heading text-lg font-bold text-[var(--ink)] mb-3 m-0">
+                Daftar Kasus ({visibleReports.length})
               </h2>
 
-              <div className="space-y-2.5 stagger">
+              <div className="divide-y divide-[var(--line-soft)] stagger">
                 {visibleReports.map((rep, idx) => {
                   const evCount = evidences.filter((e) => e.report_id === rep.id).length;
                   return (
@@ -498,7 +457,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                       }}
                       onMouseEnter={() => setHoveredReportId(rep.id)}
                       onMouseLeave={() => setHoveredReportId(null)}
-                      className="group lift w-full p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] hover:border-[var(--cyan)] flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-left"
+                      className="group w-full min-w-0 max-w-full py-3.5 px-3 rounded-2xl hover:bg-[var(--hover-bg)] flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-left transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)] shrink-0">
@@ -509,15 +468,12 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
+                      <div className="flex items-center gap-4 shrink-0">
                         <StatusBadge status={rep.status} size="sm" />
                         <span className="text-sm font-semibold text-[var(--ink-soft)] whitespace-nowrap">
                           {evCount} bukti
                         </span>
-                        <span className="inline-flex items-center gap-1 font-heading text-sm font-bold text-[var(--cyan-dark)]">
-                          <span>Rantai</span>
-                          <ChevronRight className="w-4 h-4 nudge-x" />
-                        </span>
+                        <ChevronRight className="w-4 h-4 text-[var(--cyan-dark)] nudge-x" />
                       </div>
                     </button>
                   );

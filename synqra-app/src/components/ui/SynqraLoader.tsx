@@ -30,7 +30,7 @@ export const SynqraLoader: React.FC<SynqraLoaderProps> = ({
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className={`surface-card rounded-2xl border-l-[3.5px] border-l-[var(--cyan)] animate-fade-in ${
+      className={`surface-card rounded-3xl animate-fade-in ${
         compact
           ? 'p-4 flex items-center gap-4'
           : 'p-6 sm:p-7 flex flex-col items-center justify-center text-center gap-3.5'

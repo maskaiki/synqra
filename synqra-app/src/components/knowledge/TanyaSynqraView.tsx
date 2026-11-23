@@ -216,12 +216,12 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
   return (
     <div className="space-y-6 max-w-5xl animate-fade-in pb-12">
       {/* Header dengan Tombol Mulai Sesi Baru */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--line)]">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--ink)]">
+          <h1 className="font-heading text-3xl font-bold text-[var(--ink)] m-0">
             Tanya SYNQRA AI
           </h1>
-          <p className="text-[15px] text-[var(--ink-soft)] mt-1">
+          <p className="text-[15px] text-[var(--ink-soft)] mt-1 m-0">
             Cari solusi kasus serupa lengkap dengan sitasi bukti terverifikasi.
           </p>
         </div>
@@ -230,7 +230,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
           type="button"
           onClick={handleResetSession}
           disabled={messages.length === 0 && !question}
-          className="self-start sm:self-auto px-4 py-2.5 rounded-[7px] border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-heading font-bold text-[var(--ink)] inline-flex items-center gap-2 transition-all shadow-sm shrink-0"
+          className="self-start sm:self-auto px-4 py-2.5 rounded-full surface-card hover:bg-[var(--hover-bg)] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-heading font-bold text-[var(--ink)] inline-flex items-center gap-2 transition-all shrink-0"
           title="Bersihkan percakapan dan mulai sesi tanya jawab baru"
         >
           <RotateCcw className="w-4 h-4 text-[var(--cyan-dark)]" />
@@ -272,7 +272,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
               {msg.role === 'user' ? (
                 /* Kartu Pertanyaan Pengguna */
                 <div className="flex justify-end">
-                  <div className="max-w-2xl w-full p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] shadow-sm space-y-1.5">
+                  <div className="max-w-2xl w-full p-4 rounded-3xl bg-[var(--soft)] space-y-1.5">
                     <div className="flex items-center justify-between gap-2 pb-1 border-b border-[var(--line-soft)] text-xs text-[var(--ink-soft)] font-heading font-bold">
                       <span className="inline-flex items-center gap-1.5 text-[var(--cyan-dark)]">
                         <User className="w-3.5 h-3.5" />
@@ -288,96 +288,62 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
               ) : (
                 /* Kartu Jawaban AI SYNQRA */
                 <div className="space-y-4">
-                  {/* Banner Peringatan jika ada kasus PRADUGA / belum verifikasi */}
+                  {/* Banner Peringatan Guardrail PRADUGA (bersih, tanpa sabit kiri) */}
                   {msg.hasUnverified && (
                     <div
-                      style={{
-                        backgroundColor: 'var(--amber-bg)',
-                        borderColor: 'var(--amber-border)',
-                        borderLeftColor: 'var(--amber)',
-                      }}
-                      className="p-4 rounded-xl border border-l-[4px] flex items-start gap-3 shadow-sm"
+                      style={{ backgroundColor: 'var(--amber-bg)' }}
+                      className="px-4 py-3 rounded-2xl flex items-center gap-2.5 text-sm font-semibold text-[var(--ink)]"
                     >
                       <AlertTriangle
-                        className="w-5 h-5 shrink-0 mt-0.5"
+                        className="w-4 h-4 shrink-0"
                         style={{ color: 'var(--amber)' }}
                       />
-                      <div className="text-sm font-semibold text-[var(--ink)]">
-                        <b style={{ color: 'var(--amber)' }}>
-                          Peringatan Guardrail Bukti:{' '}
-                        </b>
-                        Sebagian sumber referensi di bawah masih berstatus
-                        PRADUGA / Investigasi dan belum disahkan pakar. Utamakan
-                        sumber berstatus TERVERIFIKASI.
-                      </div>
+                      <span>
+                        Sebagian referensi berstatus <b style={{ color: 'var(--amber)' }}>PRADUGA</b>. Utamakan sumber TERVERIFIKASI.
+                      </span>
                     </div>
                   )}
 
                   {/* Kontainer Sintesis Jawaban AI */}
-                  <article className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] border-l-[4px] border-l-[var(--cyan)] shadow-sm space-y-4">
-                    {/* Header Kartu Jawaban dengan Badge Status Mesin */}
+                  <article className="surface-card p-6 rounded-3xl space-y-4">
+                    {/* Header Kartu Jawaban Minimalis (Zero Dots / Zero Badge Slop) */}
                     <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--line-soft)]">
                       <div className="flex items-center gap-2 font-heading font-bold text-base text-[var(--ink)]">
-                        <Sparkles className="w-5 h-5 text-[var(--cyan-dark)]" />
-                        <span>Sintesis Berbasis Bukti SYNQRA</span>
+                        <Sparkles className="w-4 h-4 text-[var(--cyan-dark)]" />
+                        <span>Jawaban SYNQRA</span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-heading font-bold">
-                        {/* BADGE STATUS MESIN: GEMINI 2.5 FLASH LIVE vs LOCAL FALLBACK */}
-                        {msg.engine === 'gemini-live' ? (
-                          <span
-                            style={{
-                              backgroundColor: 'var(--green-bg)',
-                              borderColor: 'var(--green-border)',
-                              color: 'var(--green)',
-                            }}
-                            className="px-2.5 py-1 rounded-[7px] border border-l-[3.5px] border-l-emerald-600 font-heading text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap"
-                            title="Didukung langsung oleh Google Gemini 2.5 Flash live API"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                            <span>GEMINI 2.5 FLASH LIVE</span>
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              backgroundColor: 'var(--amber-bg)',
-                              borderColor: 'var(--amber-border)',
-                              color: 'var(--amber)',
-                            }}
-                            className="px-2.5 py-1 rounded-[7px] border border-l-[3.5px] border-l-amber-600 font-heading text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap"
-                            title={
-                              msg.errorReason
-                                ? `Fallback lokal aktif: ${msg.errorReason}`
-                                : 'Mode fallback lokal aktif'
-                            }
-                          >
-                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                            <span>LOCAL FALLBACK</span>
-                          </span>
-                        )}
+                      <div className="flex flex-wrap items-center gap-2.5 text-xs font-heading font-bold text-[var(--ink-soft)]">
+                        <span
+                          title={
+                            msg.engine === 'gemini-live'
+                              ? 'Didukung Google Gemini API'
+                              : msg.errorReason || 'Mode analisis lokal'
+                          }
+                          style={{ color: msg.engine === 'gemini-live' ? 'var(--green)' : 'var(--amber)' }}
+                        >
+                          {msg.engine === 'gemini-live' ? 'AI Live' : 'Lokal'}
+                        </span>
 
-                        {/* Konteks Aset jika terdeteksi */}
                         {msg.detectedAsset && (
-                          <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)]">
-                            Konteks Aset: {msg.detectedAsset}
-                          </span>
+                          <>
+                            <span className="opacity-40">·</span>
+                            <span className="text-[var(--cyan-dark)]">{msg.detectedAsset}</span>
+                          </>
                         )}
 
-                        {/* Jumlah Kasus Terverifikasi */}
                         {typeof msg.verifiedCount === 'number' && (
-                          <span
-                            style={{
-                              backgroundColor: 'var(--green-bg)',
-                              color: 'var(--green)',
-                            }}
-                            className="px-2.5 py-1 rounded-[7px] inline-flex items-center gap-1"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            {msg.verifiedCount} Terverifikasi
-                          </span>
+                          <>
+                            <span className="opacity-40">·</span>
+                            <span className="inline-flex items-center gap-1 text-[var(--green)]">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              {msg.verifiedCount} Verified
+                            </span>
+                          </>
                         )}
 
-                        <span className="text-[var(--ink-soft)] font-normal text-xs ml-1">
+                        <span className="opacity-40">·</span>
+                        <span className="font-normal text-[var(--muted)]">
                           {msg.timestamp}
                         </span>
                       </div>
@@ -408,7 +374,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
                             <article
                               key={cit.reportId}
                               onClick={() => onOpenEvidence(cit)}
-                              className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] hover:border-[var(--cyan)] shadow-sm cursor-pointer transition-all flex flex-col justify-between gap-3 group"
+                              className="p-4 rounded-2xl bg-[var(--soft)] hover:bg-[var(--hover-bg)] cursor-pointer transition-all flex flex-col justify-between gap-3 group"
                             >
                               <div className="space-y-2">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -434,14 +400,14 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
                                       {cit.matchReasons.map((reason, rIdx) => (
                                         <span
                                           key={rIdx}
-                                          className="px-2 py-0.5 rounded-[5px] text-[11.5px] font-heading font-semibold bg-[var(--surface)] text-[var(--ink-soft)] border border-[var(--line)]"
+                                          className="px-2.5 py-0.5 rounded-full text-[11.5px] font-heading font-semibold bg-[var(--surface-elevated)] text-[var(--ink-soft)]"
                                         >
                                           {reason}
                                         </span>
                                       ))}
                                       {typeof cit.relevanceScore ===
                                         'number' && (
-                                        <span className="px-2 py-0.5 rounded-[5px] text-[11.5px] font-heading font-bold bg-[var(--cyan-pale)] text-[var(--cyan-dark)] border border-[var(--cyan-border,var(--line))]">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[11.5px] font-heading font-bold bg-[var(--cyan-pale)] text-[var(--cyan-dark)]">
                                           Skor: {cit.relevanceScore}
                                         </span>
                                       )}

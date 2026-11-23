@@ -15,7 +15,6 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  Cpu,
   FileAudio,
   FileText,
   Mic,
@@ -790,50 +789,32 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
             );
 
             return (
-              <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] border-l-[3.5px] border-l-[var(--cyan)] space-y-3 animate-fade-in">
+              <div className="p-4 sm:p-5 rounded-3xl bg-[var(--soft)] space-y-3 animate-fade-in">
                 <div className="flex flex-col sm:flex-row gap-3.5">
                   <img
                     src={scanResult.thumbnailUrl}
                     alt={`Foto nameplate ${scanResult.assetTag}`}
-                    className="w-20 h-20 rounded-xl object-cover border border-[var(--line)] bg-[var(--surface)] shrink-0"
+                    className="w-20 h-20 rounded-2xl object-cover bg-[var(--surface)] shadow-sm shrink-0"
                   />
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="font-heading font-bold text-base text-[var(--ink)]">
                         Hasil Scan: {scanResult.assetTag}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {scanResult.engine === 'gemini-live' ? (
-                          <span
-                            style={{
-                              backgroundColor: 'var(--green-bg)',
-                              color: 'var(--green)',
-                              borderColor: 'var(--green-border)',
-                              borderLeftColor: 'var(--green)',
-                            }}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>
-                              {(scanResult.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE
-                            </span>
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              backgroundColor: 'var(--amber-bg)',
-                              color: 'var(--amber)',
-                              borderColor: 'var(--amber-border)',
-                              borderLeftColor: 'var(--amber)',
-                            }}
-                            title={scanResult.errorReason}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                          >
-                            <Cpu className="w-3.5 h-3.5" />
-                            <span>LOCAL FALLBACK</span>
-                          </span>
-                        )}
-                        <span className="px-2.5 py-1 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)] font-heading text-xs font-bold">
+                      <div className="flex items-center gap-2 text-xs font-heading font-bold">
+                        <span
+                          title={scanResult.errorReason || scanResult.usedModel}
+                          style={{
+                            color:
+                              scanResult.engine === 'gemini-live'
+                                ? 'var(--green)'
+                                : 'var(--amber)',
+                          }}
+                        >
+                          {scanResult.engine === 'gemini-live' ? 'AI Live' : 'Lokal'}
+                        </span>
+                        <span className="text-[var(--muted)]">·</span>
+                        <span className="text-[var(--cyan-dark)]">
                           {Math.round(scanResult.confidence * 100)}%
                         </span>
                       </div>
@@ -841,12 +822,8 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
                     {matchedCatalogAsset && (
                       <div
-                        style={{
-                          backgroundColor: 'var(--green-bg)',
-                          borderColor: 'var(--green-border)',
-                          borderLeftColor: 'var(--green)',
-                        }}
-                        className="px-3 py-2 rounded-[7px] border border-l-[3.5px] flex items-start gap-2 text-sm"
+                        style={{ backgroundColor: 'var(--green-bg)' }}
+                        className="px-3.5 py-2.5 rounded-2xl flex items-start gap-2 text-sm"
                       >
                         <CheckCircle2
                           className="w-4 h-4 shrink-0 mt-0.5"
@@ -854,7 +831,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                         />
                         <div className="min-w-0">
                           <div className="font-heading font-bold text-[var(--ink)]">
-                            Cocok Katalog: {matchedCatalogAsset.id} · {matchedCatalogAsset.name}
+                            {matchedCatalogAsset.id} · {matchedCatalogAsset.name}
                           </div>
                           <div className="text-sm text-[var(--ink-soft)]">
                             {matchedCatalogAsset.area}
@@ -880,7 +857,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                         <span className="font-semibold text-[var(--ink)]">
                           {equipmentHeading}
                         </span>
-                        {' · '}Pelat tag lapangan (kompresi {scanResult.originalKb} KB ke{' '}
+                        {' · '}Pelat tag ({scanResult.originalKb} KB ke{' '}
                         {scanResult.compressedKb} KB)
                       </div>
                     )}
@@ -897,18 +874,10 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                   <div
                     style={
                       scanResult.hasVisibleAnomaly
-                        ? {
-                            backgroundColor: 'var(--amber-bg)',
-                            borderColor: 'var(--amber-border)',
-                            borderLeftColor: 'var(--amber)',
-                          }
-                        : {
-                            backgroundColor: 'var(--surface)',
-                            borderColor: 'var(--line)',
-                            borderLeftColor: 'var(--cyan)',
-                          }
+                        ? { backgroundColor: 'var(--amber-bg)' }
+                        : { backgroundColor: 'var(--surface-elevated)' }
                     }
-                    className="p-3 rounded-[7px] border border-l-[3.5px] space-y-1"
+                    className="p-4 rounded-2xl space-y-1"
                   >
                     <div className="flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-wide">
                       {scanResult.hasVisibleAnomaly ? (
@@ -918,14 +887,14 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                             style={{ color: 'var(--amber)' }}
                           />
                           <span style={{ color: 'var(--amber)' }}>
-                            Observasi Visual AI · Anomali Terdeteksi
+                            Anomali Visual Terdeteksi
                           </span>
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 shrink-0 text-[var(--cyan-dark)]" />
                           <span className="text-[var(--cyan-dark)]">
-                            Observasi Visual AI
+                            Observasi Visual
                           </span>
                         </>
                       )}
@@ -940,9 +909,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                   {photoFile && (
                     <div className="text-sm text-[var(--ink-soft)] inline-flex items-center gap-1.5">
                       <Camera className="w-4 h-4 text-[var(--cyan-dark)] shrink-0" />
-                      <span>
-                        Foto scan otomatis siap dilampirkan sebagai Foto Bukti Awal di Langkah 3.
-                      </span>
+                      <span>Foto otomatis siap sebagai Bukti Awal.</span>
                     </div>
                   )}
 
@@ -950,10 +917,10 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                     <button
                       type="button"
                       onClick={handleApplyScanToFinding}
-                      className="group px-3.5 py-2 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm shrink-0"
+                      className="group pop-btn px-4 py-2.5 rounded-full font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-md shrink-0"
                     >
                       <Sparkles className="w-4 h-4 shrink-0" />
-                      <span>Pakai Observasi AI ke Narasi Temuan</span>
+                      <span>Pakai ke Temuan</span>
                       <ArrowRight className="w-4 h-4 nudge-x shrink-0" />
                     </button>
                   )}
@@ -961,19 +928,15 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
                 {scanResult.isUnknownAsset && (
                   <div
-                    style={{
-                      backgroundColor: 'var(--amber-bg)',
-                      borderColor: 'var(--amber-border)',
-                      borderLeftColor: 'var(--amber)',
-                    }}
-                    className="p-3 rounded-[7px] border border-l-[4px] flex items-center gap-2 text-sm font-semibold text-[var(--ink)]"
+                    style={{ backgroundColor: 'var(--amber-bg)' }}
+                    className="p-3.5 rounded-2xl flex items-center gap-2 text-sm font-semibold text-[var(--ink)]"
                   >
                     <AlertTriangle
                       className="w-4 h-4 shrink-0"
                       style={{ color: 'var(--amber)' }}
                     />
                     <span>
-                      Tag &ldquo;{scanResult.assetTag}&rdquo; tidak ada di daftar utama. Pilih kartu alat secara manual di atas.
+                      Tag &ldquo;{scanResult.assetTag}&rdquo; tidak ada di daftar utama. Pilih alat di atas.
                     </span>
                   </div>
                 )}
@@ -1023,28 +986,32 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
             stepDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
           }`}
         >
-          {/* Baris Info Aset Terpilih + Toggle Mode Input */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--line-soft)]">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 font-heading text-sm font-bold text-[var(--cyan-dark)]">
-              <span>Alat: {selectedAsset.id}</span>
-              <span className="text-[var(--ink)] font-semibold">({selectedAsset.name})</span>
+          {/* Baris Info Aset Terpilih + Toggle Mode Input (Tanpa Kotak) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--line-soft)]">
+            <div className="flex flex-wrap items-baseline gap-2 font-heading text-sm">
+              <span className="font-extrabold text-[var(--cyan-dark)]">
+                {selectedAsset.id}
+              </span>
+              <span className="font-bold text-[var(--ink)]">
+                {selectedAsset.name}
+              </span>
               <button
                 type="button"
                 onClick={() => goToStep(1)}
-                className="underline text-xs font-extrabold ml-1"
+                className="text-xs font-bold text-[var(--cyan-dark)] hover:underline ml-1"
               >
                 Ganti
               </button>
             </div>
 
-            <div className="inline-flex p-1 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+            <div className="inline-flex p-1 rounded-full bg-[var(--soft)]">
               <button
                 type="button"
                 onClick={() => setInputMode('voice')}
-                className={`px-3.5 py-1.5 rounded-lg font-heading text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
+                className={`px-4 py-1.5 rounded-full font-heading text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
                   inputMode === 'voice'
-                    ? 'bg-[var(--surface)] text-[var(--ink)] shadow-sm'
-                    : 'text-[var(--ink-soft)]'
+                    ? 'pop-btn shadow-sm'
+                    : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
                 <Mic className="w-4 h-4" />
@@ -1053,10 +1020,10 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               <button
                 type="button"
                 onClick={() => setInputMode('text')}
-                className={`px-3.5 py-1.5 rounded-lg font-heading text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
+                className={`px-4 py-1.5 rounded-full font-heading text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
                   inputMode === 'text'
-                    ? 'bg-[var(--surface)] text-[var(--ink)] shadow-sm'
-                    : 'text-[var(--ink-soft)]'
+                    ? 'pop-btn shadow-sm'
+                    : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
                 <FileText className="w-4 h-4" />
@@ -1066,81 +1033,55 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           </div>
 
           {inputMode === 'voice' ? (
-            <div className="p-5 rounded-2xl border-2 border-dashed border-[var(--line)] bg-[var(--soft)] text-center space-y-3">
-              <div className="flex justify-center">
-                {micStatus === 'live' && isRecording ? (
-                  <span
-                    style={{
-                      backgroundColor: 'var(--red-bg)',
-                      color: 'var(--red)',
-                      borderColor: 'var(--red-border)',
-                      borderLeftColor: 'var(--red)',
-                    }}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                  >
-                    <span className="w-2 h-2 rounded-[2px] bg-[#DC2626] animate-pulse" />
-                    <span>MIC LIVE · {formatTimer(recordSeconds)}</span>
-                  </span>
-                ) : micStatus === 'requesting' ? (
-                  <span
-                    style={{
-                      backgroundColor: 'var(--info-bg)',
-                      color: 'var(--info)',
-                      borderColor: 'var(--info-border)',
-                      borderLeftColor: 'var(--info)',
-                    }}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                  >
-                    <span>MEMINTA IZIN MIC...</span>
-                  </span>
-                ) : micStatus === 'recorded' && recordedBlob ? (
-                  <span
-                    style={{
-                      backgroundColor: 'var(--green-bg)',
-                      color: 'var(--green)',
-                      borderColor: 'var(--green-border)',
-                      borderLeftColor: 'var(--green)',
-                    }}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>REKAMAN SIAP ({formatTimer(recordSeconds)})</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[7px] border border-l-[3.5px] border-[var(--line)] border-l-[var(--cyan-dark)] bg-[var(--surface)] text-[var(--ink-soft)] font-heading text-xs font-bold uppercase">
-                    <Mic className="w-3.5 h-3.5 text-[var(--cyan-dark)]" />
-                    <span>
-                      {micStatus === 'denied' || micStatus === 'unavailable'
-                        ? 'MIKROFON TIDAK AKTIF'
-                        : 'SIAP MEREKAM'}
-                    </span>
-                  </span>
-                )}
+            <div
+              style={{ background: 'var(--stage-gradient)' }}
+              className="py-10 px-6 rounded-3xl text-center space-y-5"
+            >
+              <div className="font-heading text-xs font-bold uppercase tracking-[0.14em] text-[var(--cyan-dark)]">
+                {micStatus === 'live' && isRecording
+                  ? `Merekam · ${formatTimer(recordSeconds)}`
+                  : micStatus === 'requesting'
+                    ? 'Meminta izin mikrofon...'
+                    : micStatus === 'recorded' && recordedBlob
+                      ? `Rekaman siap · ${formatTimer(recordSeconds)}`
+                      : micStatus === 'denied' || micStatus === 'unavailable'
+                        ? 'Mikrofon tidak aktif'
+                        : 'Siap merekam'}
               </div>
 
-              <button
-                type="button"
-                disabled={micStatus === 'requesting'}
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-lg transition-transform hover:scale-105 disabled:opacity-60 ${
-                  isRecording ? 'bg-[#DC2626] text-white' : 'bg-[#00B8D9] text-[#061A38]'
-                }`}
-                title={isRecording ? 'Hentikan rekaman' : 'Mulai rekam suara'}
-              >
-                {isRecording ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
-              </button>
+              <div className="relative inline-flex items-center justify-center">
+                <div
+                  aria-hidden="true"
+                  className={`absolute -inset-3 rounded-full ${
+                    isRecording ? 'bg-[#DC2626]/20 animate-ping' : 'bg-[#00B8D9]/15'
+                  }`}
+                />
+                <button
+                  type="button"
+                  disabled={micStatus === 'requesting'}
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className={`relative w-20 h-20 rounded-full flex items-center justify-center shadow-[0_14px_34px_-8px_rgba(0,184,217,0.55)] transition-transform hover:scale-105 disabled:opacity-60 ${
+                    isRecording
+                      ? 'bg-[#DC2626] text-white'
+                      : 'bg-gradient-to-br from-[#00C8EA] to-[#0B5A7A] text-white'
+                  }`}
+                  title={isRecording ? 'Hentikan rekaman' : 'Mulai rekam suara'}
+                >
+                  {isRecording ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
+                </button>
+              </div>
 
-              <div className="font-heading font-bold text-sm text-[var(--ink)]">
+              <div className="font-heading font-bold text-base text-[var(--ink)]">
                 {isRecording
-                  ? `Merekam (${formatTimer(recordSeconds)}). Tekan tombol merah untuk berhenti.`
+                  ? 'Tekan tombol merah untuk berhenti.'
                   : recordedBlob
-                    ? 'Rekaman selesai. Putar pratinjau atau langsung ekstrak.'
-                    : 'Tekan tombol mikrofon untuk mulai berbicara.'}
+                    ? 'Rekaman selesai. Lanjutkan ekstraksi AI.'
+                    : 'Tekan mikrofon untuk mulai berbicara.'}
               </div>
 
               <div
                 className={`h-7 flex items-center justify-center gap-1 ${
-                  isRecording ? 'voice-wave-active' : 'opacity-40'
+                  isRecording ? 'voice-wave-active' : 'opacity-35'
                 }`}
               >
                 {Array.from({ length: 16 }).map((_, i) => (
@@ -1150,12 +1091,8 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
               {(micStatus === 'denied' || micStatus === 'unavailable') && micNotice && (
                 <div
-                  style={{
-                    backgroundColor: 'var(--amber-bg)',
-                    borderColor: 'var(--amber-border)',
-                    borderLeftColor: 'var(--amber)',
-                  }}
-                  className="p-3.5 rounded-[7px] border border-l-[4px] text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  style={{ backgroundColor: 'var(--amber-bg)' }}
+                  className="max-w-xl mx-auto p-4 rounded-2xl text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-2 text-sm font-semibold text-[var(--ink)]">
                     <AlertTriangle
@@ -1168,7 +1105,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setInputMode('text')}
-                      className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--line)] font-heading text-xs font-bold text-[var(--ink)]"
+                      className="px-3.5 py-1.5 rounded-full bg-[var(--surface-elevated)] font-heading text-xs font-bold text-[var(--ink)]"
                     >
                       Ketik Teks
                     </button>
@@ -1180,7 +1117,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                         setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
                         setInputMode('text');
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--line)] font-heading text-xs font-bold text-[var(--cyan-dark)]"
+                      className="px-3.5 py-1.5 rounded-full pop-btn font-heading text-xs font-bold"
                     >
                       Contoh {selectedAssetId}
                     </button>
@@ -1189,7 +1126,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               )}
 
               {!isRecording && recordedBlob && audioUrl && (
-                <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-left space-y-2.5">
+                <div className="max-w-lg mx-auto p-4 rounded-2xl bg-[var(--surface-elevated)] shadow-sm text-left space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-sm font-bold text-[var(--ink)]">
                     <span className="inline-flex items-center gap-2 font-heading">
                       <FileAudio className="w-4 h-4 text-[var(--cyan-dark)]" />
@@ -1204,7 +1141,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                     <button
                       type="button"
                       onClick={handleReRecord}
-                      className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-xs font-heading font-bold text-[var(--ink)] inline-flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 rounded-full bg-[var(--soft)] hover:bg-[var(--hover-bg)] text-xs font-heading font-bold text-[var(--ink)] inline-flex items-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Rekam Ulang</span>
@@ -1213,7 +1150,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                 </div>
               )}
 
-              <div className="pt-1">
+              <div>
                 <button
                   type="button"
                   onClick={() => {
@@ -1222,9 +1159,9 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                     setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
                     setInputMode('text');
                   }}
-                  className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] text-sm font-bold text-[var(--ink)]"
+                  className="font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline"
                 >
-                  Isi Contoh Narasi {selectedAssetId}
+                  Pakai contoh narasi {selectedAssetId}
                 </button>
               </div>
             </div>
@@ -1317,44 +1254,25 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               3. Tinjau 7 Entitas &amp; Lampirkan Bukti
             </h2>
 
-            {extractionMeta?.engine === 'gemini-live' ? (
+            <div className="text-xs font-heading font-bold">
               <span
+                title={extractionMeta?.errorReason || extractionMeta?.usedModel}
                 style={{
-                  backgroundColor: 'var(--green-bg)',
-                  color: 'var(--green)',
-                  borderColor: 'var(--green-border)',
-                  borderLeftColor: 'var(--green)',
+                  color:
+                    extractionMeta?.engine === 'gemini-live'
+                      ? 'var(--green)'
+                      : 'var(--amber)',
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{(extractionMeta.usedModel || 'GEMINI-3.5-FLASH').toUpperCase()} LIVE</span>
+                {extractionMeta?.engine === 'gemini-live' ? 'AI Live' : 'Lokal'}
               </span>
-            ) : (
-              <span
-                style={{
-                  backgroundColor: 'var(--amber-bg)',
-                  color: 'var(--amber)',
-                  borderColor: 'var(--amber-border)',
-                  borderLeftColor: 'var(--amber)',
-                }}
-                title={extractionMeta?.errorReason}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold uppercase"
-              >
-                <Cpu className="w-3.5 h-3.5" />
-                <span>LOCAL FALLBACK</span>
-              </span>
-            )}
+            </div>
           </div>
 
           {extractionMeta?.engine === 'local-fallback' && extractionMeta.errorReason && (
             <div
-              style={{
-                backgroundColor: 'var(--amber-bg)',
-                borderColor: 'var(--amber-border)',
-                borderLeftColor: 'var(--amber)',
-              }}
-              className="p-3 rounded-[7px] border border-l-[4px] text-sm font-semibold text-[var(--ink)]"
+              style={{ backgroundColor: 'var(--amber-bg)' }}
+              className="p-3.5 rounded-2xl text-sm font-semibold text-[var(--ink)]"
             >
               <b style={{ color: 'var(--amber)' }}>Fallback Lokal: </b>
               <span>{extractionMeta.errorReason}</span>
@@ -1454,7 +1372,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           </div>
 
           {/* Kotak Unggah Foto Bukti Opsional */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--soft)]">
             <div className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
                 <Camera className="w-5 h-5" />
@@ -1497,7 +1415,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
           {/* Accordion Transkrip Asli (Tertutup Default) */}
           {extractionMeta?.transcript && (
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--soft)] overflow-hidden">
+            <div className="rounded-2xl bg-[var(--soft)] overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowTranscript((prev) => !prev)}

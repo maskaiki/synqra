@@ -7,13 +7,8 @@ import { BRAND_MEDIA } from '@/lib/mediaAssets';
 import { SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
-import { SlaReminderBanner } from '@/components/sla/SlaReminderBanner';
 import {
-  AlertTriangle,
-  CheckCircle2,
   ChevronRight,
-  Clock,
-  FileText,
   Mic,
   Plus,
   Scan,
@@ -39,7 +34,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
   onOpenReport,
   onInspectAsset,
-  onSendSlaReminder,
 }) => {
   const activeCount = reports.filter((r) => r.status !== 'VERIFIED').length;
   const verifiedCount = reports.filter((r) => r.status === 'VERIFIED').length;
@@ -52,76 +46,45 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const criticalTop = reports.find(
     (r) => r.status !== 'VERIFIED' && (r.risk_level === 'CRITICAL' || r.risk_level === 'HIGH')
   );
-  const briefingPoints: { title: string; detail: string; report?: Report }[] = [
+  const briefingPoints: { tag: string; detail: string; report?: Report }[] = [
     overdueTop
       ? {
-          title: `SLA Overdue · ${overdueTop.asset_id}`,
-          detail: `${overdueTop.title} menunggu tindak lanjut > 48 jam.`,
+          tag: `SLA · ${overdueTop.asset_id}`,
+          detail: overdueTop.title,
           report: overdueTop,
         }
       : {
-          title: 'Status SLA Terkendali',
-          detail: 'Belum ada laporan melewati batas 48 jam pada shift ini.',
+          tag: 'SLA',
+          detail: 'Semua kasus dalam batas waktu.',
         },
     earlyWarnings[0]
       ? {
-          title: `Pola Berulang · ${earlyWarnings[0].assetId}`,
-          detail: `${earlyWarnings[0].recentCount ?? earlyWarnings[0].relatedReportIds.length} laporan aktif dalam 14 hari pada aset yang sama.`,
+          tag: `Pola · ${earlyWarnings[0].assetId}`,
+          detail: `${earlyWarnings[0].recentCount ?? earlyWarnings[0].relatedReportIds.length} laporan aktif dalam 14 hari.`,
         }
       : {
-          title: 'Tidak Ada Anomali Berulang',
-          detail: 'Belum terdeteksi lonjakan laporan berulang lintas shift.',
+          tag: 'Pola Aset',
+          detail: 'Tidak ada lonjakan berulang.',
         },
     criticalTop
       ? {
-          title: `Prioritas Risiko · ${criticalTop.asset_id}`,
-          detail: `${criticalTop.title} (${criticalTop.risk_level}). Cek kondisi operasi saat patroli.`,
+          tag: `Risiko · ${criticalTop.asset_id}`,
+          detail: criticalTop.title,
           report: criticalTop,
         }
       : {
-          title: 'Kondisi Operasi Stabil',
-          detail: 'Seluruh unit terpantau dalam batas risiko normal.',
+          tag: 'Operasi',
+          detail: 'Semua unit dalam batas normal.',
         },
   ];
 
   const firstName = roleInfo.name.split(' ')[0];
 
   return (
-    <div className="space-y-7 animate-fade-in">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl sm:text-[34px] font-bold text-[var(--ink)] tracking-tight leading-tight">
-            Halo, {firstName}.
-          </h1>
-          <p className="text-[15px] text-[var(--ink-soft)] mt-1 m-0">
-            {roleInfo.key === 'frontline_omi' &&
-              'Catat temuan lapangan cepat atau cari solusi terverifikasi.'}
-            {roleInfo.key === 'dept_reviewer' &&
-              'Tinjau bukti laporan masuk, SLA, dan investigasi aset.'}
-            {roleInfo.key === 'hse_validator' &&
-              'Validasi risiko dan bukti sebelum mengesahkan pengetahuan baru.'}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onNavigate('tanya')}
-          className="group surface-card lift px-4 py-2.5 rounded-full hover:border-[var(--cyan)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2 self-start sm:self-auto"
-        >
-          <Sparkles className="w-4 h-4 text-[var(--cyan-dark)] spin-on-hover" />
-          <span>Tanya SYNQRA AI</span>
-        </button>
-      </header>
-
-      <SlaReminderBanner
-        reports={reports}
-        currentUserRole={roleInfo.key}
-        onSendReminder={onSendSlaReminder}
-        onSelectReport={onOpenReport}
-      />
-
-      {/* Atmospheric Hero Banner + Elevated KPI Strip */}
-      <div className="space-y-4">
-        <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-[#081734] text-white border border-cyan-400/20 shadow-[0_18px_40px_-20px_rgba(8,23,52,0.55)] flex flex-col md:flex-row md:items-center justify-between gap-5">
+    <div className="space-y-8">
+      {/* Full-Bleed Gradient Hero + Overlapping Floating Liquid-Glass Sheet */}
+      <div>
+        <section className="relative overflow-hidden rounded-[32px] pt-8 sm:pt-10 pb-20 sm:pb-24 px-6 sm:px-10 bg-[#07152F] text-white shadow-[0_24px_54px_-24px_rgba(6,20,46,0.65)]">
           <img
             src={BRAND_MEDIA.loginHeroOilRig.src}
             alt=""
@@ -130,113 +93,130 @@ export const HomeView: React.FC<HomeViewProps> = ({
             height={BRAND_MEDIA.loginHeroOilRig.height}
             loading="eager"
             decoding="async"
-            className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[60%_56%] scale-[1.03] opacity-55 select-none"
+            className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[62%_56%] scale-[1.03] opacity-50 select-none"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#051229]/95 via-[#0B2952]/76 to-[#074A67]/62"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#051026]/95 via-[#0B2A5A]/82 to-[#095978]/68"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#051229]/68 via-transparent to-[#051229]/30"
+            className="pointer-events-none absolute -right-20 -top-24 w-80 h-80 rounded-full bg-[#00C8EA]/22 blur-3xl"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-14 -top-24 w-64 h-64 rounded-full bg-[#00C8EA]/15 blur-3xl"
+            className="pointer-events-none absolute -left-24 bottom-0 w-72 h-72 rounded-full bg-[#2563EB]/20 blur-3xl"
           />
 
-          <div className="relative z-10 max-w-2xl">
-            <h2 className="font-heading text-2xl sm:text-[27px] font-bold text-white mb-2 leading-snug drop-shadow-[0_2px_10px_rgba(4,13,31,0.65)]">
-              Temuan kecil di lapangan mencegah unplanned shutdown.
-            </h2>
-            <p className="text-[15px] text-white/90 leading-relaxed m-0 drop-shadow-[0_1px_6px_rgba(4,13,31,0.75)]">
-              Laporan awal berstatus <b className="text-amber-300">PRADUGA</b> hingga bukti disahkan pakar.
-            </p>
-          </div>
-          <div className="relative z-10 shrink-0">
-            <button
-              type="button"
-              onClick={() => onNavigate('lapor')}
-              className="group press-soft w-full md:w-auto px-6 py-3.5 rounded-full bg-[#00C8EA] hover:bg-[#38DDF8] text-[#041529] font-heading font-bold text-[15px] inline-flex items-center justify-center gap-2 shadow-[0_10px_24px_-8px_rgba(0,200,234,0.65)]"
-            >
-              <Plus className="w-5 h-5 stroke-[2.5] spin-on-hover" />
-              <span>Laporkan Temuan</span>
-            </button>
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div className="max-w-2xl space-y-2.5">
+              <div className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-200/95">
+                <span>Halo, {firstName}</span>
+                <span className="opacity-50">·</span>
+                <span className="text-white/80">{roleInfo.shortRole}</span>
+              </div>
+              <h1 className="font-heading text-3xl sm:text-[38px] font-bold text-white leading-[1.14] tracking-tight m-0 drop-shadow-[0_3px_14px_rgba(4,12,28,0.6)]">
+                Dari temuan lapangan, menjadi pengetahuan.
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => onNavigate('tanya')}
+                className="group press-soft px-5 py-3 rounded-full bg-white/12 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-heading font-bold text-sm inline-flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-[#3CE2FF] spin-on-hover" />
+                <span>Tanya AI</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('lapor')}
+                className="group press-soft px-6 py-3 rounded-full bg-[#00C8EA] hover:bg-[#3CE2FF] text-[#041326] font-heading font-bold text-sm inline-flex items-center gap-2 shadow-[0_12px_28px_-8px_rgba(0,200,234,0.7)]"
+              >
+                <Plus className="w-4 h-4 stroke-[2.75] spin-on-hover" />
+                <span>Lapor Cepat</span>
+              </button>
+            </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger">
-          <div
-            style={{ '--i': 0 } as React.CSSProperties}
-            className="surface-card lift p-5 rounded-2xl flex items-center gap-4"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="font-heading text-3xl font-bold text-[var(--ink)] leading-none">
+        {/* Overlapping Floating Glass Stats & Quick Tools */}
+        <section className="relative z-10 -mt-12 mx-2 sm:mx-6 floating-glass rounded-3xl p-4 sm:p-5 shadow-[0_20px_48px_-22px_rgba(9,19,38,0.28)] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="grid grid-cols-3 divide-x divide-[var(--line-soft)] flex-1">
+            <button
+              type="button"
+              onClick={() => onNavigate('cases')}
+              className="px-3 sm:px-5 py-1 text-left group"
+            >
+              <div className="font-heading text-2xl sm:text-3xl font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--cyan-dark)] transition-colors">
                 {reports.length}
               </div>
-              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1.5">
-                Total Kasus
+              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1">
+                Kasus
               </div>
-            </div>
-          </div>
+            </button>
 
-          <div
-            style={{ '--i': 1 } as React.CSSProperties}
-            className="surface-card lift p-5 rounded-2xl flex items-center gap-4"
-          >
-            <div
-              style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber)' }}
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+            <button
+              type="button"
+              onClick={() => onNavigate('cases')}
+              className="px-3 sm:px-5 py-1 text-left group"
             >
-              <Clock className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="font-heading text-3xl font-bold text-[var(--ink)] leading-none">
+              <div className="font-heading text-2xl sm:text-3xl font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--amber)] transition-colors">
                 {activeCount}
               </div>
-              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1.5">
-                Aktif (Praduga &amp; Triage)
+              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1">
+                Aktif
               </div>
-            </div>
-          </div>
+            </button>
 
-          <div
-            style={{ '--i': 2 } as React.CSSProperties}
-            className="surface-card lift p-5 rounded-2xl flex items-center gap-4"
-          >
-            <div
-              style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green)' }}
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+            <button
+              type="button"
+              onClick={() => onNavigate('graph')}
+              className="px-3 sm:px-5 py-1 text-left group"
             >
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="font-heading text-3xl font-bold text-[var(--ink)] leading-none">
+              <div className="font-heading text-2xl sm:text-3xl font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--green)] transition-colors">
                 {verifiedCount}
               </div>
-              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1.5">
-                Terverifikasi Pakar
+              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1">
+                Verified
               </div>
-            </div>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5 pt-3 lg:pt-0 border-t lg:border-t-0 lg:border-l border-[var(--line-soft)] lg:pl-5 shrink-0">
+            <button
+              type="button"
+              onClick={() => onNavigate('lapor')}
+              className="group press-soft flex-1 lg:flex-none pop-btn px-4 py-2.5 rounded-full font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm"
+            >
+              <Mic className="w-4 h-4" />
+              <span>Rekam</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('lapor')}
+              className="group press-soft flex-1 lg:flex-none px-4 py-2.5 rounded-full bg-[var(--soft)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center justify-center gap-2"
+            >
+              <Scan className="w-4 h-4 text-[var(--cyan-dark)]" />
+              <span>Scan Alat</span>
+            </button>
           </div>
         </section>
       </div>
 
-      {/* Showcase 3 Aset Pilot (Seamless Breakout Cards) */}
+      {/* 3 Aset Pilot: Seamless Breakout Cards */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
-            Aset Pilot Terpantau
-          </h3>
+        <div className="flex items-center justify-between gap-4 px-1">
+          <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+            Aset Pilot
+          </h2>
           <button
             type="button"
             onClick={() => onNavigate('graph')}
             className="group hit-area font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline inline-flex items-center gap-1 shrink-0"
           >
-            <span>Peta Pengetahuan</span>
+            <span>Peta Aset</span>
             <ChevronRight className="w-4 h-4 nudge-x" />
           </button>
         </div>
@@ -245,7 +225,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {assets.map((asset, idx) => {
             const assetCases = reports.filter((r) => r.asset_id === asset.id);
             const verifiedTotal = assetCases.filter((r) => r.status === 'VERIFIED').length;
-            const unitLabel = asset.area.split(' · ')[0];
 
             return (
               <EquipmentBreakoutCard
@@ -254,7 +233,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 isDarkMode={isDarkMode}
                 style={{ '--i': idx } as React.CSSProperties}
                 badgeText={`${verifiedTotal} Verified`}
-                metaText={`${assetCases.length} Kasus · ${unitLabel}`}
+                metaText={`${assetCases.length} Kasus · ${asset.area.split(' · ')[0]}`}
                 onClick={() =>
                   onInspectAsset ? onInspectAsset(asset.id) : onNavigate('graph')
                 }
@@ -264,18 +243,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
+      {/* Bottom Clean 2-Column Feed */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         <div className="xl:col-span-8 surface-card p-6 rounded-3xl">
           <div className="flex items-center justify-between gap-4 mb-4">
-            <h3 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+            <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
               Aktivitas Terbaru
-            </h3>
+            </h2>
             <button
               type="button"
               onClick={() => onNavigate('cases')}
               className="group hit-area font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline inline-flex items-center gap-1 shrink-0"
             >
-              <span>Lihat semua</span>
+              <span>Semua</span>
               <ChevronRight className="w-4 h-4 nudge-x" />
             </button>
           </div>
@@ -290,7 +270,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   key={report.id}
                   role="button"
                   tabIndex={0}
-                  style={{ '--i': idx + 2 } as React.CSSProperties}
+                  style={{ '--i': idx } as React.CSSProperties}
                   onClick={() => onOpenReport(report)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -329,83 +309,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <aside className="xl:col-span-4 space-y-5">
-          <div className="surface-card p-6 rounded-3xl space-y-3">
-            <h3 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
-              Aksi Cepat
-            </h3>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('lapor')}
-              className="group lift press-soft w-full p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-3.5 text-left"
-            >
-              <span className="w-11 h-11 rounded-2xl pop-btn flex items-center justify-center shrink-0 shadow-sm">
-                <Mic className="w-5 h-5" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="font-heading font-bold text-[15px] text-[var(--ink)]">
-                  Rekam Suara (VN)
-                </div>
-                <div className="text-sm text-[var(--ink-soft)]">
-                  Susun 7 entitas otomatis
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-[var(--cyan-dark)] shrink-0 nudge-x" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('lapor')}
-              className="group lift press-soft w-full p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)] hover:border-[var(--cyan)] hover:bg-[var(--hover-bg)] flex items-center gap-3.5 text-left"
-            >
-              <span className="w-11 h-11 rounded-2xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] flex items-center justify-center shrink-0">
-                <Scan className="w-5 h-5" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="font-heading font-bold text-[15px] text-[var(--ink)]">
-                  Scan Nameplate Alat
-                </div>
-                <div className="text-sm text-[var(--ink-soft)]">
-                  Deteksi tag &amp; anomali kamera
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-[var(--cyan-dark)] shrink-0 nudge-x" />
-            </button>
-          </div>
-
-          <div className="surface-card p-6 rounded-3xl space-y-3.5">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-[var(--amber)]" />
-              <h3 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
-                Briefing Awal Shift
-              </h3>
-            </div>
-            <div className="space-y-2.5">
-              {briefingPoints.map((pt, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => pt.report && onOpenReport(pt.report)}
-                  className={`p-3.5 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)] ${
-                    pt.report ? 'lift cursor-pointer hover:border-[var(--cyan)]' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5">
-                    <span className="w-6 h-6 rounded-lg pop-btn font-heading font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="font-heading font-bold text-sm text-[var(--ink)]">
-                        {pt.title}
-                      </div>
-                      <p className="text-sm text-[var(--ink-soft)] mt-0.5 leading-snug m-0">
-                        {pt.detail}
-                      </p>
-                    </div>
+        <aside className="xl:col-span-4 surface-card p-6 rounded-3xl space-y-4">
+          <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+            Prioritas Shift
+          </h2>
+          <div className="divide-y divide-[var(--line-soft)]">
+            {briefingPoints.map((pt, idx) => (
+              <div
+                key={idx}
+                onClick={() => pt.report && onOpenReport(pt.report)}
+                className={`py-3.5 first:pt-1 last:pb-1 flex items-start gap-3 ${
+                  pt.report
+                    ? 'cursor-pointer hover:bg-[var(--hover-bg)] -mx-2.5 px-2.5 rounded-2xl transition-colors'
+                    : ''
+                }`}
+              >
+                <span className="w-6 h-6 rounded-full pop-btn font-heading font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                  {idx + 1}
+                </span>
+                <div className="min-w-0">
+                  <div className="font-heading font-bold text-sm text-[var(--ink)]">
+                    {pt.tag}
                   </div>
+                  <p className="text-sm text-[var(--ink-soft)] mt-0.5 leading-snug m-0 line-clamp-2">
+                    {pt.detail}
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </aside>
       </section>

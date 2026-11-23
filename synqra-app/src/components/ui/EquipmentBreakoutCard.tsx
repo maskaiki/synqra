@@ -30,9 +30,9 @@ export const EquipmentBreakoutCard: React.FC<EquipmentBreakoutCardProps> = ({
 }) => {
   const inner = (
     <>
-      {/* Panggung gradien + objek alat menembus tepi atas kartu */}
+      {/* Panggung gradien seamless + objek alat keluar menembus tepi atas kartu */}
       <div
-        className={`relative rounded-t-2xl px-4 ${
+        className={`relative rounded-t-3xl px-5 ${
           compact ? 'pt-2 pb-3' : 'pt-2 pb-4'
         }`}
         style={{
@@ -47,7 +47,7 @@ export const EquipmentBreakoutCard: React.FC<EquipmentBreakoutCardProps> = ({
             darkMode={isDarkMode}
             breakout
             className={`relative z-10 w-full ${
-              compact ? 'h-28 -mt-9' : 'h-32 sm:h-36 -mt-11'
+              compact ? 'h-28 -mt-10' : 'h-36 sm:h-40 -mt-12'
             }`}
           />
           <div
@@ -58,45 +58,37 @@ export const EquipmentBreakoutCard: React.FC<EquipmentBreakoutCardProps> = ({
         </div>
       </div>
 
-      {/* Metadata ringkas & tombol pop kontras tinggi */}
+      {/* Metadata ultra-ringkas ala Furniture Shop + tombol pop obsidian */}
       <div
         className={`flex items-end justify-between gap-3 ${
-          compact ? 'px-4 pb-4 pt-1' : 'px-5 pb-5 pt-1.5'
+          compact ? 'px-5 pb-4 pt-1' : 'px-5 pb-5 pt-1.5'
         }`}
       >
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <div className="flex items-center gap-2">
             <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)] tracking-tight">
               {asset.id}
             </span>
             {badgeText && (
-              <span
-                style={{
-                  backgroundColor: 'var(--green-bg)',
-                  color: 'var(--green)',
-                  borderColor: 'var(--green-border)',
-                  borderLeftColor: 'var(--green)',
-                }}
-                className="px-2 py-0.5 rounded-[7px] border border-l-[3.5px] font-heading text-[11px] font-bold whitespace-nowrap"
-              >
+              <span className="text-xs font-heading font-bold text-[var(--green)]">
                 {badgeText}
               </span>
             )}
           </div>
-          <div className="font-heading font-bold text-[15.5px] text-[var(--ink)] leading-snug truncate">
+          <div className="font-heading font-bold text-base text-[var(--ink)] leading-snug truncate">
             {asset.name}
           </div>
           <div className="text-sm font-medium text-[var(--ink-soft)] truncate">
-            {metaText || asset.area}
+            {metaText || asset.area.split(' · ')[0]}
           </div>
         </div>
 
         <span
           aria-hidden="true"
-          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 ${
+          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 ${
             selected
               ? 'pop-btn shadow-md scale-105'
-              : 'bg-[var(--soft)] border border-[var(--line)] text-[var(--ink)] group-hover:bg-[var(--pop-bg)] group-hover:text-[var(--pop-ink)] group-hover:border-transparent'
+              : 'pop-btn opacity-90 group-hover:opacity-100 group-hover:scale-105 shadow-sm'
           }`}
         >
           {selected ? (
@@ -109,14 +101,14 @@ export const EquipmentBreakoutCard: React.FC<EquipmentBreakoutCardProps> = ({
     </>
   );
 
-  const cardClasses = `group lift press-soft relative w-full text-left rounded-2xl overflow-visible surface-card transition-all ${
+  const cardClasses = `group lift press-soft relative w-full text-left rounded-3xl overflow-visible surface-card transition-all ${
     selected
-      ? 'ring-2 ring-[#00B8D9] border-[var(--cyan)]'
-      : 'hover:border-[var(--cyan)]/60'
+      ? 'ring-2 ring-[#00B8D9]'
+      : ''
   }`;
 
   return (
-    <div style={style} className={`${compact ? 'pt-7' : 'pt-9'} ${className}`}>
+    <div style={style} className={`${compact ? 'pt-8' : 'pt-10'} ${className}`}>
       {onClick ? (
         <button
           type="button"

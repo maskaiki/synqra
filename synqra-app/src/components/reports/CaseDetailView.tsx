@@ -274,13 +274,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
           <div className="flex flex-col xl:items-end gap-2 shrink-0">
             {isVerified ? (
               <div
-                style={{
-                  backgroundColor: 'var(--green-bg)',
-                  borderColor: 'var(--green-border)',
-                  borderLeftColor: 'var(--green)',
-                  color: 'var(--green)',
-                }}
-                className={`px-4 py-2.5 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-sm inline-flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-full bg-[#059669] text-white font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm ${
                   justVerified ? 'animate-celebrate' : ''
                 }`}
               >
@@ -483,8 +477,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
               ).map(([label, val, accent], idx) => (
                 <div
                   key={label}
-                  style={{ borderLeftColor: accent }}
-                  className={`p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)] border-l-[4px] ${
+                  className={`p-4 rounded-2xl bg-[var(--soft)] ${
                     idx === 6 ? 'md:col-span-2' : ''
                   }`}
                 >
@@ -512,7 +505,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
           }`}
         >
           {/* Galeri & Unggah Bukti (7 cols) */}
-          <section className="xl:col-span-7 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
+          <section className="xl:col-span-7 surface-card p-6 rounded-3xl space-y-4">
             <div>
               <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
                 Evidence Vault ({evidences.length} File Bukti)
@@ -565,7 +558,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                   return (
                     <div
                       key={ev.id}
-                      className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 rounded-2xl bg-[var(--soft)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         {ev.public_url ? (
@@ -658,7 +651,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
           </section>
 
           {/* Diskusi 2 Arah (5 cols) */}
-          <section className="xl:col-span-5 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
+          <section className="xl:col-span-5 surface-card p-6 rounded-3xl space-y-4">
             <h2 className="font-heading text-lg font-bold text-[var(--ink)] flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-[var(--cyan-dark)]" />
               <span>Diskusi Kasus ({comments.length})</span>
@@ -675,17 +668,11 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                     key={c.id}
                     style={
                       c.is_revision_request
-                        ? {
-                            backgroundColor: 'var(--amber-bg)',
-                            borderColor: 'var(--amber-border)',
-                            borderLeftColor: 'var(--amber)',
-                          }
+                        ? { backgroundColor: 'var(--amber-bg)' }
                         : undefined
                     }
-                    className={`p-4 rounded-xl border ${
-                      c.is_revision_request
-                        ? 'border-l-[4px]'
-                        : 'bg-[var(--soft)] border-[var(--line)]'
+                    className={`p-4 rounded-2xl ${
+                      c.is_revision_request ? '' : 'bg-[var(--soft)]'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -753,7 +740,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Matriks 4x4 Ringkas */}
-            <div className="lg:col-span-5 p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] space-y-3">
+            <div className="lg:col-span-5 p-4 rounded-2xl bg-[var(--soft)] space-y-3">
               <div className="font-heading text-sm font-bold text-[var(--ink)]">
                 Matriks Risiko (4 x 4)
               </div>

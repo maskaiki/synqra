@@ -50,7 +50,7 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
         aria-modal="true"
         aria-label={citation.title}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-3xl surface-card shadow-2xl overflow-hidden animate-modal"
+        className="w-full max-w-2xl rounded-3xl bg-[var(--surface-elevated)] border border-[var(--line)] shadow-2xl overflow-hidden animate-modal"
       >
         {/* Header dengan sentuhan gradien halus */}
         <div
@@ -85,7 +85,7 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
         {/* Body */}
         <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {/* Evidence Preview Box */}
-          <div className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)]">
+          <div className="p-4 rounded-2xl bg-[var(--soft)]">
             <div className="flex items-center gap-2.5 mb-3">
               <FileCheck2 className="w-5 h-5 text-[var(--cyan-dark)]" />
               <span className="font-heading font-bold text-sm text-[var(--ink)] truncate">
@@ -98,10 +98,10 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
                 src={citation.evidenceUrl}
                 alt={citation.evidenceName}
                 decoding="async"
-                className="w-full max-h-80 object-contain rounded-2xl border border-[var(--line-soft)] bg-[var(--surface)] shadow-sm"
+                className="w-full max-h-80 object-contain rounded-2xl bg-[var(--surface)] shadow-sm"
               />
             ) : (
-              <div className="p-6 rounded-2xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center space-y-2">
+              <div className="p-6 rounded-2xl bg-[var(--surface)] text-center space-y-2">
                 <FileCheck2 className="w-10 h-10 mx-auto text-[var(--cyan-dark)]" />
                 <div className="font-heading font-bold text-sm text-[var(--ink)]">
                   Arsip Bukti Teknis ({citation.evidenceName})
@@ -115,13 +115,13 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
 
           {/* Evidence Traceability Details */}
           <div className="grid grid-cols-1 gap-2.5">
-            <div className="p-4 rounded-2xl bg-[var(--soft)] border-l-[3.5px] border-l-[var(--amber)]">
+            <div className="p-4 rounded-2xl bg-[var(--soft)]">
               <div className="font-heading text-xs font-extrabold uppercase text-[var(--amber)] mb-1">
                 Gejala Teramati
               </div>
               <p className="text-sm font-semibold text-[var(--ink)] m-0">{citation.gejala}</p>
             </div>
-            <div className="p-4 rounded-2xl bg-[var(--soft)] border-l-[3.5px] border-l-[var(--red)]">
+            <div className="p-4 rounded-2xl bg-[var(--soft)]">
               <div className="font-heading text-xs font-extrabold uppercase text-[var(--red)] mb-1">
                 {isVerified ? 'Akar Penyebab Terverifikasi' : 'Praduga Penyebab (Belum Disahkan)'}
               </div>
@@ -129,7 +129,7 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
                 {citation.praduga_penyebab}
               </p>
             </div>
-            <div className="p-4 rounded-2xl bg-[var(--soft)] border-l-[3.5px] border-l-[var(--info)]">
+            <div className="p-4 rounded-2xl bg-[var(--soft)]">
               <div className="font-heading text-xs font-extrabold uppercase text-[var(--info)] mb-1">
                 Tindakan Rekomendasi
               </div>
@@ -145,18 +145,14 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
               isVerified
                 ? {
                     backgroundColor: 'var(--green-bg)',
-                    borderColor: 'var(--green-border)',
-                    borderLeftColor: 'var(--green)',
                     color: 'var(--green)',
                   }
                 : {
                     backgroundColor: 'var(--amber-bg)',
-                    borderColor: 'var(--amber-border)',
-                    borderLeftColor: 'var(--amber)',
                     color: 'var(--amber)',
                   }
             }
-            className="p-3.5 rounded-xl border border-l-[4px] flex items-center gap-2.5 text-sm font-bold"
+            className="p-3.5 rounded-2xl flex items-center gap-2.5 text-sm font-bold"
           >
             {isVerified ? (
               <>

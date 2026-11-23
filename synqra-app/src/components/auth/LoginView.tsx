@@ -28,7 +28,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   };
 
   return (
-    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-[var(--surface)]">
+    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-12">
       {/* Left Hero Visual Panel */}
       <section className="hidden lg:flex lg:col-span-6 xl:col-span-7 relative overflow-hidden flex-col justify-between p-12 xl:p-16 bg-[#07152F] text-white">
         {/* Foto Latar Oil Rig Senja (WebP teroptimasi) */}
@@ -61,11 +61,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
           className="pointer-events-none absolute -right-44 top-12 w-[560px] h-[560px] rounded-full border border-cyan-300/15"
         />
 
-        <div className="relative z-10 flex items-center gap-4">
+        <div className="relative z-10 flex items-center gap-3.5">
           <img
             src="/assets/synqra-logo-dark.png"
             alt="Logo SYNQRA"
-            className="w-14 h-14 object-contain rounded-xl p-1.5 bg-[#071630]/75 border border-white/20 backdrop-blur-md shadow-lg"
+            className="w-12 h-12 object-contain shrink-0 drop-shadow-[0_4px_16px_rgba(0,200,234,0.38)]"
           />
           <div>
             <div className="font-heading font-extrabold text-2xl tracking-wider text-white">
@@ -104,13 +104,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
       </section>
 
       {/* Right Login Card Panel */}
-      <section className="lg:col-span-6 xl:col-span-5 relative flex items-center justify-center p-6 sm:p-12 bg-[var(--surface)]">
+      <section className="lg:col-span-6 xl:col-span-5 relative flex items-center justify-center p-6 sm:p-12">
         <button
           type="button"
           onClick={onToggleTheme}
           title="Ubah Mode Terang / Gelap"
           aria-label="Ubah Mode Terang / Gelap"
-          className="absolute top-6 right-6 w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
+          className="absolute top-6 right-6 w-11 h-11 rounded-full surface-card hover:border-[var(--cyan)] flex items-center justify-center text-[var(--ink)]"
         >
           <span key={isDarkMode ? 'sun' : 'moon'} className="animate-spin-in inline-flex">
             {isDarkMode ? (
@@ -126,7 +126,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             <img
               src={isDarkMode ? '/assets/synqra-logo-dark.png' : '/assets/synqra-logo-light.png'}
               alt="Logo SYNQRA"
-              className="w-12 h-12 object-contain rounded-xl p-1 bg-[var(--soft)] border border-[var(--line)]"
+              className="w-10 h-10 object-contain shrink-0 mix-blend-multiply dark:mix-blend-normal"
             />
             <div>
               <div className="font-heading font-extrabold text-xl text-[var(--ink)]">SYNQRA</div>
@@ -159,10 +159,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       aria-checked={isActive}
                       style={{ '--i': idx + 1 } as React.CSSProperties}
                       onClick={() => setRoleChoice(r.key)}
-                      className={`press-soft w-full flex items-center gap-3.5 p-3.5 rounded-2xl border-2 text-left ${
+                      className={`press-soft w-full flex items-center gap-3.5 p-3.5 rounded-2xl text-left transition-all ${
                         isActive
-                          ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
-                          : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)]/60 hover:bg-[var(--hover-bg)]'
+                          ? 'surface-card ring-2 ring-[#00B8D9] shadow-md'
+                          : 'surface-card hover:bg-[var(--hover-bg)]'
                       }`}
                     >
                       <span className="w-11 h-11 rounded-xl bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] font-heading font-extrabold text-sm flex items-center justify-center shrink-0">
@@ -233,10 +233,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </button>
           </form>
 
-          <div className="mt-5 p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex items-start gap-2.5 text-sm text-[var(--ink-soft)]">
+          <div className="mt-5 flex items-start gap-2.5 text-sm text-[var(--ink-soft)] px-1">
             <ShieldCheck className="w-5 h-5 text-[var(--cyan-dark)] shrink-0 mt-0.5" />
             <span>
-              Anda juga dapat berpindah peran kapan saja langsung dari pojok kanan atas tanpa perlu keluar.
+              Bisa ganti peran kapan saja dari pojok kanan atas tanpa keluar.
             </span>
           </div>
         </div>

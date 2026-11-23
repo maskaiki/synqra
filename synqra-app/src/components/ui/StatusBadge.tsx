@@ -1,12 +1,6 @@
 import React from 'react';
 import { ReportStatus, RiskLevel, SlaInfo } from '@/types/synqra';
-import {
-  AlertTriangle,
-  Clock,
-  Search,
-  CheckCircle2,
-  ShieldAlert,
-} from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: ReportStatus;
@@ -21,61 +15,48 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const configs: Record<
     ReportStatus,
-    { label: string; icon: React.ReactNode; style: React.CSSProperties }
+    { label: string; style: React.CSSProperties }
   > = {
     PRADUGA: {
       label: 'PRADUGA',
-      icon: <AlertTriangle className="w-3.5 h-3.5 shrink-0" />,
       style: {
-        backgroundColor: 'var(--amber-bg)',
-        color: 'var(--amber)',
-        borderColor: 'var(--amber-border)',
-        borderLeftColor: 'var(--amber)',
+        backgroundColor: '#D97706',
+        color: '#FFFFFF',
       },
     },
     TRIAGE: {
-      label: 'TRIAGE DEPT',
-      icon: <Clock className="w-3.5 h-3.5 shrink-0" />,
+      label: 'TRIAGE',
       style: {
-        backgroundColor: 'var(--info-bg)',
-        color: 'var(--info)',
-        borderColor: 'var(--info-border)',
-        borderLeftColor: 'var(--info)',
+        backgroundColor: '#2563EB',
+        color: '#FFFFFF',
       },
     },
     INVESTIGATION: {
       label: 'INVESTIGASI',
-      icon: <Search className="w-3.5 h-3.5 shrink-0" />,
       style: {
-        backgroundColor: 'var(--purple-bg)',
-        color: 'var(--purple)',
-        borderColor: 'var(--purple-border)',
-        borderLeftColor: 'var(--purple)',
+        backgroundColor: 'var(--pop-bg)',
+        color: 'var(--pop-ink)',
       },
     },
     VERIFIED: {
       label: 'TERVERIFIKASI',
-      icon: <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />,
       style: {
-        backgroundColor: 'var(--green-bg)',
-        color: 'var(--green)',
-        borderColor: 'var(--green-border)',
-        borderLeftColor: 'var(--green)',
+        backgroundColor: '#059669',
+        color: '#FFFFFF',
       },
     },
   };
 
   const cfg = configs[status] || configs.PRADUGA;
   const paddingClass =
-    size === 'sm' ? 'px-2.5 py-1 text-[11.5px]' : 'px-3 py-1.5 text-xs';
+    size === 'sm' ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-[11.5px]';
 
   return (
     <span
       style={cfg.style}
-      className={`inline-flex items-center gap-1.5 font-heading font-bold uppercase tracking-wider rounded-[7px] border border-l-[3.5px] whitespace-nowrap select-none ${paddingClass} ${className}`}
+      className={`inline-flex items-center font-heading font-bold uppercase tracking-wider rounded-[7px] whitespace-nowrap select-none shadow-sm ${paddingClass} ${className}`}
     >
-      {cfg.icon}
-      <span>{cfg.label}</span>
+      {cfg.label}
     </span>
   );
 };
@@ -86,34 +67,26 @@ interface SlaBadgeProps {
 }
 
 export const SlaBadge: React.FC<SlaBadgeProps> = ({ sla, compact = false }) => {
-  const styleMap: Record<SlaInfo['level'], React.CSSProperties> = {
-    green: {
-      backgroundColor: 'var(--green-bg)',
-      color: 'var(--green)',
-      borderColor: 'var(--green-border)',
-      borderLeftColor: 'var(--green)',
-    },
-    yellow: {
-      backgroundColor: 'var(--amber-bg)',
-      color: 'var(--amber)',
-      borderColor: 'var(--amber-border)',
-      borderLeftColor: 'var(--amber)',
-    },
-    red: {
-      backgroundColor: 'var(--red-bg)',
-      color: 'var(--red)',
-      borderColor: 'var(--red-border)',
-      borderLeftColor: 'var(--red)',
-    },
+  const colorMap: Record<SlaInfo['level'], string> = {
+    green: 'var(--green)',
+    yellow: 'var(--amber)',
+    red: 'var(--red)',
   };
+
+  const text = compact
+    ? `${sla.hoursElapsed}j`
+    : sla.level === 'red'
+      ? `${sla.hoursElapsed}j Overdue`
+      : `${sla.hoursElapsed}j`;
 
   return (
     <span
-      style={styleMap[sla.level]}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-[11.5px] whitespace-nowrap select-none"
+      style={{ color: colorMap[sla.level] }}
+      title={sla.label}
+      className="inline-flex items-center gap-1 font-heading font-bold text-xs whitespace-nowrap select-none"
     >
       <Clock className="w-3.5 h-3.5 shrink-0" />
-      <span>{compact ? sla.shortLabel : sla.label}</span>
+      <span>{text}</span>
     </span>
   );
 };
@@ -123,40 +96,19 @@ interface RiskBadgeProps {
 }
 
 export const RiskBadge: React.FC<RiskBadgeProps> = ({ level = 'MEDIUM' }) => {
-  const styles: Record<RiskLevel, React.CSSProperties> = {
-    LOW: {
-      backgroundColor: 'var(--green-bg)',
-      color: 'var(--green)',
-      borderColor: 'var(--green-border)',
-      borderLeftColor: 'var(--green)',
-    },
-    MEDIUM: {
-      backgroundColor: 'var(--info-bg)',
-      color: 'var(--info)',
-      borderColor: 'var(--info-border)',
-      borderLeftColor: 'var(--info)',
-    },
-    HIGH: {
-      backgroundColor: 'var(--amber-bg)',
-      color: 'var(--amber)',
-      borderColor: 'var(--amber-border)',
-      borderLeftColor: 'var(--amber)',
-    },
-    CRITICAL: {
-      backgroundColor: 'var(--red-bg)',
-      color: 'var(--red)',
-      borderColor: 'var(--red-border)',
-      borderLeftColor: 'var(--red)',
-    },
+  const colorMap: Record<RiskLevel, string> = {
+    LOW: 'var(--green)',
+    MEDIUM: 'var(--info)',
+    HIGH: 'var(--amber)',
+    CRITICAL: 'var(--red)',
   };
 
   return (
     <span
-      style={styles[level]}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] border border-l-[3.5px] font-heading font-bold text-[11.5px] uppercase whitespace-nowrap"
+      style={{ color: colorMap[level] }}
+      className="inline-flex items-center font-heading font-extrabold text-xs uppercase tracking-wide whitespace-nowrap select-none"
     >
-      <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-      <span>RISK: {level}</span>
+      {level}
     </span>
   );
 };
