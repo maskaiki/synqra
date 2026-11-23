@@ -7,12 +7,14 @@ interface TechnicalArtProps {
   type?: string;
   className?: string;
   darkMode?: boolean;
+  breakout?: boolean;
 }
 
 export const TechnicalArt: React.FC<TechnicalArtProps> = ({
   type = 'pump',
   className = 'w-full h-24',
   darkMode = false,
+  breakout = false,
 }) => {
   const [imgError, setImgError] = useState(false);
 
@@ -22,6 +24,18 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
 
   const equipmentImage = EQUIPMENT_MEDIA[type];
   if (equipmentImage && !imgError) {
+    const shadowClass = breakout
+      ? darkMode
+        ? 'asset-render-breakout-dark'
+        : 'asset-render-breakout-light'
+      : darkMode
+        ? 'asset-render-dark'
+        : 'asset-render-light';
+
+    const hoverClass = breakout
+      ? 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5 group-hover:scale-[1.07]'
+      : 'transition-transform duration-300 ease-out group-hover:scale-[1.06]';
+
     return (
       <img
         src={equipmentImage.src}
@@ -32,9 +46,7 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
         decoding="async"
         draggable={false}
         onError={() => setImgError(true)}
-        className={`object-contain select-none transition-transform duration-300 ease-out group-hover:scale-[1.06] ${
-          darkMode ? 'asset-render-dark' : 'asset-render-light'
-        } ${className}`}
+        className={`object-contain select-none ${hoverClass} ${shadowClass} ${className}`}
       />
     );
   }

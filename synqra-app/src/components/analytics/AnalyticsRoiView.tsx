@@ -12,7 +12,8 @@ import {
   RoleInfo,
 } from '@/types/synqra';
 import { calculateSla } from '@/lib/constants';
-import { TechnicalArt } from '@/components/ui/TechnicalArt';
+import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
+import { SynqraLoader } from '@/components/ui/SynqraLoader';
 import {
   AlertTriangle,
   BarChart3,
@@ -171,14 +172,14 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
       </header>
 
       {/* 2 Tab Internal */}
-      <div className="inline-flex flex-wrap p-1.5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm gap-1.5">
+      <div className="surface-card inline-flex flex-wrap p-1.5 rounded-full gap-1.5">
         <button
           type="button"
           aria-pressed={activeTab === 'warnings'}
           onClick={() => setActiveTab('warnings')}
-          className={`px-4 py-2.5 rounded-xl font-heading text-sm font-bold inline-flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 ${
             activeTab === 'warnings'
-              ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830]'
+              ? 'pop-btn shadow-sm'
               : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
           }`}
         >
@@ -189,9 +190,9 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
           type="button"
           aria-pressed={activeTab === 'summary'}
           onClick={() => setActiveTab('summary')}
-          className={`px-4 py-2.5 rounded-xl font-heading text-sm font-bold inline-flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 ${
             activeTab === 'summary'
-              ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830]'
+              ? 'pop-btn shadow-sm'
               : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
           }`}
         >
@@ -202,14 +203,14 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
 
       {/* TAB 1: PERINGATAN DINI AI */}
       {activeTab === 'warnings' && (
-        <section className="space-y-5 animate-step-in">
-          <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <section className="space-y-5 animate-slide-prev">
+          <div className="surface-card p-5 sm:p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="font-heading text-base font-bold text-[var(--ink)]">
                 Pemindaian Pola Kegagalan Berulang
               </div>
               <p className="text-sm text-[var(--ink-soft)] m-0">
-                AI mengelompokkan seluruh laporan berdasarkan aset untuk menandai risiko gangguan berulang.
+                AI mengelompokkan seluruh laporan per aset untuk menandai risiko gangguan berulang.
               </p>
             </div>
 
@@ -217,7 +218,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
               type="button"
               disabled={isScanning}
               onClick={handleScanPatterns}
-              className="group px-5 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md disabled:opacity-50 shrink-0"
+              className="group pop-btn px-5 py-3 rounded-full font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-md disabled:opacity-50 shrink-0"
             >
               <Radar className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
               <span>{isScanning ? 'Memindai Pola...' : 'Pindai Pola Berulang'}</span>
@@ -239,27 +240,12 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
             </div>
           )}
 
-          {/* Doherty threshold: kerangka shimmer tampil seketika saat AI memindai pola */}
           {isScanning && (
-            <div aria-busy="true" className="space-y-4 animate-fade-in">
-              {[0, 1, 2].map((idx) => (
-                <div
-                  key={idx}
-                  className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] space-y-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex gap-2">
-                      <div className="skeleton h-6 w-20 rounded-[7px]" />
-                      <div className="skeleton h-6 w-20 rounded-[7px]" />
-                    </div>
-                    <div className="skeleton h-6 w-28 rounded-[7px]" />
-                  </div>
-                  <div className="skeleton h-5 w-2/3" />
-                  <div className="skeleton h-4 w-full" />
-                  <div className="skeleton h-4 w-4/5" />
-                </div>
-              ))}
-            </div>
+            <SynqraLoader
+              variant="radar"
+              label="Memindai pola anomali berulang..."
+              sublabel="Mengelompokkan riwayat lintas shift pada P-101A, E-201, dan FCV-301."
+            />
           )}
 
           {!scanResult && !isScanning && (
@@ -432,12 +418,12 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
 
       {/* TAB 2: RINGKASAN PILOT */}
       {activeTab === 'summary' && (
-        <div className="space-y-6 animate-step-in">
+        <div className="space-y-6 animate-slide-next">
           {/* 3 Metrik Ringkas Kesiapan Pilot */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
             <div
               style={{ '--i': 0 } as React.CSSProperties}
-              className="lift p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-2"
+              className="surface-card lift p-5 rounded-2xl space-y-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-heading text-sm font-bold text-[var(--ink)]">
@@ -455,7 +441,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
 
             <div
               style={{ '--i': 1 } as React.CSSProperties}
-              className="lift p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-2"
+              className="surface-card lift p-5 rounded-2xl space-y-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-heading text-sm font-bold text-[var(--ink)]">
@@ -473,7 +459,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
 
             <div
               style={{ '--i': 2 } as React.CSSProperties}
-              className="lift p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-2.5"
+              className="surface-card lift p-5 rounded-2xl space-y-2.5"
             >
               <div className="font-heading text-sm font-bold text-[var(--ink)]">
                 Distribusi Kasus
@@ -501,18 +487,13 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
             </div>
           </section>
 
-          {/* Profil Kesiapan per Aset */}
-          <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
-            <div>
-              <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
-                Profil Pengetahuan per Aset
-              </h2>
-              <p className="text-sm text-[var(--ink-soft)] mt-0.5 m-0">
-                Status kelengkapan kasus terverifikasi pada tiga peralatan pilot utama.
-              </p>
-            </div>
+          {/* Profil Kesiapan per Aset (Breakout Cards) */}
+          <section className="surface-card p-6 rounded-3xl space-y-4">
+            <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+              Profil Pengetahuan per Aset
+            </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
               {assets.map((asset, idx) => {
                 const assetCases = reports.filter((r) => r.asset_id === asset.id);
                 const verifiedCases = assetCases.filter((r) => r.status === 'VERIFIED').length;
@@ -520,54 +501,19 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
                 const latestCase = assetCases[0];
 
                 return (
-                  <div
+                  <EquipmentBreakoutCard
                     key={asset.id}
+                    asset={asset}
+                    isDarkMode={isDarkMode}
                     style={{ '--i': idx } as React.CSSProperties}
-                    className="group lift p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] hover:border-[var(--cyan)] flex flex-col justify-between gap-3"
-                  >
-                    <div className="h-28 rounded-xl bg-gradient-to-b from-[var(--cyan-pale)]/45 to-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2.5">
-                      <TechnicalArt
-                        type={asset.type}
-                        darkMode={isDarkMode}
-                        className="w-full h-24"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
-                          {asset.id}
-                        </span>
-                        <span
-                          style={{
-                            backgroundColor: 'var(--green-bg)',
-                            color: 'var(--green)',
-                            borderColor: 'var(--green-border)',
-                          }}
-                          className="px-2 py-0.5 rounded-[7px] border font-heading text-xs font-bold"
-                        >
-                          {verifiedCases} Verified
-                        </span>
-                      </div>
-                      <div className="font-heading font-bold text-base text-[var(--ink)]">
-                        {asset.name}
-                      </div>
-                      <div className="text-sm text-[var(--ink-soft)]">
-                        {asset.area} · {openCases} kasus aktif
-                      </div>
-                    </div>
-
-                    {latestCase && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenReport(latestCase)}
-                        className="pt-2.5 border-t border-[var(--line-soft)] flex items-center justify-between gap-2 text-sm font-heading font-bold text-[var(--cyan-dark)] hover:underline text-left"
-                      >
-                        <span className="truncate">Kasus Terbaru: {latestCase.id}</span>
-                        <ExternalLink className="w-4 h-4 shrink-0 nudge-x" />
-                      </button>
-                    )}
-                  </div>
+                    badgeText={`${verifiedCases} Verified`}
+                    metaText={
+                      latestCase
+                        ? `${openCases} aktif · Terbaru ${latestCase.id}`
+                        : `${openCases} kasus aktif`
+                    }
+                    onClick={latestCase ? () => onOpenReport(latestCase) : undefined}
+                  />
                 );
               })}
             </div>

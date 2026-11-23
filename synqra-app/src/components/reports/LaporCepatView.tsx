@@ -2,8 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Asset, Evidence, FailureEntities, Report, RoleInfo } from '@/types/synqra';
-import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
+import { SynqraLoader } from '@/components/ui/SynqraLoader';
 import { uploadEvidenceFile } from '@/lib/dataService';
 import {
   AlertTriangle,
@@ -167,6 +168,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   onCancel,
 }) => {
   const [activeStep, setActiveStep] = useState<WizardStep>(1);
+  const [stepDir, setStepDir] = useState<'next' | 'prev'>('next');
   const [highestStep, setHighestStep] = useState<WizardStep>(1);
 
   const [selectedAssetId, setSelectedAssetId] = useState<string>('P-101A');
@@ -233,6 +235,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
   const goToStep = (step: WizardStep) => {
     setErrorMsg(null);
+    setStepDir(step >= activeStep ? 'next' : 'prev');
     setActiveStep(step);
     setHighestStep((prev) => (step > prev ? step : prev));
   };
@@ -584,6 +587,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
         sourceMode: useAudio ? 'audio' : 'text',
       });
       setShowTranscript(false);
+      setStepDir('next');
       setActiveStep(3);
       setHighestStep(3);
     } catch (err: unknown) {
@@ -663,7 +667,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       {/* Indikator Langkah Wizard (Klik Ulang untuk Langkah Terlewati) */}
       <nav
         aria-label="Langkah Lapor Cepat"
-        className="flex flex-wrap items-center gap-2 p-2.5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm"
+        className="surface-card flex flex-wrap items-center gap-2 p-2 rounded-2xl"
       >
         {(
           [
@@ -684,11 +688,11 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               <button
                 type="button"
                 disabled={!unlocked}
-                onClick={() => unlocked && setActiveStep(item.step)}
+                onClick={() => unlocked && goToStep(item.step)}
                 aria-current={active ? 'step' : undefined}
-                className={`px-3.5 py-2 rounded-xl font-heading text-sm font-bold inline-flex items-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed ${
+                className={`px-4 py-2 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed ${
                   active
-                    ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830]'
+                    ? 'pop-btn shadow-sm'
                     : completed
                       ? 'bg-[var(--cyan-pale)] text-[var(--cyan-dark)] hover:opacity-90'
                       : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
@@ -707,7 +711,11 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
       {/* LAYAR 1: PILIH ALAT & SCAN NAMEPLATE */}
       {activeStep === 1 && (
-        <section className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-5 animate-step-in">
+        <section
+          className={`surface-card p-5 sm:p-6 rounded-3xl space-y-5 ${
+            stepDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
+          }`}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
               1. Pilih Peralatan atau Scan Nameplate
@@ -726,7 +734,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                 type="button"
                 disabled={isScanning}
                 onClick={() => nameplateInputRef.current?.click()}
-                className="px-4 py-2.5 rounded-xl bg-[var(--cyan-pale)] border border-[var(--cyan)]/40 text-[var(--cyan-dark)] font-heading font-bold text-sm inline-flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+                className="px-4 py-2.5 rounded-full bg-[var(--cyan-pale)] border border-[var(--cyan)]/40 text-[var(--cyan-dark)] font-heading font-bold text-sm inline-flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
               >
                 <Scan className="w-4 h-4" />
                 <span>
@@ -736,51 +744,26 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
-            {assets.map((asset, idx) => {
-              const active = selectedAssetId === asset.id;
-              return (
-                <button
-                  key={asset.id}
-                  type="button"
-                  style={{ '--i': idx } as React.CSSProperties}
-                  onClick={() => setSelectedAssetId(asset.id)}
-                  className={`group lift press-soft p-4 rounded-2xl border-2 text-left ${
-                    active
-                      ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
-                      : 'border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)]/60'
-                  }`}
-                >
-                  <div className="h-24 rounded-xl bg-gradient-to-b from-[var(--cyan-pale)]/35 to-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2 mb-2.5">
-                    <TechnicalArt
-                      type={asset.type}
-                      darkMode={isDarkMode}
-                      className="w-full h-20"
-                    />
-                  </div>
-                  <div className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
-                    {asset.id}
-                  </div>
-                  <div className="font-heading font-bold text-[15px] text-[var(--ink)] mt-0.5">
-                    {asset.name}
-                  </div>
-                  <div className="text-sm text-[var(--ink-soft)] mt-0.5 truncate">
-                    {asset.area}
-                  </div>
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+            {assets.map((asset, idx) => (
+              <EquipmentBreakoutCard
+                key={asset.id}
+                asset={asset}
+                isDarkMode={isDarkMode}
+                selected={selectedAssetId === asset.id}
+                style={{ '--i': idx } as React.CSSProperties}
+                onClick={() => setSelectedAssetId(asset.id)}
+              />
+            ))}
           </div>
 
           {isScanning && (
-            <div aria-busy="true" className="p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line)] flex gap-3.5 animate-fade-in">
-              <div className="skeleton w-20 h-20 rounded-xl shrink-0" />
-              <div className="flex-1 space-y-2 py-1" aria-hidden>
-                <div className="skeleton h-4 w-48" />
-                <div className="skeleton h-3.5 w-3/4" />
-                <div className="skeleton h-3.5 w-1/2" />
-              </div>
-            </div>
+            <SynqraLoader
+              variant="scan"
+              compact
+              label="Memindai nameplate & kondisi fisik..."
+              sublabel="Mengenali tag alat dan mendeteksi anomali visual dengan Gemini Vision."
+            />
           )}
 
           {scanResult && (() => {
@@ -1024,7 +1007,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
             <button
               type="button"
               onClick={() => goToStep(2)}
-              className="group px-5 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm hover:shadow-md"
+              className="group pop-btn px-5 py-2.5 rounded-full font-heading font-bold text-sm inline-flex items-center gap-2 shadow-md"
             >
               <span>Lanjut ke Temuan</span>
               <ArrowRight className="w-4 h-4 nudge-x" />
@@ -1035,7 +1018,11 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
       {/* LAYAR 2: REKAM SUARA ATAU KETIK TEMUAN */}
       {activeStep === 2 && (
-        <section className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4 animate-step-in">
+        <section
+          className={`surface-card p-5 sm:p-6 rounded-3xl space-y-4 ${
+            stepDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
+          }`}
+        >
           {/* Baris Info Aset Terpilih + Toggle Mode Input */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--line-soft)]">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[7px] bg-[var(--cyan-pale)] border border-[var(--cyan)]/35 font-heading text-sm font-bold text-[var(--cyan-dark)]">
@@ -1043,7 +1030,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               <span className="text-[var(--ink)] font-semibold">({selectedAsset.name})</span>
               <button
                 type="button"
-                onClick={() => setActiveStep(1)}
+                onClick={() => goToStep(1)}
                 className="underline text-xs font-extrabold ml-1"
               >
                 Ganti
@@ -1283,20 +1270,19 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           )}
 
           {isExtracting && (
-            <div aria-busy="true" className="p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] space-y-2.5 animate-fade-in">
-              <div className="skeleton h-3.5 w-3/4" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" aria-hidden>
-                <div className="skeleton h-9" />
-                <div className="skeleton h-9" />
-              </div>
-            </div>
+            <SynqraLoader
+              variant="extract"
+              compact
+              label="Menyusun 7 entitas kegagalan..."
+              sublabel="Ekstraksi gejala, kondisi operasi, praduga penyebab, dan usulan tindakan."
+            />
           )}
 
           <div className="flex items-center justify-between gap-3 pt-3 border-t border-[var(--line-soft)]">
             <button
               type="button"
-              onClick={() => setActiveStep(1)}
-              className="group px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
+              onClick={() => goToStep(1)}
+              className="group px-4 py-2.5 rounded-full border border-[var(--line-soft)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4 nudge-back" />
               <span>Kembali</span>
@@ -1305,7 +1291,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               type="button"
               disabled={isExtracting}
               onClick={() => handleExtractAI()}
-              className="group px-5 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm hover:shadow-md disabled:opacity-50"
+              className="group pop-btn px-5 py-2.5 rounded-full font-heading font-bold text-sm inline-flex items-center gap-2 shadow-md disabled:opacity-50"
             >
               <Sparkles className={`w-4 h-4 ${isExtracting ? 'animate-spin' : ''}`} />
               <span>
@@ -1321,7 +1307,11 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
       {/* LAYAR 3: TINJAU 7 ENTITAS & LAMPIRKAN BUKTI */}
       {activeStep === 3 && entities && (
-        <section className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4 animate-step-in">
+        <section
+          className={`surface-card p-5 sm:p-6 rounded-3xl space-y-4 ${
+            stepDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
+          }`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--line-soft)]">
             <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
               3. Tinjau 7 Entitas &amp; Lampirkan Bukti
@@ -1553,8 +1543,8 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--line-soft)]">
             <button
               type="button"
-              onClick={() => setActiveStep(2)}
-              className="group px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
+              onClick={() => goToStep(2)}
+              className="group px-4 py-2.5 rounded-full border border-[var(--line-soft)] bg-[var(--surface)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4 nudge-back" />
               <span>Ubah Narasi</span>
@@ -1563,7 +1553,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
               type="button"
               disabled={isSubmitting}
               onClick={handleSubmitReport}
-              className="group px-5 py-2.5 rounded-xl bg-[#087F5B] hover:bg-[#066346] text-white font-heading font-bold text-sm inline-flex items-center gap-2 shadow-sm hover:shadow-md disabled:opacity-50"
+              className="group px-5 py-2.5 rounded-full bg-[#087F5B] hover:bg-[#066346] text-white font-heading font-bold text-sm inline-flex items-center gap-2 shadow-md disabled:opacity-50"
             >
               <span>
                 {isSubmitting ? 'Menyimpan...' : 'Kirim Laporan (Status Praduga)'}

@@ -35,9 +35,6 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
   const [query, setQuery] = useState('');
 
   const earlyWarnings = detectEarlyWarnings(reports, assets);
-
-  // Postel's law: terima input yang longgar ("p101a", "P 101 A", atau "rep004")
-  // agar tetap cocok dengan "P-101A" / "REP-004" (abaikan huruf besar, spasi & tanda hubung).
   const normalize = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '');
 
   const filtered = reports.filter((r) => {
@@ -69,14 +66,14 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
           <h1 className="font-heading text-3xl font-bold text-[var(--ink)]">
             Triage &amp; Daftar Kasus ({filtered.length})
           </h1>
-          <p className="text-[15px] text-[var(--ink-soft)] mt-1">
+          <p className="text-[15px] text-[var(--ink-soft)] mt-1 m-0">
             Saring kasus berdasarkan aset, status, dan batas SLA.
           </p>
         </div>
         <button
           type="button"
           onClick={onCreateNew}
-          className="group px-5 py-3 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-sm inline-flex items-center gap-2 self-start sm:self-auto"
+          className="group pop-btn px-5 py-3 rounded-full font-heading font-bold text-sm inline-flex items-center gap-2 self-start sm:self-auto shadow-md"
         >
           <Plus className="w-4 h-4 stroke-[2.5] spin-on-hover" />
           <span>Buat Laporan</span>
@@ -112,26 +109,26 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
         </div>
       )}
 
-      <section className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
+      <section className="surface-card p-5 rounded-3xl space-y-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="w-5 h-5 text-[var(--cyan-dark)] absolute left-3.5 top-3" />
+            <Search className="w-5 h-5 text-[var(--cyan-dark)] absolute left-4 top-3" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nomor laporan, tag alat, gejala, atau nama pelapor..."
-              className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:border-[var(--cyan)] focus:ring-4 focus:ring-[#00B8D9]/20 transition-[border-color,box-shadow] duration-200"
+              placeholder="Cari nomor laporan, tag alat, gejala, atau pelapor..."
+              className="w-full pl-11 pr-4 py-2.5 rounded-full border border-[var(--line-soft)] bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:border-[var(--cyan)] focus:ring-4 focus:ring-[#00B8D9]/20 transition-[border-color,box-shadow] duration-200"
             />
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setAssetFilter('ALL')}
-              className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold ${
+              className={`px-4 py-2 rounded-full border font-heading text-sm font-bold ${
                 assetFilter === 'ALL'
-                  ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] border-transparent'
-                  : 'bg-[var(--soft)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                  ? 'pop-btn border-transparent shadow-sm'
+                  : 'bg-[var(--soft)] border-[var(--line-soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
               }`}
             >
               Semua Aset
@@ -141,10 +138,10 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                 key={a.id}
                 type="button"
                 onClick={() => setAssetFilter(a.id)}
-                className={`px-3.5 py-2 rounded-xl border font-heading text-sm font-bold ${
+                className={`px-4 py-2 rounded-full border font-heading text-sm font-bold ${
                   assetFilter === a.id
-                    ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830] border-transparent'
-                    : 'bg-[var(--soft)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                    ? 'pop-btn border-transparent shadow-sm'
+                    : 'bg-[var(--soft)] border-[var(--line-soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
                 {a.id}
@@ -168,10 +165,10 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                 key={key}
                 type="button"
                 onClick={() => setStatusFilter(key)}
-                className={`hit-area px-3.5 py-1.5 rounded-lg border font-heading text-xs font-bold ${
+                className={`hit-area px-3.5 py-1.5 rounded-full border font-heading text-xs font-bold ${
                   statusFilter === key
                     ? 'bg-[var(--cyan-pale)] border-[var(--cyan)] text-[var(--cyan-dark)]'
-                    : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                    : 'bg-[var(--surface)] border-[var(--line-soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
                 {label}
@@ -191,10 +188,10 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                 key={key}
                 type="button"
                 onClick={() => setSlaFilter(key)}
-                className={`hit-area px-3 py-1.5 rounded-lg border font-heading text-xs font-bold ${
+                className={`hit-area px-3.5 py-1.5 rounded-full border font-heading text-xs font-bold ${
                   slaFilter === key
-                    ? 'bg-[#B42318] text-white border-transparent'
-                    : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                    ? 'bg-[#B42318] text-white border-transparent shadow-sm'
+                    : 'bg-[var(--surface)] border-[var(--line-soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
                 {label}
@@ -217,7 +214,6 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
               key={report.id}
               role="button"
               tabIndex={0}
-              // Staggering dibatasi 6 item agar daftar panjang tetap terasa instan.
               style={{ '--i': Math.min(idx, 6) } as React.CSSProperties}
               onClick={() => onSelectReport(report)}
               onKeyDown={(e) => {
@@ -226,17 +222,20 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                   onSelectReport(report);
                 }
               }}
-              className="group lift p-5 rounded-2xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] shadow-sm cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              className="group surface-card lift p-5 rounded-2xl hover:border-[var(--cyan)] cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-4 min-w-0 flex-1">
-                <div className="w-16 h-16 rounded-xl bg-[var(--soft)] border border-[var(--line)] flex items-center justify-center p-1.5 shrink-0">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center p-1.5 shrink-0"
+                  style={{ background: 'var(--stage-gradient)' }}
+                >
                   <TechnicalArt
                     type={asset?.type || 'pump'}
                     darkMode={isDarkMode}
                     className="w-14 h-14"
                   />
                 </div>
-                <div className="min-w-0 flex-1 space-y-2">
+                <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
                       {report.id}
@@ -249,22 +248,22 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
                     {report.risk_level && <RiskBadge level={report.risk_level} />}
                   </div>
 
-                  <h3 className="font-heading font-bold text-lg text-[var(--ink)] leading-snug">
+                  <h3 className="font-heading font-bold text-lg text-[var(--ink)] leading-snug m-0">
                     {report.title}
                   </h3>
 
-                  <p className="text-sm text-[var(--ink-soft)] line-clamp-2">
-                    <b className="text-[var(--ink)]">Gejala:</b> {report.gejala}
+                  <p className="text-sm text-[var(--ink-soft)] line-clamp-1 m-0">
+                    {report.gejala}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-[var(--ink-soft)]">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-[var(--ink-soft)] pt-0.5">
                     <span>
                       Pelapor: <b className="text-[var(--ink)]">{report.reporter_name}</b>
                     </span>
                     <span>
-                      Bukti Fisik:{' '}
+                      Bukti:{' '}
                       <b style={{ color: evCount > 0 ? 'var(--green)' : 'var(--red)' }}>
-                        {evCount > 0 ? `${evCount} file` : 'Kosong (Validasi Terkunci)'}
+                        {evCount > 0 ? `${evCount} file` : 'Kosong (Terkunci)'}
                       </b>
                     </span>
                     {isSelfReport && report.status !== 'VERIFIED' && (
@@ -286,9 +285,9 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
               </div>
 
               <div className="shrink-0">
-                <span className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] group-hover:border-[var(--cyan)] group-hover:bg-[var(--cyan-pale)] transition-colors duration-200 font-heading font-bold text-sm text-[var(--ink)] inline-flex items-center gap-2">
+                <span className="px-4 py-2.5 rounded-full border border-[var(--line-soft)] bg-[var(--soft)] group-hover:bg-[var(--pop-bg)] group-hover:text-[var(--pop-ink)] group-hover:border-transparent transition-colors duration-200 font-heading font-bold text-sm text-[var(--ink)] inline-flex items-center gap-2">
                   <span>Buka Detail</span>
-                  <ArrowRight className="w-4 h-4 text-[var(--cyan-dark)] nudge-x" />
+                  <ArrowRight className="w-4 h-4 nudge-x" />
                 </span>
               </div>
             </article>
@@ -296,8 +295,8 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
         })}
 
         {filtered.length === 0 && (
-          <div className="p-12 rounded-2xl bg-[var(--surface)] border border-dashed border-[var(--line)] text-center animate-fade-in">
-            <p className="text-base font-bold text-[var(--ink-soft)]">
+          <div className="surface-card p-12 rounded-3xl border-dashed text-center animate-fade-in">
+            <p className="text-base font-bold text-[var(--ink-soft)] m-0">
               Tidak ada kasus yang cocok dengan filter pencarian saat ini.
             </p>
           </div>

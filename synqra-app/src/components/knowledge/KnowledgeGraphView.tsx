@@ -5,6 +5,7 @@ import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
 import { detectEarlyWarnings } from '@/lib/constants';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
+import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -21,6 +22,7 @@ interface KnowledgeGraphViewProps {
   reports: Report[];
   evidences: Evidence[];
   isDarkMode: boolean;
+  initialAssetId?: string;
   onOpenEvidence: (citation: CitationItem) => void;
   onOpenReport: (report: Report) => void;
 }
@@ -30,13 +32,24 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   reports,
   evidences,
   isDarkMode,
+  initialAssetId,
   onOpenEvidence,
   onOpenReport,
 }) => {
-  const [selectedAssetId, setSelectedAssetId] = useState<string>(assets[0]?.id || 'P-101A');
+  const [selectedAssetId, setSelectedAssetId] = useState<string>(
+    initialAssetId || assets[0]?.id || 'P-101A'
+  );
   const [showAllStatuses, setShowAllStatuses] = useState(false);
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
   const [hoveredReportId, setHoveredReportId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialAssetId && assets.some((a) => a.id === initialAssetId)) {
+      setSelectedAssetId(initialAssetId);
+      setFocusedReportId(null);
+      setHoveredReportId(null);
+    }
+  }, [initialAssetId, assets]);
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) || assets[0];
   const assetReports = selectedAsset
@@ -101,8 +114,8 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         </label>
       </header>
 
-      {/* Asset Selector Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+      {/* Asset Selector Cards (Breakout Seamless) */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
         {assets.map((asset, idx) => {
           const isSelected = asset.id === selectedAsset.id;
           const verifiedTotal = reports.filter(
@@ -111,32 +124,17 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           const allTotal = reports.filter((r) => r.asset_id === asset.id).length;
 
           return (
-            <button
+            <EquipmentBreakoutCard
               key={asset.id}
-              type="button"
+              asset={asset}
+              isDarkMode={isDarkMode}
+              selected={isSelected}
+              compact
               style={{ '--i': idx } as React.CSSProperties}
+              badgeText={`${verifiedTotal} Verified`}
+              metaText={`${allTotal} Total Kasus · ${asset.area.split(' · ')[0]}`}
               onClick={() => handleSelectAsset(asset.id)}
-              className={`group lift press-soft p-4 rounded-2xl border-2 text-left flex items-center gap-4 ${
-                isSelected
-                  ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] shadow-sm'
-                  : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)]/60'
-              }`}
-            >
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-[var(--soft)] to-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-1.5 shrink-0">
-                <TechnicalArt type={asset.type} darkMode={isDarkMode} className="w-14 h-14" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
-                  {asset.id}
-                </div>
-                <div className="font-heading font-bold text-[15px] text-[var(--ink)] truncate">
-                  {asset.name}
-                </div>
-                <div className="text-sm font-semibold text-[var(--ink-soft)] mt-0.5">
-                  {verifiedTotal} Verified · {allTotal} Total
-                </div>
-              </div>
-            </button>
+            />
           );
         })}
       </section>
@@ -165,7 +163,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         /* Panel Fokus Kasus: Tampilan rantai sebab-akibat 5 lapis yang lega */
         <section
           key={focusedReport.id}
-          className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-6 animate-step-in"
+          className="surface-card p-6 rounded-3xl space-y-6 animate-slide-next"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--line-soft)]">
             <button
@@ -200,7 +198,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         verifiedBy: focusedReport.verified_by,
                       })
                     }
-                    className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-2"
+                    className="px-4 py-2.5 rounded-full border border-[var(--line-soft)] bg-[var(--soft)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-2"
                   >
                     <Eye className="w-4 h-4 text-[var(--cyan-dark)]" />
                     <span>Lihat Bukti</span>
@@ -211,7 +209,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenReport(focusedReport)}
-                className="group px-4 py-2.5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading text-sm font-bold inline-flex items-center gap-2 shadow-sm hover:shadow-md"
+                className="group pop-btn px-5 py-2.5 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 shadow-md"
               >
                 <span>Buka Detail Lengkap</span>
                 <ArrowRight className="w-4 h-4 nudge-x" />
@@ -345,13 +343,13 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         </section>
       ) : (
         /* Overview Mode: Peta Simpul Visual + Daftar Kasus 1 Baris */
-        <div className="space-y-6 animate-step-in">
+        <div className="space-y-6 animate-slide-prev">
           {/* Bagian 1: Peta Simpul Visual Ringkas */}
-          <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
+          <section className="surface-card p-6 rounded-3xl space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <GitBranch className="w-5 h-5 text-[var(--cyan-dark)]" />
-                <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
+                <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
                   Peta Simpul Aset {selectedAsset.id}
                 </h2>
               </div>
@@ -361,35 +359,46 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             </div>
 
             {visibleReports.length === 0 ? (
-              <div className="p-10 rounded-xl bg-[var(--soft)] border border-dashed border-[var(--line)] text-center space-y-2">
+              <div className="p-10 rounded-2xl bg-[var(--soft)] border border-dashed border-[var(--line)] text-center space-y-2">
                 <CheckCircle2 className="w-8 h-8 mx-auto text-[var(--cyan-dark)]" />
                 <div className="font-heading font-bold text-base text-[var(--ink)]">
                   Belum ada kasus TERVERIFIKASI pada aset {selectedAsset.id}
                 </div>
-                <p className="text-sm text-[var(--ink-soft)]">
+                <p className="text-sm text-[var(--ink-soft)] m-0">
                   Aktifkan opsi Sertakan Praduga / Investigasi atau sahkan kasus di menu Triage &amp; Kasus.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[248px_76px_1fr] items-stretch gap-4 lg:gap-0">
-                {/* Simpul Aset Pusat */}
-                <div className="group p-4 rounded-2xl bg-[var(--soft)] border-2 border-[var(--cyan)] flex flex-col justify-between gap-3">
-                  <div className="h-32 rounded-xl bg-gradient-to-b from-[var(--cyan-pale)]/55 to-[var(--surface)] border border-[var(--line-soft)] flex items-center justify-center p-2.5">
-                    <TechnicalArt
-                      type={selectedAsset.type}
-                      darkMode={isDarkMode}
-                      className="w-full h-28"
-                    />
-                  </div>
-                  <div>
-                    <div className="font-heading text-xl font-bold text-[var(--ink)]">
-                      {selectedAsset.id}
+              <div className="grid grid-cols-1 lg:grid-cols-[256px_76px_1fr] items-stretch gap-4 lg:gap-0 pt-4">
+                {/* Simpul Aset Pusat dengan efek breakout seamless */}
+                <div className="group pt-5">
+                  <div className="h-full p-4 rounded-2xl bg-[var(--soft)] border-2 border-[var(--cyan)] shadow-sm flex flex-col justify-between gap-3 overflow-visible">
+                    <div
+                      className="rounded-xl flex flex-col items-center justify-end px-2 pb-2 pt-1 overflow-visible"
+                      style={{ background: 'var(--stage-gradient-active)' }}
+                    >
+                      <TechnicalArt
+                        type={selectedAsset.type}
+                        darkMode={isDarkMode}
+                        breakout
+                        className="w-full h-32 -mt-9 relative z-10"
+                      />
+                      <div
+                        aria-hidden="true"
+                        className="w-3/4 h-3 -mt-1.5 rounded-[50%]"
+                        style={{ background: 'var(--stage-floor)' }}
+                      />
                     </div>
-                    <div className="font-heading font-bold text-sm text-[var(--cyan-dark)]">
-                      {selectedAsset.name}
-                    </div>
-                    <div className="text-sm text-[var(--ink-soft)] mt-1">
-                      {selectedAsset.area}
+                    <div>
+                      <div className="font-heading text-xl font-bold text-[var(--ink)]">
+                        {selectedAsset.id}
+                      </div>
+                      <div className="font-heading font-bold text-sm text-[var(--cyan-dark)]">
+                        {selectedAsset.name}
+                      </div>
+                      <div className="text-sm text-[var(--ink-soft)] mt-1">
+                        {selectedAsset.area}
+                      </div>
                     </div>
                   </div>
                 </div>

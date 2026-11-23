@@ -226,7 +226,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
             <button
               type="submit"
-              className="group press-soft w-full py-3.5 px-5 rounded-xl bg-[#0B1F44] hover:bg-[#13315C] dark:bg-[#00B8D9] dark:hover:bg-[#22D3EE] text-white dark:text-[#061830] font-heading font-bold text-[15px] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg"
+              className="group press-soft pop-btn w-full py-3.5 px-5 rounded-full font-heading font-bold text-[15px] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg"
             >
               <span>Masuk ke Workspace</span>
               <ArrowRight className="w-5 h-5 nudge-x" />

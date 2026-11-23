@@ -55,6 +55,7 @@ export default function SynqraApp() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [selectedGraphAssetId, setSelectedGraphAssetId] = useState<string | undefined>(undefined);
   const [activeCitation, setActiveCitation] = useState<CitationItem | null>(null);
   const [toast, setToast] = useState<{ id: number; msg: string; leaving: boolean } | null>(
     null
@@ -280,6 +281,12 @@ export default function SynqraApp() {
     }
   };
 
+  const handleInspectAsset = (assetId: string) => {
+    setSelectedGraphAssetId(assetId);
+    setActivePage('graph');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (!isLoggedIn) {
     return (
       <LoginView
@@ -320,7 +327,7 @@ export default function SynqraApp() {
       />
 
       {/* Right Content Column */}
-      <div className="flex-1 min-w-0 flex flex-col pb-20 lg:pb-0">
+      <div className="flex-1 min-w-0 flex flex-col pb-24 lg:pb-0">
         <Topbar
           activePage={activePage}
           currentRole={currentRole}
@@ -342,6 +349,7 @@ export default function SynqraApp() {
               isDarkMode={isDarkMode}
               onNavigate={setActivePage}
               onOpenReport={handleOpenReport}
+              onInspectAsset={handleInspectAsset}
               onSendSlaReminder={handleSendSlaReminder}
             />
           )}
@@ -391,6 +399,7 @@ export default function SynqraApp() {
               reports={reports}
               evidences={evidences}
               isDarkMode={isDarkMode}
+              initialAssetId={selectedGraphAssetId}
               onOpenEvidence={setActiveCitation}
               onOpenReport={handleOpenReport}
             />

@@ -94,12 +94,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      <aside className="hidden lg:flex lg:flex-col w-[274px] shrink-0 bg-[var(--sidebar-bg)] border-r border-[var(--line)] px-4 py-6 sticky top-0 h-screen overflow-y-auto transition-colors">
+      <aside className="hidden lg:flex lg:flex-col w-[268px] shrink-0 bg-[var(--sidebar-bg)] backdrop-blur-xl border-r border-[var(--line-soft)] px-4 py-6 sticky top-0 h-screen overflow-y-auto transition-colors">
         <div className="flex items-center gap-3 px-2 pb-6">
           <img
             src={isDarkMode ? '/assets/synqra-logo-dark.png' : '/assets/synqra-logo-light.png'}
             alt="SYNQRA Logo"
-            className="w-11 h-11 object-contain rounded-xl p-1 bg-[var(--soft)] border border-[var(--line)]"
+            className="w-11 h-11 object-contain rounded-xl p-1 bg-[var(--soft)] border border-[var(--line-soft)] shadow-sm"
           />
           <div>
             <div className="font-heading font-extrabold text-xl tracking-wide text-[var(--ink)] leading-none">
@@ -111,21 +111,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        <div className="font-heading text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--ink)] px-3 pb-2.5">
+        <div className="font-heading text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--muted)] px-3 pb-2.5">
           WORKSPACE
         </div>
 
-        <nav ref={navRef} className="relative space-y-1.5">
+        <nav ref={navRef} className="relative space-y-1">
           {indicator && (
             <span
               aria-hidden
-              className="nav-indicator pointer-events-none absolute left-0 right-0 top-0 rounded-xl bg-[var(--cyan-pale)] border border-[var(--cyan)]/40"
+              className="nav-indicator pointer-events-none absolute left-0 right-0 top-0 rounded-xl bg-gradient-to-r from-[var(--cyan-pale)] to-transparent border border-[var(--cyan)]/35 shadow-sm"
               style={{
                 transform: `translateY(${indicator.top}px)`,
                 height: indicator.height,
               }}
             >
-              <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[var(--cyan-dark)]" />
+              <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r bg-[var(--cyan-dark)]" />
             </span>
           )}
           {navItems.map((item) => {
@@ -139,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 type="button"
                 aria-current={active ? 'page' : undefined}
                 onClick={() => onNavigate(item.id)}
-                className={`relative z-[1] w-full flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold text-[14.5px] text-left border border-transparent ${
+                className={`relative z-[1] w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-[14.5px] text-left border border-transparent ${
                   active
                     ? 'text-[var(--ink)]'
                     : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             borderColor: 'var(--green-border)',
                           }
                     }
-                    className={`px-2 py-0.5 rounded-[6px] border font-heading text-[11px] font-bold ${
+                    className={`px-2 py-0.5 rounded-[7px] border border-l-[3px] font-heading text-[11px] font-bold ${
                       item.badgeTone === 'red' ? 'animate-ping-once' : ''
                     }`}
                   >
@@ -178,17 +178,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-[#0B1F44] to-[#14496D] text-white border border-cyan-400/25 shadow-sm">
-          <div className="font-heading font-bold text-[15px] text-white mb-1">
-            Temuan baru di lapangan?
+        <div className="relative overflow-hidden mt-6 p-4 rounded-2xl bg-gradient-to-br from-[#0A162B] via-[#0F274D] to-[#0B4A66] text-white border border-cyan-400/25 shadow-md">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-8 -top-8 w-24 h-24 rounded-full bg-[#00B8D9]/20 blur-xl"
+          />
+          <div className="relative z-10 font-heading font-bold text-[15px] text-white mb-1">
+            Temuan baru?
           </div>
-          <p className="text-sm text-white/90 leading-relaxed mb-3">
-            Rekam suara 2 menit atau scan nameplate alat, AI merapikan 7 entitas otomatis.
+          <p className="relative z-10 text-sm text-white/85 leading-snug mb-3.5 m-0">
+            Scan alat atau rekam suara cepat.
           </p>
           <button
             type="button"
             onClick={() => onNavigate('lapor')}
-            className="group press-soft w-full py-2.5 px-3 rounded-xl bg-[#00B8D9] hover:bg-[#22D3EE] text-[#061A38] font-heading font-bold text-sm flex items-center justify-center gap-2"
+            className="relative z-10 group press-soft w-full py-2.5 px-3 rounded-xl bg-[#00C8EA] hover:bg-[#38DDF8] text-[#041529] font-heading font-bold text-sm flex items-center justify-center gap-2 shadow-sm"
           >
             <Plus className="w-4 h-4 stroke-[2.5] spin-on-hover" />
             <span>Buat Laporan</span>
@@ -197,14 +201,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="flex-1" />
 
-        <div className="pt-4 mt-4 border-t border-[var(--line)] space-y-1.5">
+        <div className="pt-4 mt-4 border-t border-[var(--line-soft)] space-y-1">
           <button
             type="button"
             onClick={onToggleTheme}
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] font-bold text-sm transition-colors"
           >
             <span key={isDarkMode ? 'sun' : 'moon'} className="animate-spin-in inline-flex">
-              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[#0B1F44]" />}
+              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-[var(--ink)]" />}
             </span>
             <span className="flex-1 text-left">
               {isDarkMode ? 'Mode Terang' : 'Mode Gelap'}
@@ -222,7 +226,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </aside>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--topbar-bg)] backdrop-blur-md border-t border-[var(--line)] flex py-1 px-1">
+      {/* Mobile Floating Liquid-Glass Dock */}
+      <nav
+        aria-label="Navigasi Mobile"
+        className="lg:hidden fixed bottom-3 left-3 right-3 z-30 rounded-2xl floating-glass shadow-[0_14px_34px_-12px_rgba(10,22,43,0.38)] flex items-center gap-1 p-1.5"
+      >
         {navItems.map((item) => {
           const active = isNavActive(item.id);
           return (
@@ -231,14 +239,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               aria-current={active ? 'page' : undefined}
               onClick={() => onNavigate(item.id)}
-              className={`relative flex-1 min-h-[56px] flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl font-heading text-[11px] font-bold ${
-                active ? 'text-[var(--cyan-dark)] bg-[var(--cyan-pale)]' : 'text-[var(--ink-soft)]'
+              className={`relative flex-1 min-h-[52px] flex flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-xl font-heading text-[11px] font-bold transition-all ${
+                active
+                  ? 'pop-btn shadow-md'
+                  : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
               }`}
             >
               <span key={active ? 'on' : 'off'} className={active ? 'animate-pop inline-flex' : 'inline-flex'}>
                 {item.icon}
               </span>
-              <span>{item.label.split(' ')[0]}</span>
+              <span className="truncate max-w-full">{item.label.split(' ')[0]}</span>
             </button>
           );
         })}

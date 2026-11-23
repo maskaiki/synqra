@@ -19,14 +19,27 @@
   --ink-soft: #243754;
   --muted: #3A4F6E;
   --line: #CFDCE8;
-  --line-soft: #DCE6F0;
+  --line-soft: #E2EAF2;
   --surface: #FFFFFF;
   --surface-elevated: #FFFFFF;
-  --canvas: #EEF3F8;
-  --soft: #F3F7FB;
+  --canvas: #F1F5F9;
+  --canvas-glow: radial-gradient(920px circle at 16% -12%, rgba(0, 184, 217, 0.11), transparent 60%), radial-gradient(740px circle at 88% -8%, rgba(11, 31, 68, 0.07), transparent 56%);
+  --soft: #F5F8FC;
   --hover-bg: #EAF3FA;
-  --sidebar-bg: #FFFFFF;
-  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --sidebar-bg: rgba(255, 255, 255, 0.94);
+  --topbar-bg: rgba(255, 255, 255, 0.82);
+
+  /* Pop Accent & Atmospheric Surfaces */
+  --pop-bg: #0A162B;
+  --pop-bg-hover: #14274A;
+  --pop-ink: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.80);
+  --glass-border: rgba(207, 220, 232, 0.85);
+  --card-shadow: 0 1px 2px rgba(10, 22, 43, 0.04), 0 10px 26px -18px rgba(10, 22, 43, 0.16);
+  --card-shadow-hover: 0 6px 16px -6px rgba(10, 22, 43, 0.09), 0 20px 36px -20px rgba(10, 22, 43, 0.25);
+  --stage-gradient: radial-gradient(circle at 50% 62%, rgba(0, 184, 217, 0.15) 0%, rgba(11, 31, 68, 0.05) 56%, transparent 82%);
+  --stage-gradient-active: radial-gradient(circle at 50% 58%, rgba(0, 184, 217, 0.28) 0%, rgba(11, 31, 68, 0.09) 58%, transparent 86%);
+  --stage-floor: radial-gradient(ellipse at center, rgba(10, 22, 43, 0.24) 0%, rgba(10, 22, 43, 0.07) 48%, transparent 74%);
 
   /* Semantic High-Contrast Tokens */
   --green: #087F5B;
@@ -51,16 +64,28 @@
   --ink-soft: #C7D7EA;
   --muted: #9FB5D1;
   --line: #243957;
-  --line-soft: #1D304B;
+  --line-soft: #1B2E49;
   --surface: #0F203B;
   --surface-elevated: #142848;
-  --canvas: #071226;
+  --canvas: #061022;
+  --canvas-glow: radial-gradient(920px circle at 16% -12%, rgba(0, 184, 217, 0.14), transparent 60%), radial-gradient(740px circle at 88% -8%, rgba(56, 214, 240, 0.08), transparent 56%);
   --soft: #132746;
   --hover-bg: #183258;
-  --sidebar-bg: #0B1930;
-  --topbar-bg: rgba(11, 25, 48, 0.90);
+  --sidebar-bg: rgba(11, 25, 48, 0.94);
+  --topbar-bg: rgba(11, 25, 48, 0.82);
   --cyan-dark: #38D6F0;
   --cyan-pale: rgba(0, 184, 217, 0.18);
+
+  --pop-bg: #00C8EA;
+  --pop-bg-hover: #38DDF8;
+  --pop-ink: #041529;
+  --glass-bg: rgba(11, 25, 48, 0.82);
+  --glass-border: rgba(56, 214, 240, 0.20);
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.30), 0 12px 30px -16px rgba(0, 0, 0, 0.56);
+  --card-shadow-hover: 0 8px 20px -6px rgba(0, 0, 0, 0.45), 0 20px 38px -18px rgba(0, 184, 217, 0.28);
+  --stage-gradient: radial-gradient(circle at 50% 62%, rgba(0, 184, 217, 0.20) 0%, rgba(15, 42, 82, 0.28) 55%, transparent 82%);
+  --stage-gradient-active: radial-gradient(circle at 50% 58%, rgba(0, 200, 234, 0.34) 0%, rgba(15, 42, 82, 0.36) 58%, transparent 86%);
+  --stage-floor: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.64) 0%, rgba(0, 184, 217, 0.16) 52%, transparent 76%);
 
   --green: #38E4AD;
   --green-bg: rgba(16, 185, 129, 0.16);
@@ -90,6 +115,8 @@ html {
 body {
   margin: 0;
   background-color: var(--canvas);
+  background-image: var(--canvas-glow);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-montserrat);
   font-size: 15px;
@@ -98,6 +125,27 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.surface-card {
+  background-color: var(--surface);
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--card-shadow);
+}
+
+.floating-glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-border);
+}
+
+.pop-btn {
+  background-color: var(--pop-bg);
+  color: var(--pop-ink);
+}
+.pop-btn:hover:not(:disabled) {
+  background-color: var(--pop-bg-hover);
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading {
@@ -172,8 +220,8 @@ button:not([data-no-press]):not(:disabled):active {
 }
 @media (hover: hover) {
   .lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px -14px rgba(11, 31, 68, 0.35);
+    transform: translateY(-2.5px);
+    box-shadow: var(--card-shadow-hover);
   }
 }
 .lift:active {
@@ -408,12 +456,69 @@ button:not([data-no-press]):not(:disabled):active {
   animation: bellSwing 0.75s var(--ease-out) 0.25s 1 both;
 }
 
+/* Pose-to-pose directional: transisi geser maju/mundur pada wizard & tab. */
+@keyframes slideNextIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes slidePrevIn {
+  from {
+    opacity: 0;
+    transform: translateX(-16px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+.animate-slide-next {
+  animation: slideNextIn var(--dur-slow) var(--ease-out) backwards;
+}
+.animate-slide-prev {
+  animation: slidePrevIn var(--dur-slow) var(--ease-out) backwards;
+}
+
+/* Micro-loading orbital: cincin berputar halus saat AI memproses. */
+@keyframes orbitalSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbitalPulse {
+  0%, 100% {
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+.orbital-spin {
+  animation: orbitalSpin 1.35s linear infinite;
+}
+.orbital-pulse {
+  animation: orbitalPulse 2s ease-in-out infinite;
+}
+
 /* Solid drawing 2D: kedalaman bayangan gambar alat di Mode Terang & Gelap. */
 .asset-render-light {
   filter: drop-shadow(0 8px 14px rgba(11, 31, 68, 0.18)) drop-shadow(0 2px 4px rgba(11, 31, 68, 0.12));
 }
 .asset-render-dark {
   filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(0, 184, 217, 0.18));
+}
+.asset-render-breakout-light {
+  filter: drop-shadow(0 18px 20px rgba(10, 22, 43, 0.24)) drop-shadow(0 5px 8px rgba(10, 22, 43, 0.14));
+}
+.asset-render-breakout-dark {
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.68)) drop-shadow(0 0 16px rgba(0, 184, 217, 0.22));
 }
 
 /* Aksesibilitas: hormati preferensi kurangi gerakan. */

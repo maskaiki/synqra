@@ -63,6 +63,12 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
   const [activeTab, setActiveTab] = useState<'summary' | 'evidence_discussion' | 'risk_capa'>(
     'summary'
   );
+  const [tabDir, setTabDir] = useState<'next' | 'prev'>('next');
+  const switchTab = (next: 'summary' | 'evidence_discussion' | 'risk_capa') => {
+    const order = ['summary', 'evidence_discussion', 'risk_capa'] as const;
+    setTabDir(order.indexOf(next) >= order.indexOf(activeTab) ? 'next' : 'prev');
+    setActiveTab(next);
+  };
   const [consequence, setConsequence] = useState<RiskConsequence>(
     report.risk_consequence || 'Moderate'
   );
@@ -236,7 +242,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Top Header + Compact Workflow Action Bar */}
-      <header className="p-5 sm:p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
+      <header className="surface-card p-5 sm:p-6 rounded-3xl space-y-4">
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
           <div className="space-y-2 min-w-0">
             <button
@@ -394,7 +400,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
       </header>
 
       {/* 3 Tab Bersih Berdiri Sendiri */}
-      <div className="inline-flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-[var(--surface)] border border-[var(--line)]">
+      <div className="surface-card inline-flex flex-wrap gap-1.5 p-1.5 rounded-full">
         {(
           [
             ['summary', 'Ringkasan & 7 Entitas'],
@@ -405,11 +411,11 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
           <button
             key={id}
             type="button"
-            onClick={() => setActiveTab(id)}
+            onClick={() => switchTab(id)}
             aria-pressed={activeTab === id}
-            className={`px-4 py-2 rounded-xl font-heading text-sm font-bold ${
+            className={`px-4 py-2 rounded-full font-heading text-sm font-bold ${
               activeTab === id
-                ? 'bg-[#0B1F44] dark:bg-[#00B8D9] text-white dark:text-[#061830]'
+                ? 'pop-btn shadow-sm'
                 : 'text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--soft)]'
             }`}
           >
@@ -420,12 +426,24 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
       {/* Tab 1: Ringkasan & 7 Entitas */}
       {activeTab === 'summary' && (
-        <div className="space-y-5 animate-step-in">
-          {/* Strip Konteks Aset Ringkas */}
-          <section className="group p-4 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-14 h-14 rounded-xl bg-[var(--soft)] border border-[var(--line-soft)] flex items-center justify-center p-1.5 shrink-0">
-                <TechnicalArt type={asset.type} darkMode={isDarkMode} className="w-12 h-12" />
+        <div
+          className={`space-y-5 ${
+            tabDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
+          }`}
+        >
+          {/* Strip Konteks Aset dengan Panggung Gradien & Breakout Render */}
+          <section className="group surface-card p-5 rounded-3xl flex flex-wrap items-center justify-between gap-4 overflow-visible">
+            <div className="flex items-center gap-4 min-w-0">
+              <div
+                className="w-20 h-16 rounded-2xl flex items-center justify-center p-1 shrink-0 overflow-visible"
+                style={{ background: 'var(--stage-gradient-active)' }}
+              >
+                <TechnicalArt
+                  type={asset.type}
+                  darkMode={isDarkMode}
+                  breakout
+                  className="w-20 h-20 -mt-3"
+                />
               </div>
               <div className="min-w-0">
                 <div className="font-heading font-extrabold text-sm text-[var(--cyan-dark)]">
@@ -446,8 +464,8 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
           </section>
 
           {/* Grid 2 Kolom 7 Entitas */}
-          <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
-            <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
+          <section className="surface-card p-6 rounded-3xl space-y-4">
+            <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
               7 Entitas Terstruktur Kasus
             </h2>
 
@@ -466,7 +484,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                 <div
                   key={label}
                   style={{ borderLeftColor: accent }}
-                  className={`p-4 rounded-xl bg-[var(--soft)] border border-[var(--line)] border-l-[4px] ${
+                  className={`p-4 rounded-2xl bg-[var(--soft)] border border-[var(--line-soft)] border-l-[4px] ${
                     idx === 6 ? 'md:col-span-2' : ''
                   }`}
                 >
@@ -488,7 +506,11 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
       {/* Tab 2: Bukti & Diskusi */}
       {activeTab === 'evidence_discussion' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start animate-step-in">
+        <div
+          className={`grid grid-cols-1 xl:grid-cols-12 gap-6 items-start ${
+            tabDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
+          }`}
+        >
           {/* Galeri & Unggah Bukti (7 cols) */}
           <section className="xl:col-span-7 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-4">
             <div>
@@ -712,7 +734,11 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
       {/* Tab 3: Risiko & CAPA */}
       {activeTab === 'risk_capa' && (
-        <section className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-sm space-y-6 animate-step-in">
+        <section
+          className={`surface-card p-6 rounded-3xl space-y-6 ${
+            tabDir === 'next' ? 'animate-slide-next' : 'animate-slide-prev'
+          }`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-heading text-lg font-bold text-[var(--ink)]">
