@@ -38,15 +38,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: {
     id: MainPage;
     label: string;
+    mobileLabel: string;
     icon: React.ReactNode;
     dotTone?: 'red';
     count?: number;
   }[] = [
-    { id: 'home', label: 'Beranda', icon: <Home className="w-5 h-5" /> },
-    { id: 'lapor', label: 'Lapor Cepat', icon: <Mic className="w-5 h-5" /> },
+    { id: 'home', label: 'Beranda', mobileLabel: 'Beranda', icon: <Home className="w-5 h-5" /> },
+    { id: 'lapor', label: 'Lapor Cepat', mobileLabel: 'Lapor', icon: <Mic className="w-5 h-5" /> },
     {
       id: 'cases',
       label: 'Triage & Kasus',
+      mobileLabel: 'Triage',
       icon: <Inbox className="w-5 h-5" />,
       dotTone: overdueCount > 0 ? 'red' : undefined,
       count: overdueCount > 0 ? overdueCount : undefined,
@@ -54,17 +56,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       id: 'graph',
       label: 'Knowledge Graph',
+      mobileLabel: 'Graph',
       icon: <Layers className="w-5 h-5" />,
       count: verifiedCount,
     },
     {
       id: 'tanya',
       label: 'Tanya SYNQRA',
+      mobileLabel: 'Tanya',
       icon: <Sparkles className="w-5 h-5" />,
     },
     {
       id: 'analytics',
       label: 'Peringatan Dini',
+      mobileLabel: 'Sinyal',
       icon: <Radar className="w-5 h-5" />,
     },
   ];
@@ -229,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span key={active ? 'on' : 'off'} className={active ? 'animate-pop inline-flex' : 'inline-flex'}>
                 {item.icon}
               </span>
-              <span className="truncate max-w-full">{item.label.split(' ')[0]}</span>
+              <span className="truncate max-w-full">{item.mobileLabel}</span>
             </button>
           );
         })}

@@ -8,7 +8,10 @@ import { SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import {
+  Activity,
+  CheckCircle2,
   ChevronRight,
+  FolderKanban,
   Mic,
   Plus,
   Scan,
@@ -81,10 +84,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const firstName = roleInfo.name.split(' ')[0];
 
   return (
-    <div className="space-y-8">
-      {/* Full-Bleed Gradient Hero + Overlapping Floating Liquid-Glass Sheet */}
-      <div>
-        <section className="relative overflow-hidden rounded-[32px] pt-8 sm:pt-10 pb-20 sm:pb-24 px-6 sm:px-10 bg-[#07152F] text-white shadow-[0_24px_54px_-24px_rgba(6,20,46,0.65)]">
+    <div className="space-y-7">
+      {/* Hero Banner + Standalone Glass Stats & Quick-Tools Bar (No Overlap) */}
+      <div className="space-y-4">
+        <section className="relative overflow-hidden rounded-[32px] py-8 sm:py-10 px-6 sm:px-10 bg-[#07152F] text-white ring-1 ring-white/10 shadow-[0_24px_54px_-24px_rgba(6,20,46,0.62)]">
           <img
             src={BRAND_MEDIA.loginHeroOilRig.src}
             alt=""
@@ -93,22 +96,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
             height={BRAND_MEDIA.loginHeroOilRig.height}
             loading="eager"
             decoding="async"
-            className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[62%_56%] scale-[1.03] opacity-50 select-none"
+            className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[64%_54%] scale-[1.03] opacity-55 select-none"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#051026]/95 via-[#0B2A5A]/82 to-[#095978]/68"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#051026]/95 via-[#0A2552]/80 to-[#095575]/60"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-20 -top-24 w-80 h-80 rounded-full bg-[#00C8EA]/22 blur-3xl"
+            className="pointer-events-none absolute -right-20 -top-24 w-80 h-80 rounded-full bg-[#00C8EA]/24 blur-3xl"
           />
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -left-24 bottom-0 w-72 h-72 rounded-full bg-[#2563EB]/20 blur-3xl"
           />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-2xl space-y-2.5">
               <div className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-200/95">
                 <span>Halo, {firstName}</span>
@@ -141,45 +144,66 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </section>
 
-        {/* Overlapping Floating Glass Stats & Quick Tools */}
-        <section className="relative z-10 -mt-12 mx-2 sm:mx-6 floating-glass rounded-3xl p-4 sm:p-5 shadow-[0_20px_48px_-22px_rgba(9,19,38,0.28)] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="grid grid-cols-3 divide-x divide-[var(--line-soft)] flex-1">
+        {/* Standalone Frosted Glass Stats & Quick Tools Bar */}
+        <section className="surface-card rounded-[28px] p-4 sm:px-6 sm:py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 flex-1">
             <button
               type="button"
               onClick={() => onNavigate('cases')}
-              className="px-3 sm:px-5 py-1 text-left group"
+              className="group flex items-center gap-3 sm:gap-3.5 px-2.5 sm:px-3.5 py-2 rounded-2xl hover:bg-[var(--hover-bg)] text-left transition-colors"
             >
-              <div className="font-heading text-2xl sm:text-3xl font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--cyan-dark)] transition-colors">
-                {reports.length}
-              </div>
-              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1">
-                Kasus
+              <span className="hidden sm:flex w-11 h-11 rounded-2xl bg-[var(--cyan-pale)] text-[var(--cyan-dark)] items-center justify-center shrink-0">
+                <FolderKanban className="w-5 h-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-heading text-2xl sm:text-[28px] font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--cyan-dark)] transition-colors">
+                  {reports.length}
+                </div>
+                <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1 truncate">
+                  Total Kasus
+                </div>
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate('cases')}
-              className="px-3 sm:px-5 py-1 text-left group"
+              className="group flex items-center gap-3 sm:gap-3.5 px-2.5 sm:px-3.5 py-2 rounded-2xl hover:bg-[var(--hover-bg)] text-left transition-colors"
             >
-              <div className="font-heading text-2xl sm:text-3xl font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--amber)] transition-colors">
-                {activeCount}
-              </div>
-              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1">
-                Aktif
+              <span
+                style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber)' }}
+                className="hidden sm:flex w-11 h-11 rounded-2xl items-center justify-center shrink-0"
+              >
+                <Activity className="w-5 h-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-heading text-2xl sm:text-[28px] font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--amber)] transition-colors">
+                  {activeCount}
+                </div>
+                <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1 truncate">
+                  Kasus Aktif
+                </div>
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate('graph')}
-              className="px-3 sm:px-5 py-1 text-left group"
+              className="group flex items-center gap-3 sm:gap-3.5 px-2.5 sm:px-3.5 py-2 rounded-2xl hover:bg-[var(--hover-bg)] text-left transition-colors"
             >
-              <div className="font-heading text-2xl sm:text-3xl font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--green)] transition-colors">
-                {verifiedCount}
-              </div>
-              <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1">
-                Verified
+              <span
+                style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green)' }}
+                className="hidden sm:flex w-11 h-11 rounded-2xl items-center justify-center shrink-0"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-heading text-2xl sm:text-[28px] font-extrabold text-[var(--ink)] leading-none group-hover:text-[var(--green)] transition-colors">
+                  {verifiedCount}
+                </div>
+                <div className="text-sm font-semibold text-[var(--ink-soft)] mt-1 truncate">
+                  Terverifikasi
+                </div>
               </div>
             </button>
           </div>
@@ -188,7 +212,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('lapor')}
-              className="group press-soft flex-1 lg:flex-none pop-btn px-4 py-2.5 rounded-full font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm"
+              className="group press-soft flex-1 lg:flex-none pop-btn px-5 py-2.5 rounded-full font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm"
             >
               <Mic className="w-4 h-4" />
               <span>Rekam</span>
@@ -196,7 +220,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('lapor')}
-              className="group press-soft flex-1 lg:flex-none px-4 py-2.5 rounded-full bg-[var(--soft)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center justify-center gap-2"
+              className="group press-soft flex-1 lg:flex-none px-5 py-2.5 rounded-full bg-[var(--soft)] hover:bg-[var(--hover-bg)] text-[var(--ink)] font-heading font-bold text-sm inline-flex items-center justify-center gap-2"
             >
               <Scan className="w-4 h-4 text-[var(--cyan-dark)]" />
               <span>Scan Alat</span>
