@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { INITIAL_ASSETS, INITIAL_REPORTS } from '@/lib/constants';
-import { GEMINI_MODEL_FALLBACKS } from '@/lib/gemini';
+import {
+  cleanJsonString,
+  formatGeminiError,
+  GEMINI_MODEL_FALLBACKS,
+  getGenAI,
+  isInvalidKeyError,
+} from '@/lib/gemini';
 import {
   Asset,
   EarlyWarningAlert,
@@ -9,6 +14,8 @@ import {
   EarlyWarningSeverity,
   Report,
 } from '@/types/synqra';
+
+export const maxDuration = 60;
 
 interface PeringatanDiniRequestBody {
   reports?: Report[];
@@ -28,32 +35,47 @@ interface GeminiAlertPayload {
   }>;
 }
 
+const EARLY_WARNING_SCHEMA = {
+  type: 'object',
+  properties: {
+    alerts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          assetId: { type: 'string' },
+          severity: {
+            type: 'string',
+            enum: ['KRITIS', 'WASPADA', 'PANTAU'],
+          },
+          patternTitle: { type: 'string' },
+          frequencyLabel: { type: 'string' },
+          summary: { type: 'string' },
+          recommendedAction: { type: 'string' },
+          relatedReportIds: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        required: [
+          'id',
+          'assetId',
+          'severity',
+          'patternTitle',
+          'frequencyLabel',
+          'summary',
+          'recommendedAction',
+          'relatedReportIds',
+        ],
+      },
+    },
+  },
+  required: ['alerts'],
+};
+
 function stripForbiddenDashes(text: string): string {
   return text.replace(/[\u2013\u2014]/g, '-').trim();
-}
-
-function cleanJsonString(raw: string): string {
-  return raw
-    .trim()
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
-}
-
-function formatGeminiError(err: unknown): string {
-  if (err && typeof err === 'object') {
-    const errObj = err as { status?: number; message?: string };
-    const statusPrefix = errObj.status ? `HTTP ${errObj.status}: ` : '';
-    const rawMsg = errObj.message || String(err);
-    return stripForbiddenDashes(`${statusPrefix}${rawMsg.split('\n')[0].slice(0, 180)}`);
-  }
-  return stripForbiddenDashes(String(err).slice(0, 180));
-}
-
-function isInvalidKeyError(msg: string): boolean {
-  const upper = msg.toUpperCase();
-  return upper.includes('API_KEY_INVALID') || upper.includes('API KEY NOT VALID');
 }
 
 function normalizeSeverity(raw: unknown): EarlyWarningSeverity {
@@ -195,13 +217,10 @@ export async function POST(req: NextRequest) {
 
     const fallbackAlerts = buildFallbackAlerts(allReports, allAssets);
     const generatedAt = new Date().toISOString();
+    const ai = getGenAI();
 
-    const apiKey =
-      process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-    const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-    if (genAI) {
-      let lastError = 'Semua model Gemini gagal memindai pola berulang.';
+    if (ai) {
+      const errors: string[] = [];
 
       const groupedContext = allAssets
         .map((asset) => {
@@ -219,49 +238,43 @@ export async function POST(req: NextRequest) {
         })
         .join('\n\n');
 
-      const prompt = `Anda adalah Sistem Deteksi Dini Keandalan Peralatan (Early Warning AI) pada platform SYNQRA untuk kilang migas.
-Analisislah seluruh riwayat kasus yang sudah dikelompokkan per aset di bawah ini untuk mendeteksi pola kegagalan berulang.
-
-RIWAYAT KASUS PER ASET:
-${groupedContext}
+      const systemInstruction = `Anda adalah Sistem Deteksi Dini Keandalan Peralatan (Early Warning AI) pada platform SYNQRA untuk kilang migas.
+Analisislah seluruh riwayat kasus yang sudah dikelompokkan per aset untuk mendeteksi pola kegagalan berulang.
 
 ATURAN KERAS:
-1. Kembalikan HANYA JSON murni tanpa markdown code fence.
+1. Kembalikan HANYA JSON murni sesuai skema tanpa markdown code fence.
 2. Buat tepat 1 peringatan utama per aset yang memiliki pola berulang (>= 2 kasus serupa).
-3. "relatedReportIds" WAJIB berisi ID laporan nyata yang benar-benar ada pada aset tersebut di data di atas. DILARANG mengarang ID baru.
+3. "relatedReportIds" WAJIB berisi ID laporan nyata yang benar-benar ada pada aset tersebut. DILARANG mengarang ID baru.
 4. "severity" harus tepat salah satu dari: "KRITIS", "WASPADA", atau "PANTAU".
 5. "summary" dan "recommendedAction" masing-masing cukup 1 kalimat pendek dalam Bahasa Indonesia langsung ke inti.
-6. DILARANG keras menggunakan tanda em-dash atau en-dash pada seluruh teks output.
+6. DILARANG keras menggunakan tanda em-dash atau en-dash pada seluruh teks output.`;
 
-FORMAT JSON:
-{
-  "alerts": [
-    {
-      "id": "ew-p101a",
-      "assetId": "P-101A",
-      "severity": "KRITIS",
-      "patternTitle": "Judul pola singkat",
-      "frequencyLabel": "4 kasus dalam 60 hari",
-      "summary": "1 kalimat ringkasan pola.",
-      "recommendedAction": "1 kalimat saran pencegahan teknis.",
-      "relatedReportIds": ["REP-001", "REP-010"]
-    }
-  ]
-}`;
+      const userPrompt = `RIWAYAT KASUS PER ASET:\n${groupedContext}`;
 
       for (const modelName of GEMINI_MODEL_FALLBACKS) {
         try {
-          const model = genAI.getGenerativeModel({
+          const interaction = await ai.interactions.create({
             model: modelName,
-            generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.15,
+            input: userPrompt,
+            system_instruction: systemInstruction,
+            generation_config: {
+              thinking_level: 'low',
             },
+            response_format: {
+              type: 'text',
+              mime_type: 'application/json',
+              schema: EARLY_WARNING_SCHEMA,
+            },
+            store: false,
           });
 
-          const res = await model.generateContent(prompt);
+          const rawText = interaction.output_text || '';
+          if (!rawText.trim()) {
+            throw new Error('Respons JSON kosong dari model.');
+          }
+
           const parsed = JSON.parse(
-            cleanJsonString(res.response.text())
+            cleanJsonString(rawText)
           ) as GeminiAlertPayload;
 
           const rawAlerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
@@ -326,7 +339,6 @@ FORMAT JSON:
             });
           }
 
-          // Pastikan seluruh aset dari fallback yang belum tercakup tetap muncul
           for (const fb of fallbackAlerts) {
             if (!seenAssets.has(fb.assetId)) {
               normalizedAlerts.push(fb);
@@ -346,8 +358,8 @@ FORMAT JSON:
 
           return NextResponse.json({ success: true, ...payload });
         } catch (err) {
-          const formatted = formatGeminiError(err);
-          lastError = `[${modelName}] ${formatted}`;
+          const formatted = stripForbiddenDashes(formatGeminiError(err));
+          errors.push(`[${modelName}] ${formatted}`);
           console.warn(`Gemini early warning fallback (${modelName}):`, formatted);
           if (isInvalidKeyError(formatted)) {
             break;
@@ -358,7 +370,7 @@ FORMAT JSON:
       const fallbackResp: EarlyWarningResponse = {
         alerts: fallbackAlerts,
         engine: 'local-fallback',
-        errorReason: lastError,
+        errorReason: errors[0] || 'Semua model Gemini gagal memindai pola berulang.',
         generatedAt,
       };
       return NextResponse.json({ success: true, ...fallbackResp });

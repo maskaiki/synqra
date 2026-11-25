@@ -5,6 +5,8 @@ import {
   LaporCepatExtractionResult,
 } from '@/lib/gemini';
 
+export const maxDuration = 60;
+
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
 
 function detectAssetId(
@@ -48,6 +50,8 @@ export async function POST(req: NextRequest) {
       const formData = await req.formData();
       const audioFile = formData.get('audio') as File | null;
       const textNarrative = (formData.get('text') as string | null) || '';
+      const clientTranscript =
+        (formData.get('client_transcript') as string | null) || '';
       requestedAsset = (formData.get('asset_id') as string | null) || '';
 
       if (audioFile && audioFile.size > 0) {
@@ -65,10 +69,17 @@ export async function POST(req: NextRequest) {
         const base64Audio = Buffer.from(arrayBuffer).toString('base64');
         extraction = await extractFromAudio(
           base64Audio,
-          audioFile.type || 'audio/webm'
+          audioFile.type || 'audio/webm',
+          {
+            hintAssetId: requestedAsset,
+            clientTranscript,
+          }
         );
-      } else if (textNarrative.trim()) {
-        extraction = await extractFailureEntitiesFromText(textNarrative);
+      } else if (textNarrative.trim() || clientTranscript.trim()) {
+        extraction = await extractFailureEntitiesFromText(
+          textNarrative.trim() || clientTranscript.trim(),
+          requestedAsset
+        );
       } else {
         return NextResponse.json(
           { error: 'Rekaman suara atau teks narasi tidak boleh kosong.' },
@@ -87,7 +98,10 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      extraction = await extractFailureEntitiesFromText(textNarrative);
+      extraction = await extractFailureEntitiesFromText(
+        textNarrative,
+        requestedAsset
+      );
     }
 
     const detectedAssetId = detectAssetId(

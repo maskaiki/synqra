@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CitationItem, Evidence, Report } from '@/types/synqra';
 import { INITIAL_EVIDENCES, INITIAL_REPORTS } from '@/lib/constants';
-import { GEMINI_MODEL } from '@/lib/gemini';
+import {
+  formatGeminiError,
+  GEMINI_MODEL_FALLBACKS,
+  getGenAI,
+  isInvalidKeyError,
+} from '@/lib/gemini';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase/client';
 
-const apiKey =
-  process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+export const maxDuration = 60;
 
 export interface TanyaHistoryItem {
   role: 'user' | 'assistant';
@@ -25,6 +27,74 @@ interface TanyaRequestBody {
   customReports?: Report[];
   customEvidences?: Evidence[];
   history?: TanyaHistoryItem[];
+}
+
+function sanitizeTanyaAnswer(raw: string): string {
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  const cleanedLines: string[] = [];
+
+  for (const originalLine of lines) {
+    let line = originalLine.trimEnd();
+    const trimmed = line.trim();
+
+    // Hapus garis pemisah horizontal mentah (---, ***, ___)
+    if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      cleanedLines.push('');
+      continue;
+    }
+
+    // Ubah heading markdown (### Judul) menjadi baris label bersih tanpa tanda #
+    const headingMatch = trimmed.match(/^#{1,6}\s+(.+?)(?:\s+#+)?$/);
+    if (headingMatch) {
+      let headingText = headingMatch[1]
+        .replace(/^\*{1,3}(.+?)\*{1,3}$/, '$1')
+        .replace(/^\d+\.\s+/, '')
+        .trim();
+      if (!headingText.endsWith(':')) {
+        headingText = `${headingText}:`;
+      }
+      cleanedLines.push(`@@SECTION@@${headingText}`);
+      continue;
+    }
+
+    // Pertahankan bullet list (* item atau - item) tanpa merusak tanda bintang bullet
+    let listPrefix = '';
+    const bulletMatch = line.match(/^(\s*)[-*•]\s+(.+)$/);
+    if (bulletMatch) {
+      listPrefix = `${bulletMatch[1]}• `;
+      line = bulletMatch[2];
+    }
+
+    // Lepas tanda miring *kata* di dalam **bold** (contoh: **Pengerasan (*Static Friction*)** -> **Pengerasan (Static Friction)**)
+    line = line.replace(/\*\*([^*]+?)\*([^*\n]+?)\*([^*]*?)\*\*/g, '**$1$2$3**');
+
+    // Lepas tanda miring single-asterisk (*stroke*, *gland stem*, *(Catatan:...)*) agar bersih tanpa simbol *
+    line = line.replace(/(^|[^\w*])\*([^*\n]+?)\*(?!\*)/g, '$1$2');
+
+    // Lepas tanda miring underscore (_kata_) namun jaga snake_case
+    line = line.replace(/(^|\s|\()_([^_\n]+?)_(?=$|[\s.,;:!?)])/g, '$1$2');
+
+    // Lepas backtick kode sederhana (`FCV-301` -> FCV-301)
+    line = line.replace(/`([^`\n]+)`/g, '$1');
+
+    // Perbaiki multi-sitasi [1, 2] -> [1] [2] dan spasi menggantung sebelum tanda baca [2] . -> [2].
+    line = line.replace(
+      /\[(\d+(?:\s*[,;]\s*\d+)+)\]/g,
+      (_m, nums: string) =>
+        nums
+          .split(/\s*[,;]\s*/)
+          .map((n) => `[${n.trim()}]`)
+          .join(' ')
+    );
+    line = line.replace(/(\[\d+\])\s+([.,;:!?])/g, '$1$2');
+
+    cleanedLines.push(`${listPrefix}${line}`);
+  }
+
+  return cleanedLines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -80,31 +150,31 @@ export async function POST(req: NextRequest) {
       body.assetFilter && body.assetFilter !== 'ALL'
         ? body.assetFilter
         : qLower.includes('p-101') ||
-          qLower.includes('pompa') ||
-          qLower.includes('seal') ||
-          qLower.includes('vibrasi')
+            qLower.includes('pompa') ||
+            qLower.includes('seal') ||
+            qLower.includes('vibrasi')
           ? 'P-101A'
           : qLower.includes('e-201') ||
-            qLower.includes('heat') ||
-            qLower.includes('exchanger') ||
-            qLower.includes('fouling') ||
-            qLower.includes('gasket')
+              qLower.includes('heat') ||
+              qLower.includes('exchanger') ||
+              qLower.includes('fouling') ||
+              qLower.includes('gasket')
             ? 'E-201'
             : qLower.includes('fcv') ||
-              qLower.includes('valve') ||
-              qLower.includes('katup') ||
-              qLower.includes('stroke') ||
-              qLower.includes('aktuator')
+                qLower.includes('valve') ||
+                qLower.includes('katup') ||
+                qLower.includes('stroke') ||
+                qLower.includes('aktuator')
               ? 'FCV-301'
               : fullSearchContext.includes('p-101') ||
-                fullSearchContext.includes('pompa')
+                  fullSearchContext.includes('pompa')
                 ? 'P-101A'
                 : fullSearchContext.includes('e-201') ||
-                  fullSearchContext.includes('heat') ||
-                  fullSearchContext.includes('exchanger')
+                    fullSearchContext.includes('heat') ||
+                    fullSearchContext.includes('exchanger')
                   ? 'E-201'
                   : fullSearchContext.includes('fcv') ||
-                    fullSearchContext.includes('valve')
+                      fullSearchContext.includes('valve')
                     ? 'FCV-301'
                     : null;
 
@@ -232,65 +302,92 @@ export async function POST(req: NextRequest) {
     let engine: 'gemini-live' | 'local-fallback' = 'local-fallback';
     let errorReason: string | undefined = undefined;
 
-    if (genAI) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: GEMINI_MODEL,
-          generationConfig: { temperature: 0.2 },
-        });
+    const ai = getGenAI();
+    if (ai) {
+      const contextText = citations
+        .map(
+          (c) =>
+            `[${c.index}] ${c.reportId} | Aset: ${c.assetId} | Status: ${c.status}\n` +
+            `Judul: ${c.title}\n` +
+            `Gejala: ${c.gejala}\n` +
+            `Penyebab: ${c.praduga_penyebab}\n` +
+            `Tindakan: ${c.usulan_tindakan}\n` +
+            `Bukti: ${c.evidenceName}`
+        )
+        .join('\n\n');
 
-        const contextText = citations
-          .map(
-            (c) =>
-              `[${c.index}] ${c.reportId} | Aset: ${c.assetId} | Status: ${c.status}\n` +
-              `Judul: ${c.title}\n` +
-              `Gejala: ${c.gejala}\n` +
-              `Penyebab: ${c.praduga_penyebab}\n` +
-              `Tindakan: ${c.usulan_tindakan}\n` +
-              `Bukti: ${c.evidenceName}`
-          )
-          .join('\n\n');
+      const historyPrompt =
+        history.length > 0
+          ? `\nRIWAYAT PERCAKAPAN SEBELUMNYA (Maksimal 6 pesan terakhir):\n` +
+            history
+              .map(
+                (m) =>
+                  `${m.role === 'user' ? 'Pengguna' : 'Asisten SYNQRA'}: ${m.content}`
+              )
+              .join('\n') +
+            '\n'
+          : '';
 
-        const historyPrompt =
-          history.length > 0
-            ? `\nRIWAYAT PERCAKAPAN SEBELUMNYA (Maksimal 6 pesan terakhir):\n` +
-              history
-                .map(
-                  (m) =>
-                    `${m.role === 'user' ? 'Pengguna' : 'Asisten SYNQRA'}: ${m.content}`
-                )
-                .join('\n') +
-              '\n'
-            : '';
-
-        const prompt = `Anda adalah asisten teknis SYNQRA (Intelligence, Connected by Evidence) untuk industri migas dan petrokimia.
-Jawab pertanyaan pengguna HANYA berdasarkan konteks kasus di bawah ini dalam Bahasa Indonesia yang ringkas, terstruktur, dan jelas.
+      const systemInstruction = `Anda adalah asisten teknis SYNQRA (Intelligence, Connected by Evidence) untuk industri migas dan petrokimia.
+Jawab pertanyaan pengguna HANYA berdasarkan konteks kasus yang diberikan dalam Bahasa Indonesia yang ringkas, sederhana, informatif, dan langsung dapat ditindaklanjuti teknisi lapangan.
 
 ATURAN KERAS (WAJIB DIPATUHI):
-1. WAJIB sertakan nomor sitasi [1], [2], dst. di setiap klaim penyebab atau rekomendasi teknis.
+1. WAJIB sertakan nomor sitasi tunggal [1], [2], dst. tepat sebelum tanda titik kalimat pada setiap klaim penyebab atau rekomendasi teknis (contoh: "...target bukaan [2]."). Jangan gabungkan angka di satu kurung (tulis [1] [2], bukan [1, 2]).
 2. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi.
-3. Jika mengutip kasus berstatus PRADUGA/TRIAGE/INVESTIGATION, sebutkan secara eksplisit bahwa itu masih dugaan awal yang belum disahkan pakar.
+3. Jika mengutip kasus berstatus PRADUGA/TRIAGE/INVESTIGATION, letakkan di bagian terpisah dan nyatakan secara eksplisit bahwa temuan itu masih dugaan awal yang belum disahkan pakar.
 4. Dilarang mengarang data atau kesimpulan di luar konteks yang diberikan.
-5. Jika ada RIWAYAT PERCAKAPAN SEBELUMNYA, pahami konteks pertanyaan lanjutan dan berikan jawaban yang koheren.
 
-KONTEKS KASUS KNOWLEDGE BASE:
+ATURAN FORMAT & TIPOGRAFI (WAJIB DIPATUHI):
+- DILARANG menggunakan simbol pagar (#, ##, ###), garis pemisah (---), backtick (\`), atau tanda bintang miring (*kata*) maupun garis bawah (_kata_) untuk istilah Inggris. Tulis istilah teknis secara normal tanpa tanda bintang (contoh: stroke, gland stem, static friction, packing PTFE, smart positioner).
+- Susun jawaban secara sederhana dan padat dalam maksimal 4 blok berikut:
+  1) Pembuka 1-2 kalimat ringkas yang langsung menjawab inti pertanyaan.
+  2) Baris judul polos: Fakta Terverifikasi:
+     Diikuti daftar bernomor (1., 2.) dengan format: 1. **Judul Singkat:** Penjelasan inti 1-2 kalimat padat [1].
+  3) (Hanya bila ada rujukan non-VERIFIED yang relevan) Baris judul polos: Dugaan Awal (Belum Disahkan Pakar):
+     Diikuti poin ringkas (1 kalimat) yang menegaskan status praduga/triage [4].
+  4) Baris judul polos: Langkah Rekomendasi:
+     Diikuti 2-3 langkah praktis bernomor (1., 2.) langsung ke tindakan lapangan [1].`;
+
+      const userPrompt = `KONTEKS KASUS KNOWLEDGE BASE:
 ${contextText}
 ${historyPrompt}
 PERTANYAAN PENGGUNA TERBARU:
 ${question}`;
 
-        const res = await model.generateContent(prompt);
-        const text = res.response.text();
-        if (text && text.trim().length > 0) {
-          aiAnswer = text.trim();
-          engine = 'gemini-live';
-        } else {
-          errorReason = 'Gemini tidak mengembalikan respons teks.';
+      const errors: string[] = [];
+
+      for (const modelName of GEMINI_MODEL_FALLBACKS) {
+        try {
+          const interaction = await ai.interactions.create({
+            model: modelName,
+            input: userPrompt,
+            system_instruction: systemInstruction,
+            generation_config: {
+              thinking_level: 'low',
+            },
+            store: false,
+          });
+
+          const text = interaction.output_text?.trim() || '';
+          if (text.length > 0) {
+            aiAnswer = sanitizeTanyaAnswer(text);
+            engine = 'gemini-live';
+            errorReason = undefined;
+            break;
+          }
+          errors.push(`[${modelName}] Respons teks kosong.`);
+        } catch (err) {
+          const formatted = formatGeminiError(err);
+          errors.push(`[${modelName}] ${formatted}`);
+          console.warn(`Gemini Tanya SYNQRA fallback (${modelName}):`, formatted);
+          if (isInvalidKeyError(formatted)) {
+            break;
+          }
         }
-      } catch (err) {
-        console.warn('Gemini Tanya SYNQRA fallback triggered:', err);
-        errorReason =
-          err instanceof Error ? err.message : 'Gagal menghubungi Gemini API.';
+      }
+
+      if (!aiAnswer && errors.length > 0) {
+        errorReason = errors[0];
       }
     } else {
       errorReason = 'GEMINI_API_KEY belum dikonfigurasi di environment.';
@@ -304,11 +401,14 @@ ${question}`;
 
       if (verifiedCits.length > 0) {
         parts.push(
-          `Berdasarkan arsip Knowledge Base terverifikasi pakar, temuan yang paling relevan adalah:\n` +
+          `Ringkasan temuan arsip Knowledge Base SYNQRA yang paling relevan untuk pertanyaan ini:`
+        );
+        parts.push(
+          `Fakta Terverifikasi:\n` +
             verifiedCits
               .map(
-                (c) =>
-                  `• **${c.title}** (${c.assetId}) [${c.index}]: Gejala "${c.gejala}". Penyebab terverifikasi: ${c.praduga_penyebab}. Tindakan rekomendasi: ${c.usulan_tindakan} [${c.index}].`
+                (c, i) =>
+                  `${i + 1}. **${c.title} (${c.assetId}):** ${c.praduga_penyebab} [${c.index}].`
               )
               .join('\n')
         );
@@ -316,12 +416,22 @@ ${question}`;
 
       if (unverifiedCits.length > 0) {
         parts.push(
-          `Sebagai referensi tambahan (masih berstatus **PRADUGA / dalam pemeriksaan** dan belum disahkan pakar):\n` +
+          `Dugaan Awal (Belum Disahkan Pakar):\n` +
             unverifiedCits
               .map(
                 (c) =>
-                  `• **${c.title}** (${c.assetId} · ${c.status}) [${c.index}]: Indikasi awal mengarah pada ${c.praduga_penyebab}. Usulan pemeriksaan: ${c.usulan_tindakan} [${c.index}].`
+                  `• **${c.title} (${c.assetId}, status ${c.status}):** Indikasi awal mengarah pada ${c.praduga_penyebab} dan belum disahkan pakar [${c.index}].`
               )
+              .join('\n')
+        );
+      }
+
+      if (citations.length > 0) {
+        parts.push(
+          `Langkah Rekomendasi:\n` +
+            citations
+              .slice(0, 3)
+              .map((c, i) => `${i + 1}. ${c.usulan_tindakan} [${c.index}].`)
               .join('\n')
         );
       }
@@ -332,7 +442,7 @@ ${question}`;
         );
       }
 
-      aiAnswer = parts.join('\n\n');
+      aiAnswer = sanitizeTanyaAnswer(parts.join('\n\n'));
     }
 
     return NextResponse.json({
