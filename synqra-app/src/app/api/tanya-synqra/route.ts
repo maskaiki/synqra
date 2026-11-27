@@ -50,10 +50,15 @@ function sanitizeTanyaAnswer(raw: string, maxCitationIndex = 5): string {
     let line = originalLine.trimEnd();
     const trimmed = line.trim();
 
-    if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+    if (
+      /^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed) ||
+      /^Pembuka\s+1-2\s+kalimat\s+ringkas[^\n]*$/i.test(trimmed)
+    ) {
       cleanedLines.push('');
       continue;
     }
+
+    line = line.replace(/^Pembuka:\s+/i, '');
 
     const headingMatch = trimmed.match(/^#{1,6}\s+(.+?)(?:\s+#+)?$/);
     if (headingMatch) {
@@ -436,8 +441,8 @@ ATURAN KERAS (WAJIB DIPATUHI):
 
 ATURAN FORMAT & TIPOGRAFI (WAJIB DIPATUHI):
 - DILARANG menggunakan simbol pagar (#, ##, ###), garis pemisah (---), backtick (\`), atau tanda bintang miring (*kata*) maupun garis bawah (_kata_) untuk istilah Inggris. Tulis istilah teknis secara normal tanpa tanda bintang (contoh: flooding, fouling, mechanical seal, smart positioner).
-- Susun jawaban jelas dalam blok berikut (hanya tampilkan blok yang relevan dengan pertanyaan):
-  1) Pembuka 1-2 kalimat ringkas yang langsung menjawab inti pertanyaan.
+- Susun jawaban jelas dalam blok berikut (hanya tampilkan blok yang relevan; JANGAN menulis kata label "Pembuka:" atau menyalin kalimat instruksi ini):
+  1) Paragraf langsung 1-2 kalimat ringkas yang menjawab inti pertanyaan.
   2) Baris judul polos: Fakta Terverifikasi:
      Diikuti daftar bernomor (1., 2., ...) dengan format: 1. **Judul Singkat:** Penjelasan padat [1]. atau [PE25].
   3) (Hanya bila relevan dan ada rujukan non-VERIFIED) Baris judul polos: Dugaan Awal (Belum Disahkan Pakar):

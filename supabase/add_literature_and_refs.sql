@@ -18,6 +18,8 @@ ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS literature_refs TEXT[] DEFAU
 ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS journal_image_ids TEXT[] DEFAULT '{}'::TEXT[];
 
 ALTER TABLE public.literature_references ENABLE ROW LEVEL SECURITY;
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.literature_references TO anon, authenticated;
 DROP POLICY IF EXISTS "synqra_literature_read" ON public.literature_references;
 CREATE POLICY "synqra_literature_read" ON public.literature_references FOR SELECT TO anon, authenticated USING (true);
 DROP POLICY IF EXISTS "synqra_literature_write" ON public.literature_references;

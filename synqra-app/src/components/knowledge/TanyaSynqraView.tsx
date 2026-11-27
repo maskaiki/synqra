@@ -115,73 +115,75 @@ function renderInlineTokens(
 ): React.ReactNode[] {
   const segment = stripStrayInlineSymbols(rawSegment);
   const tokenRegex = /(\[(?:\d+|[A-Z0-9]{2,8})\]|\*\*[^\n]+?\*\*)/g;
-  const parts = segment.split(tokenRegex);
+  const parts = segment.split(tokenRegex).filter((part) => part.length > 0);
 
-  return parts
-    .filter((part) => part.length > 0)
-    .map((part, idx) => {
-      const key = `${keyPrefix}-${idx}`;
+  return parts.map((part, idx) => {
+    const key = `${keyPrefix}-${idx}`;
+    const prevPart = parts[idx - 1] || '';
+    const nextPart = parts[idx + 1] || '';
+    const afterOpenParen = /[(\[]$/.test(prevPart);
+    const followedByPunct = /^[.,;:!?)\]]/.test(nextPart);
 
-      const citMatch = part.match(/^\[(\d+)\]$/);
-      if (citMatch) {
-        const num = Number(citMatch[1]);
-        const cit = citations.find((c) => c.index === num);
-        const nextPart = parts[idx + 1] || '';
-        const followedByPunct = /^[.,;:!?)]/.test(nextPart);
-        if (cit) {
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onOpenEvidence(cit)}
-              title={`Buka bukti sumber ${cit.reportId}: ${cit.evidenceName}`}
-              className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
-                followedByPunct ? 'ml-1 mr-0' : 'mx-1'
-              } rounded-[6px] bg-[#0B1F44] hover:bg-[#00B8D9] dark:bg-[#00B8D9] text-white hover:text-[#061A38] dark:text-[#061830] font-heading text-xs font-extrabold transition-colors align-baseline`}
-            >
-              [{num}]
-            </button>
-          );
-        }
-        return null;
-      }
-
-      const paperMatch = part.match(/^\[([A-Z0-9]{2,8})\]$/);
-      if (paperMatch) {
-        const code = paperMatch[1];
-        const lit = LITERATURE_DATABASE[code];
-        const nextPart = parts[idx + 1] || '';
-        const followedByPunct = /^[.,;:!?)]/.test(nextPart);
-        if (lit) {
-          return (
-            <span
-              key={key}
-              title={`${lit.code} (${lit.year}): ${lit.citation} | ${lit.keyFindings}`}
-              className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
-                followedByPunct ? 'ml-1 mr-0' : 'mx-1'
-              } rounded-[5px] bg-[var(--soft)] border border-[var(--line)] text-[var(--cyan-dark)] font-heading text-xs font-bold align-baseline cursor-help`}
-            >
-              [{code}]
-            </span>
-          );
-        }
-      }
-
-      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-        const inner = part.slice(2, -2).replace(/\*/g, '');
+    const citMatch = part.match(/^\[(\d+)\]$/);
+    if (citMatch) {
+      const num = Number(citMatch[1]);
+      const cit = citations.find((c) => c.index === num);
+      if (cit) {
         return (
-          <strong
+          <button
             key={key}
-            className="font-heading font-semibold text-[var(--ink)]"
+            type="button"
+            onClick={() => onOpenEvidence(cit)}
+            title={`Buka bukti sumber ${cit.reportId}: ${cit.evidenceName}`}
+            className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
+              afterOpenParen ? 'ml-0' : 'ml-1'
+            } ${
+              followedByPunct ? 'mr-0' : 'mr-1'
+            } rounded-[6px] bg-[#0B1F44] hover:bg-[#00B8D9] dark:bg-[#00B8D9] text-white hover:text-[#061A38] dark:text-[#061830] font-heading text-xs font-extrabold transition-colors align-baseline`}
           >
-            {renderInlineTokens(inner, citations, onOpenEvidence, `${key}-b`)}
-          </strong>
+            [{num}]
+          </button>
         );
       }
+      return null;
+    }
 
-      const cleanPlain = part.replace(/\*/g, '');
-      return <span key={key}>{cleanPlain}</span>;
-    });
+    const paperMatch = part.match(/^\[([A-Z0-9]{2,8})\]$/);
+    if (paperMatch) {
+      const code = paperMatch[1];
+      const lit = LITERATURE_DATABASE[code];
+      if (lit) {
+        return (
+          <span
+            key={key}
+            title={`${lit.code} (${lit.year}): ${lit.citation} | ${lit.keyFindings}`}
+            className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
+              afterOpenParen ? 'ml-0' : 'ml-1'
+            } ${
+              followedByPunct ? 'mr-0' : 'mr-1'
+            } rounded-[5px] bg-[var(--soft)] border border-[var(--line)] text-[var(--cyan-dark)] font-heading text-xs font-bold align-baseline cursor-help`}
+          >
+            [{code}]
+          </span>
+        );
+      }
+    }
+
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      const inner = part.slice(2, -2).replace(/\*/g, '');
+      return (
+        <strong
+          key={key}
+          className="font-heading font-semibold text-[var(--ink)]"
+        >
+          {renderInlineTokens(inner, citations, onOpenEvidence, `${key}-b`)}
+        </strong>
+      );
+    }
+
+    const cleanPlain = part.replace(/\*/g, '');
+    return <span key={key}>{cleanPlain}</span>;
+  });
 }
 
 function detectSectionHeading(trimmed: string): string | null {
