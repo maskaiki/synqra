@@ -57,6 +57,47 @@ export const TechnicalArt: React.FC<TechnicalArtProps> = ({
 
   const renderGraphic = () => {
     switch (type) {
+      case 'column':
+      case 'stripper':
+        return (
+          <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M74 132h72M84 122h52" />
+            <rect x="88" y="24" width="44" height="98" rx="18" fill={fillColor} />
+            <path d="M88 44h44M88 64h44M88 84h44M88 104h44" stroke={highlightColor} />
+            <path d="M110 24V12h38v40M70 94h18" stroke={highlightColor} strokeWidth="4" />
+          </g>
+        );
+      case 'furnace':
+      case 'heater':
+        return (
+          <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M36 125h148" />
+            <rect x="52" y="52" width="116" height="73" rx="6" fill={fillColor} />
+            <path d="M92 52V18h36v34" fill={fillColor} />
+            <path d="M72 74v34m20-34v34m20-34v34m20-34v34m16-34v34" stroke={highlightColor} />
+            <path d="M40 88h12m116 0h14" stroke={highlightColor} strokeWidth="5" />
+          </g>
+        );
+      case 'finfan':
+        return (
+          <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M34 114h152M52 94v20m116-20v20" />
+            <rect x="44" y="50" width="132" height="44" rx="8" fill={fillColor} />
+            <circle cx="84" cy="40" r="14" fill={fillColor} stroke={highlightColor} />
+            <circle cx="136" cy="40" r="14" fill={fillColor} stroke={highlightColor} />
+            <path d="M44 72h132M26 72h18m132 0h18" stroke={highlightColor} strokeWidth="4" />
+          </g>
+        );
+      case 'desalter':
+      case 'vessel':
+        return (
+          <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M58 104v20m104-20v20M44 124h132" />
+            <rect x="42" y="48" width="136" height="56" rx="28" fill={fillColor} />
+            <path d="M76 48V30h18v18m32 0V30h18v18M110 104v16" stroke={highlightColor} strokeWidth="3.5" />
+            <path d="M24 76h18m136 0h18" stroke={highlightColor} strokeWidth="5" />
+          </g>
+        );
       case 'pump':
         return (
           <g stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

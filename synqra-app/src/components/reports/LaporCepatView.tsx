@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Asset, Evidence, FailureEntities, Report, RoleInfo } from '@/types/synqra';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Asset, AssetCategoryCode, Evidence, FailureEntities, Report, RoleInfo } from '@/types/synqra';
+import { EQUIPMENT_CATEGORIES } from '@/lib/cduBalonganKnowledge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import { SynqraLoader } from '@/components/ui/SynqraLoader';
@@ -21,12 +22,14 @@ import {
   MicOff,
   RotateCcw,
   Scan,
+  Search,
   Sparkles,
   Upload,
 } from 'lucide-react';
 
 interface LaporCepatViewProps {
   assets: Asset[];
+  reports?: Report[];
   roleInfo: RoleInfo;
   isDarkMode: boolean;
   onReportCreated: (report: Report, initialEvidence?: Evidence) => void;
@@ -91,14 +94,15 @@ function isValidSpecValue(value?: string): boolean {
   return !INVALID_SPEC_VALUES.has(value.trim().toLowerCase());
 }
 
-const SAMPLE_PROMPTS: Record<string, string> = {
-  'P-101A':
-    'Lapor dari unit CDU, pompa P-101A bergetar keras 7,6 mm/s di bearing drive end dan terlihat rembesan cairan di sekitar mechanical seal saat beban 90%.',
-  'E-201':
-    'Heat exchanger E-201 menunjukkan penurunan suhu outlet 12 derajat dari baseline dan differential pressure naik 0,6 bar. Indikasi awal fouling di tube bundle.',
-  'FCV-301':
-    'Control valve FCV-301 merespons perintah DCS terlambat sekitar 8 detik saat setpoint diubah ke 60%. Suplai instrument air normal 4,2 bar.',
-};
+function getSamplePromptForAsset(assetId: string, reports: Report[], assets: Asset[]): string {
+  const rep = reports.find((r) => r.asset_id === assetId);
+  if (rep?.sample_narrative) return rep.sample_narrative;
+  if (rep?.description) return rep.description;
+  const asset = assets.find((a) => a.id === assetId);
+  return asset
+    ? `Lapor dari Unit 11 CDU Balongan, ditemukan anomali operasional pada ${asset.id} (${asset.name}) di area ${asset.area}. Mohon tindak lanjut inspeksi awal.`
+    : `Lapor dari Unit 11 CDU Balongan pada peralatan ${assetId}.`;
+}
 
 function pickSupportedAudioMimeType(): string | undefined {
   if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
@@ -161,6 +165,7 @@ async function compressNameplateImage(file: File): Promise<{
 
 export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   assets,
+  reports = [],
   roleInfo,
   isDarkMode,
   onReportCreated,
@@ -170,7 +175,10 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const [stepDir, setStepDir] = useState<'next' | 'prev'>('next');
   const [highestStep, setHighestStep] = useState<WizardStep>(1);
 
-  const [selectedAssetId, setSelectedAssetId] = useState<string>('P-101A');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | AssetCategoryCode>('ALL');
+  const [assetQuery, setAssetQuery] = useState<string>('');
+  const [showAllAssets, setShowAllAssets] = useState<boolean>(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string>(assets[0]?.id || '11-C-106');
   const [findingType, setFindingType] = useState<'Kondisi Abnormal' | 'Potensi Bahaya' | 'Near Miss'>('Kondisi Abnormal');
   const [urgency, setUrgency] = useState<'Mendesak' | 'Normal'>('Normal');
 
@@ -208,6 +216,31 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) || assets[0];
+
+  const filteredAssets = useMemo(() => {
+    const q = assetQuery.trim().toLowerCase();
+    const list = assets.filter((a) => {
+      const matchCat = categoryFilter === 'ALL' || a.categoryCode === categoryFilter;
+      if (!matchCat) return false;
+      if (!q) return true;
+      return `${a.id} ${a.name} ${a.subtitle} ${a.area}`.toLowerCase().includes(q);
+    });
+    if (categoryFilter === 'ALL' && !q && !showAllAssets) {
+      // Tampilkan 1 tag representatif per kategori (6 kartu rapi) saat default
+      const picks: Asset[] = [];
+      for (const cat of EQUIPMENT_CATEGORIES) {
+        const rep = list.find((a) => a.categoryCode === cat.code);
+        if (rep) picks.push(rep);
+      }
+      if (selectedAsset && !picks.some((p) => p.id === selectedAsset.id)) {
+        picks[0] = selectedAsset;
+      }
+      return picks;
+    }
+    return list;
+  }, [assets, categoryFilter, assetQuery, showAllAssets, selectedAsset]);
+
+  const displayedAssets = showAllAssets || assetQuery.trim() ? filteredAssets : filteredAssets.slice(0, 6);
 
   const revokeAudioUrl = () => {
     if (audioUrlRef.current) {
@@ -743,18 +776,89 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
             </div>
           </div>
 
+          <div className="space-y-3">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-[var(--cyan-dark)] absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  value={assetQuery}
+                  onChange={(e) => setAssetQuery(e.target.value)}
+                  placeholder="Cari kode tag (mis. 11-C-101, 11-E-107, Desalter, Furnace)..."
+                  className="w-full pl-10 pr-4 py-2 rounded-full border-0 bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#00B8D9]/20"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategoryFilter('ALL');
+                    setShowAllAssets(false);
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-heading text-xs font-bold ${
+                    categoryFilter === 'ALL'
+                      ? 'pop-btn shadow-sm'
+                      : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  Semua ({assets.length})
+                </button>
+                {EQUIPMENT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.code}
+                    type="button"
+                    onClick={() => {
+                      setCategoryFilter(cat.code);
+                      setShowAllAssets(true);
+                    }}
+                    className={`px-3 py-1.5 rounded-full font-heading text-xs font-bold ${
+                      categoryFilter === cat.code
+                        ? 'pop-btn shadow-sm'
+                        : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                    }`}
+                  >
+                    {cat.shortLabel}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedAsset && (
+              <div className="text-sm text-[var(--ink-soft)]">
+                Terpilih:{' '}
+                <span className="font-heading font-extrabold text-[var(--cyan-dark)]">
+                  {selectedAsset.id}
+                </span>{' '}
+                · <span className="font-semibold text-[var(--ink)]">{selectedAsset.name}</span> ({selectedAsset.area})
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-            {assets.map((asset, idx) => (
+            {displayedAssets.map((asset, idx) => (
               <EquipmentBreakoutCard
                 key={asset.id}
                 asset={asset}
                 isDarkMode={isDarkMode}
                 selected={selectedAssetId === asset.id}
-                style={{ '--i': idx } as React.CSSProperties}
+                style={{ '--i': Math.min(idx, 5) } as React.CSSProperties}
                 onClick={() => setSelectedAssetId(asset.id)}
               />
             ))}
           </div>
+
+          {filteredAssets.length > displayedAssets.length && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllAssets(true)}
+                className="px-4 py-2 rounded-full bg-[var(--soft)] hover:bg-[var(--hover-bg)] font-heading text-xs font-bold text-[var(--cyan-dark)]"
+              >
+                Tampilkan semua {assets.length} peralatan Unit 11 CDU
+              </button>
+            </div>
+          )}
 
           {isScanning && (
             <SynqraLoader
@@ -1114,7 +1218,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                       onClick={() => {
                         setRecordedBlob(null);
                         revokeAudioUrl();
-                        setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
+                        setNarrative(getSamplePromptForAsset(selectedAssetId, reports, assets));
                         setInputMode('text');
                       }}
                       className="px-3.5 py-1.5 rounded-full pop-btn font-heading text-xs font-bold"
@@ -1156,7 +1260,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                   onClick={() => {
                     setRecordedBlob(null);
                     revokeAudioUrl();
-                    setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A']);
+                    setNarrative(getSamplePromptForAsset(selectedAssetId, reports, assets));
                     setInputMode('text');
                   }}
                   className="font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline"
@@ -1174,7 +1278,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                 <button
                   type="button"
                   onClick={() =>
-                    setNarrative(SAMPLE_PROMPTS[selectedAssetId] || SAMPLE_PROMPTS['P-101A'])
+                    setNarrative(getSamplePromptForAsset(selectedAssetId, reports, assets))
                   }
                   className="px-3 py-1.5 rounded-[7px] border border-[var(--line)] bg-[var(--soft)] hover:border-[var(--cyan)] text-xs font-heading font-bold text-[var(--cyan-dark)]"
                 >
@@ -1302,10 +1406,16 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                 onChange={(e) => setSelectedAssetId(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-[var(--line)] bg-[var(--soft)] text-[var(--ink)] font-heading text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
               >
-                {assets.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.id} : {a.name}
-                  </option>
+                {EQUIPMENT_CATEGORIES.map((cat) => (
+                  <optgroup key={cat.code} label={cat.label}>
+                    {assets
+                      .filter((a) => a.categoryCode === cat.code)
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.id} · {a.name}
+                        </option>
+                      ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

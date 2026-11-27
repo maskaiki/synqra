@@ -108,8 +108,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="font-heading font-extrabold text-[21px] tracking-wide text-[var(--ink)] leading-none">
               SYNQRA
             </div>
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-[var(--cyan-dark)] mt-1">
-              Industrial Knowledge
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--cyan-dark)] mt-1">
+              Unit 11 CDU · RU VI Balongan
             </div>
           </div>
         </div>

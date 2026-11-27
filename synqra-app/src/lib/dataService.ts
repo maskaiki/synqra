@@ -5,13 +5,13 @@ import {
   INITIAL_EVIDENCES,
   INITIAL_REPORTS,
 } from '@/lib/constants';
-import { resolveBuiltInEvidenceUrl } from '@/lib/mediaAssets';
+import { resolveBuiltInEvidenceUrl, EVIDENCE_MEDIA_META } from '@/lib/mediaAssets';
 import { Asset, CaseComment, Evidence, Report } from '@/types/synqra';
 
 const STORAGE_KEYS = {
-  reports: 'synqra_v3_reports',
-  comments: 'synqra_v3_comments',
-  evidences: 'synqra_v3_evidences',
+  reports: 'synqra_v4_balongan_reports',
+  comments: 'synqra_v4_balongan_comments',
+  evidences: 'synqra_v4_balongan_evidences',
 };
 
 export interface WorkspaceSnapshot {
@@ -50,7 +50,14 @@ function writeLocal<T>(key: string, data: T): void {
 function hydrateBuiltInEvidences(list: Evidence[]): Evidence[] {
   return list.map((ev) => {
     const builtInUrl = resolveBuiltInEvidenceUrl(ev);
-    return builtInUrl ? { ...ev, public_url: builtInUrl } : ev;
+    const meta = ev.id ? EVIDENCE_MEDIA_META[ev.id] : undefined;
+    if (!builtInUrl && !meta) return ev;
+    return {
+      ...ev,
+      ...(builtInUrl ? { public_url: builtInUrl } : {}),
+      ...(meta?.attribution && !ev.source_attribution ? { source_attribution: meta.attribution } : {}),
+      ...(meta?.license && !ev.license_label ? { license_label: meta.license } : {}),
+    };
   });
 }
 
@@ -65,14 +72,35 @@ export async function loadWorkspaceData(): Promise<WorkspaceSnapshot> {
       ]);
 
       if (!reportsRes.error && reportsRes.data && reportsRes.data.length > 0) {
+        const initialAssetById = new Map(INITIAL_ASSETS.map((a) => [a.id, a]));
+        const initialReportById = new Map(INITIAL_REPORTS.map((r) => [r.id, r]));
+
         const mappedAssets =
           assetsRes.data && assetsRes.data.length > 0
-            ? (assetsRes.data as Asset[]).map((a) => ({
-                ...a,
-                subtitle: a.subtitle || a.type.toUpperCase(),
-                dept: a.dept || a.area,
-              }))
+            ? (assetsRes.data as Asset[]).map((a) => {
+                const base = initialAssetById.get(a.id);
+                return {
+                  ...base,
+                  ...a,
+                  categoryCode: a.categoryCode || base?.categoryCode || 'E',
+                  unitCount: a.unitCount ?? base?.unitCount ?? 1,
+                  subtitle: a.subtitle || base?.subtitle || a.type.toUpperCase(),
+                  dept: a.dept || base?.dept || a.area,
+                };
+              })
             : INITIAL_ASSETS;
+
+        const mappedReports = (reportsRes.data as Report[]).map((r) => {
+          const base = initialReportById.get(r.id);
+          return {
+            ...r,
+            literature_refs: r.literature_refs || base?.literature_refs,
+            journal_image_ids: r.journal_image_ids || base?.journal_image_ids,
+            fact_vs_scenario_note: r.fact_vs_scenario_note || base?.fact_vs_scenario_note,
+            sample_narrative: r.sample_narrative || base?.sample_narrative,
+            required_evidence_hint: r.required_evidence_hint || base?.required_evidence_hint,
+          };
+        });
 
         const mappedEvidences = hydrateBuiltInEvidences(
           ((evidencesRes.data as Evidence[]) || []).map((ev) => {
@@ -96,7 +124,7 @@ export async function loadWorkspaceData(): Promise<WorkspaceSnapshot> {
 
         return {
           assets: mappedAssets,
-          reports: reportsRes.data as Report[],
+          reports: mappedReports,
           comments: (commentsRes.data as CaseComment[]) || [],
           evidences: mappedEvidences,
           source: 'supabase',

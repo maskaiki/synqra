@@ -112,12 +112,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             </div>
 
             {earlyWarnings.length > 0 && (
-              <div className="px-1 flex flex-wrap items-center gap-3 text-xs font-heading font-bold text-[var(--amber)]">
-                {earlyWarnings.map((w) => (
+              <div className="px-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-heading font-bold text-[var(--amber)]">
+                {earlyWarnings.slice(0, 4).map((w) => (
                   <span key={w.id || w.assetId}>
                     Pola {w.assetId}: {w.recentCount ?? w.relatedReportIds.length} aktif
                   </span>
                 ))}
+                {earlyWarnings.length > 4 && (
+                  <span className="text-[var(--muted)]">
+                    +{earlyWarnings.length - 4} pola lain
+                  </span>
+                )}
               </div>
             )}
 

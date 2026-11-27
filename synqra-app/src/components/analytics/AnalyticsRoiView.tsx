@@ -11,7 +11,8 @@ import {
   Report,
   RoleInfo,
 } from '@/types/synqra';
-import { calculateSla } from '@/lib/constants';
+import { calculateSla, COMPANY_UMBRELLA } from '@/lib/constants';
+import { EQUIPMENT_CATEGORIES } from '@/lib/cduBalonganKnowledge';
 import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import { SynqraLoader } from '@/components/ui/SynqraLoader';
 import {
@@ -80,12 +81,24 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
         ? Math.round((compliantActiveCount / activeReports.length) * 100)
         : 100;
 
-    const targetIds = ['P-101A', 'E-201', 'FCV-301'];
-    const distribution = targetIds.map((assetId) => {
-      const list = reports.filter((r) => r.asset_id === assetId);
+    const distribution = EQUIPMENT_CATEGORIES.map((cat) => {
+      const catAssets = assets.filter((a) => a.categoryCode === cat.code);
+      const idSet = new Set(catAssets.map((a) => a.id));
+      const list = reports.filter((r) => idSet.has(r.asset_id));
       const verified = list.filter((r) => r.status === 'VERIFIED').length;
       const pct = totalReports > 0 ? Math.round((list.length / totalReports) * 100) : 0;
-      return { assetId, count: list.length, verified, pct };
+      return {
+        categoryCode: cat.code,
+        assetId: cat.shortLabel,
+        label: cat.label,
+        renderType: cat.renderType,
+        tagCount: catAssets.length,
+        unitCount: cat.unitCount,
+        count: list.length,
+        verified,
+        pct,
+        latestCase: list[0],
+      };
     });
 
     return {
@@ -97,7 +110,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
       slaRate,
       distribution,
     };
-  }, [reports, evidences, comments]);
+  }, [assets, reports, evidences, comments]);
 
   const handleScanPatterns = async () => {
     setIsScanning(true);
@@ -173,7 +186,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
           }`}
         >
           <BarChart3 className="w-4 h-4" />
-          <span>Ringkasan Pilot</span>
+          <span>Ringkasan Unit 11</span>
         </button>
       </div>
 
@@ -220,16 +233,16 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
             <SynqraLoader
               variant="radar"
               label="Memindai pola anomali berulang..."
-              sublabel="Mengelompokkan riwayat lintas shift pada P-101A, E-201, dan FCV-301."
+              sublabel={`Mengelompokkan riwayat lintas-aset pada ${assets.length} peralatan ${COMPANY_UMBRELLA.shortBadge}.`}
             />
           )}
 
           {!scanResult && !isScanning && (
             <div className="surface-card p-6 rounded-3xl space-y-4">
               <div className="font-heading text-base font-bold text-[var(--ink)]">
-                Ringkasan Populasi Kasus Siap Pindai
+                Ringkasan Populasi Kasus Siap Pindai (6 Kelompok Peralatan)
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger">
                 {pilotSummary.distribution.map((d, idx) => (
                   <div
                     key={d.assetId}
@@ -237,7 +250,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
                     className="p-4 rounded-2xl bg-[var(--soft)] space-y-1"
                   >
                     <div className="font-heading text-sm font-extrabold text-[var(--cyan-dark)]">
-                      {d.assetId}
+                      {d.assetId} · {d.tagCount} Tag
                     </div>
                     <div className="font-heading text-2xl font-extrabold text-[var(--ink)]">
                       {d.count} Kasus
@@ -249,7 +262,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
                 ))}
               </div>
               <p className="text-sm text-[var(--ink-soft)] m-0">
-                Tekan tombol <b>Pindai Pola Berulang</b> di atas untuk melihat sinyal peringatan dini pada tiap aset.
+                Tekan tombol <b>Pindai Pola Berulang</b> di atas untuk melihat sinyal peringatan dini lintas-aset Unit 11 CDU.
               </p>
             </div>
           )}
@@ -323,6 +336,22 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
                       <span>{alert.recommendedAction}</span>
                     </div>
 
+                    {alert.isCrossAssetPattern && alert.affectedAssetIds && alert.affectedAssetIds.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-heading text-xs font-bold text-[var(--ink-soft)] mr-1">
+                          Jalur Terdampak:
+                        </span>
+                        {alert.affectedAssetIds.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 rounded-[6px] bg-[var(--soft)] font-heading text-xs font-bold text-[var(--ink)]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <span className="font-heading text-xs font-bold text-[var(--ink-soft)] uppercase tracking-wider">
                         Kasus Terkait:
@@ -351,7 +380,7 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
         </section>
       )}
 
-      {/* TAB 2: RINGKASAN PILOT */}
+      {/* TAB 2: RINGKASAN UNIT 11 CDU */}
       {activeTab === 'summary' && (
         <div className="space-y-6 animate-slide-next">
           {/* 3 Metrik Ringkas Kesiapan Pilot */}
@@ -422,32 +451,38 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
             </div>
           </section>
 
-          {/* Profil Kesiapan per Aset (Breakout Cards) */}
+          {/* Profil Kesiapan per Kelompok Peralatan Unit 11 CDU (Breakout Cards) */}
           <section className="surface-card p-6 rounded-3xl space-y-4">
             <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
-              Profil Pengetahuan per Aset
+              Profil Pengetahuan per Kelompok Peralatan Unit 11 CDU
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-              {assets.map((asset, idx) => {
-                const assetCases = reports.filter((r) => r.asset_id === asset.id);
-                const verifiedCases = assetCases.filter((r) => r.status === 'VERIFIED').length;
-                const openCases = assetCases.length - verifiedCases;
-                const latestCase = assetCases[0];
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
+              {pilotSummary.distribution.map((item, idx) => {
+                const openCases = item.count - item.verified;
+                const synthAsset: Asset = {
+                  id: item.assetId,
+                  name: item.label,
+                  subtitle: `${item.tagCount} Kode Tag`,
+                  type: item.renderType,
+                  area: `${item.tagCount} Kode Tag · ${item.unitCount} Unit`,
+                  dept: 'Unit 11 CDU',
+                  description: item.label,
+                };
 
                 return (
                   <EquipmentBreakoutCard
-                    key={asset.id}
-                    asset={asset}
+                    key={item.categoryCode}
+                    asset={synthAsset}
                     isDarkMode={isDarkMode}
                     style={{ '--i': idx } as React.CSSProperties}
-                    badgeText={`${verifiedCases} Verified`}
+                    badgeText={`${item.verified} Verified`}
                     metaText={
-                      latestCase
-                        ? `${openCases} aktif · Terbaru ${latestCase.id}`
+                      item.latestCase
+                        ? `${openCases} aktif · Terbaru ${item.latestCase.id}`
                         : `${openCases} kasus aktif`
                     }
-                    onClick={latestCase ? () => onOpenReport(latestCase) : undefined}
+                    onClick={item.latestCase ? () => onOpenReport(item.latestCase!) : undefined}
                   />
                 );
               })}

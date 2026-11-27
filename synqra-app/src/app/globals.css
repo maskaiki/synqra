@@ -125,8 +125,6 @@ html {
 body {
   margin: 0;
   background-color: var(--canvas);
-  background-image: var(--canvas-glow);
-  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-montserrat);
   font-size: 15px;
@@ -137,18 +135,28 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--canvas-glow);
+  transform: translateZ(0);
+}
+
 .surface-card {
   background-color: var(--surface);
-  backdrop-filter: blur(18px) saturate(145%);
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--card-shadow), var(--glass-specular);
 }
 
 .floating-glass {
   background-color: var(--glass-bg);
-  backdrop-filter: blur(22px) saturate(175%);
-  -webkit-backdrop-filter: blur(22px) saturate(175%);
+  backdrop-filter: blur(12px) saturate(145%);
+  -webkit-backdrop-filter: blur(12px) saturate(145%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-specular);
 }

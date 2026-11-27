@@ -3,7 +3,9 @@ import {
   extractFailureEntitiesFromText,
   extractFromAudio,
   LaporCepatExtractionResult,
+  matchCdu11AssetTag,
 } from '@/lib/gemini';
+import { INITIAL_ASSETS } from '@/lib/constants';
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -12,30 +14,20 @@ function detectAssetId(
   transcript: string,
   fallbackAsset?: string
 ): string {
-  const combined = `${identitasAlat} ${transcript}`.toUpperCase();
-  if (
-    combined.includes('E-201') ||
-    combined.includes('HEAT') ||
-    combined.includes('EXCHANGER')
-  ) {
-    return 'E-201';
+  // 1. Prioritaskan kode tag eksplisit 11-* yang disebut langsung pada hasil ekstraksi/transkrip
+  const strictMatch = matchCdu11AssetTag(`${identitasAlat} ${transcript}`, INITIAL_ASSETS, {
+    strictTagOnly: true,
+  });
+  if (strictMatch) return strictMatch.id;
+
+  // 2. Bila operator sudah memilih alat spesifik pada Step 1, pertahankan pilihan valid tersebut
+  if (fallbackAsset && INITIAL_ASSETS.some((a) => a.id === fallbackAsset)) {
+    return fallbackAsset;
   }
-  if (
-    combined.includes('FCV-301') ||
-    combined.includes('FCV') ||
-    combined.includes('VALVE') ||
-    combined.includes('KATUP')
-  ) {
-    return 'FCV-301';
-  }
-  if (
-    combined.includes('P-101') ||
-    combined.includes('POMPA') ||
-    combined.includes('PUMP')
-  ) {
-    return 'P-101A';
-  }
-  return fallbackAsset || 'P-101A';
+
+  // 3. Fallback sinonim teknis Unit 11 CDU Balongan
+  const fuzzyMatch = matchCdu11AssetTag(`${identitasAlat} ${transcript}`, INITIAL_ASSETS);
+  return fuzzyMatch?.id || INITIAL_ASSETS[0].id;
 }
 
 export async function POST(req: NextRequest) {

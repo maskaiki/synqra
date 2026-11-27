@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Asset, MainPage, Report, RoleInfo } from '@/types/synqra';
-import { calculateSla, detectEarlyWarnings } from '@/lib/constants';
+import { calculateSla, COMPANY_UMBRELLA, detectEarlyWarnings } from '@/lib/constants';
+import { EQUIPMENT_TYPE_SHOWCASE } from '@/lib/cduBalonganKnowledge';
 import { BRAND_MEDIA } from '@/lib/mediaAssets';
 import { SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
@@ -96,7 +97,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             height={BRAND_MEDIA.loginHeroOilRig.height}
             loading="eager"
             decoding="async"
-            className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[64%_54%] scale-[1.03] opacity-55 select-none"
+            className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[72%_44%] scale-[1.03] opacity-65 select-none"
           />
           <div
             aria-hidden="true"
@@ -113,10 +114,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-2xl space-y-2.5">
-              <div className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-200/95">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-cyan-200/95">
                 <span>Halo, {firstName}</span>
                 <span className="opacity-50">·</span>
-                <span className="text-white/80">{roleInfo.shortRole}</span>
+                <span className="text-white/90">{roleInfo.shortRole}</span>
+                <span className="opacity-50">·</span>
+                <span className="text-white/85">{COMPANY_UMBRELLA.fullTitle}</span>
               </div>
               <h1 className="font-heading text-3xl sm:text-[38px] font-bold text-white leading-[1.14] tracking-tight m-0 drop-shadow-[0_3px_14px_rgba(4,12,28,0.6)]">
                 Dari temuan lapangan, menjadi pengetahuan.
@@ -229,37 +232,62 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </section>
       </div>
 
-      {/* 3 Aset Pilot: Seamless Breakout Cards */}
+      {/* 9 Tipe Peralatan Unit 11 CDU: Menampilkan ke-9 Aset Visual 3D Unit 11 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-4 px-1">
-          <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
-            Aset Pilot
-          </h2>
+          <div>
+            <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+              {EQUIPMENT_TYPE_SHOWCASE.length} Tipe Peralatan Unit 11 CDU
+            </h2>
+            <p className="text-sm text-[var(--ink-soft)] m-0">
+              {assets.length} Kode Tag aktif ({COMPANY_UMBRELLA.totalPhysicalUnits} unit fisik) di {COMPANY_UMBRELLA.refineryName}
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => onNavigate('graph')}
             className="group hit-area font-heading text-sm font-bold text-[var(--cyan-dark)] hover:underline inline-flex items-center gap-1 shrink-0"
           >
-            <span>Peta Aset</span>
+            <span>Peta {assets.length} Aset</span>
             <ChevronRight className="w-4 h-4 nudge-x" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-          {assets.map((asset, idx) => {
-            const assetCases = reports.filter((r) => r.asset_id === asset.id);
-            const verifiedTotal = assetCases.filter((r) => r.status === 'VERIFIED').length;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
+          {EQUIPMENT_TYPE_SHOWCASE.map((item, idx) => {
+            const typeAssets = assets.filter((a) => a.type === item.renderType);
+            const typeAssetIds = new Set(typeAssets.map((a) => a.id));
+            const typeCases = reports.filter((r) => typeAssetIds.has(r.asset_id));
+            const verifiedTotal = typeCases.filter((r) => r.status === 'VERIFIED').length;
+            const unitTotal = typeAssets.reduce((sum, a) => sum + (a.unitCount || 1), 0);
+            const representative =
+              typeAssets.find((a) => reports.some((r) => r.asset_id === a.id && r.status === 'VERIFIED')) ||
+              typeAssets[0];
+
+            const syntheticAsset: Asset = {
+              id: item.tagHint,
+              name: item.label,
+              subtitle: `${typeAssets.length} Kode Tag`,
+              type: item.renderType,
+              categoryCode: item.categoryCode,
+              unitCount: unitTotal || 1,
+              area: `${typeAssets.length} Kode Tag · ${unitTotal} Unit`,
+              dept: representative?.dept || 'Operasi Unit 11 CDU',
+              description: item.summary,
+            };
 
             return (
               <EquipmentBreakoutCard
-                key={asset.id}
-                asset={asset}
+                key={item.renderType}
+                asset={syntheticAsset}
                 isDarkMode={isDarkMode}
                 style={{ '--i': idx } as React.CSSProperties}
                 badgeText={`${verifiedTotal} Verified`}
-                metaText={`${assetCases.length} Kasus · ${asset.area.split(' · ')[0]}`}
+                metaText={`${typeAssets.length} Tag · ${typeCases.length} Kasus · ${unitTotal} Unit Fisik`}
                 onClick={() =>
-                  onInspectAsset ? onInspectAsset(asset.id) : onNavigate('graph')
+                  onInspectAsset && representative
+                    ? onInspectAsset(representative.id)
+                    : onNavigate('graph')
                 }
               />
             );

@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Asset, AssetCategoryCode, CitationItem, Evidence, Report } from '@/types/synqra';
+import {
+  CDU11_SYSTEMIC_PATTERNS,
+  EQUIPMENT_CATEGORIES,
+} from '@/lib/cduBalonganKnowledge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
-import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,6 +16,7 @@ import {
   Eye,
   FileCheck2,
   GitBranch,
+  Network,
 } from 'lucide-react';
 
 interface KnowledgeGraphViewProps {
@@ -35,21 +39,43 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   onOpenReport,
 }) => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>(
-    initialAssetId || assets[0]?.id || 'P-101A'
+    initialAssetId || assets[0]?.id || '11-C-106'
   );
+  const [activeCategory, setActiveCategory] = useState<AssetCategoryCode>(() => {
+    const initialObj = assets.find((a) => a.id === (initialAssetId || assets[0]?.id));
+    return initialObj?.categoryCode || 'C';
+  });
   const [showAllStatuses, setShowAllStatuses] = useState(false);
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
   const [hoveredReportId, setHoveredReportId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialAssetId && assets.some((a) => a.id === initialAssetId)) {
-      setSelectedAssetId(initialAssetId);
-      setFocusedReportId(null);
-      setHoveredReportId(null);
+    if (initialAssetId) {
+      const target = assets.find((a) => a.id === initialAssetId);
+      if (target) {
+        setSelectedAssetId(target.id);
+        if (target.categoryCode) setActiveCategory(target.categoryCode);
+        setFocusedReportId(null);
+        setHoveredReportId(null);
+      }
     }
   }, [initialAssetId, assets]);
 
-  const selectedAsset = assets.find((a) => a.id === selectedAssetId) || assets[0];
+  const categoryAssets = useMemo(
+    () => assets.filter((a) => a.categoryCode === activeCategory),
+    [assets, activeCategory]
+  );
+
+  const selectedAsset = assets.find((a) => a.id === selectedAssetId) || categoryAssets[0] || assets[0];
+  const crossAssetPatterns = useMemo(
+    () =>
+      selectedAsset
+        ? CDU11_SYSTEMIC_PATTERNS.filter((p) =>
+            p.affectedTags.includes(selectedAsset.id)
+          )
+        : [],
+    [selectedAsset]
+  );
   const assetReports = selectedAsset
     ? reports.filter((r) => r.asset_id === selectedAsset.id)
     : [];
@@ -106,29 +132,74 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         </label>
       </header>
 
-      {/* Asset Selector Cards (Breakout Seamless) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-        {assets.map((asset, idx) => {
-          const isSelected = asset.id === selectedAsset.id;
-          const verifiedTotal = reports.filter(
-            (r) => r.asset_id === asset.id && r.status === 'VERIFIED'
-          ).length;
-          const allTotal = reports.filter((r) => r.asset_id === asset.id).length;
+      {/* Scalable 2-Level Asset Selector (6 Categories + 66 Tags) */}
+      <section className="surface-card p-4 sm:p-5 rounded-3xl space-y-3.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {EQUIPMENT_CATEGORIES.map((cat) => {
+            const isCatActive = activeCategory === cat.code;
+            const catIds = new Set(
+              assets.filter((a) => a.categoryCode === cat.code).map((a) => a.id)
+            );
+            const verifiedInCat = reports.filter(
+              (r) => catIds.has(r.asset_id) && r.status === 'VERIFIED'
+            ).length;
+            return (
+              <button
+                key={cat.code}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(cat.code);
+                  const firstInCat =
+                    assets.find(
+                      (a) =>
+                        a.categoryCode === cat.code &&
+                        reports.some((r) => r.asset_id === a.id && r.status === 'VERIFIED')
+                    ) || assets.find((a) => a.categoryCode === cat.code);
+                  if (firstInCat) handleSelectAsset(firstInCat.id);
+                }}
+                className={`px-4 py-2 rounded-full font-heading text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-colors ${
+                  isCatActive
+                    ? 'pop-btn shadow-sm'
+                    : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--hover-bg)]'
+                }`}
+              >
+                <span>{cat.shortLabel}</span>
+                <span className={`text-xs ${isCatActive ? 'opacity-80' : 'text-[var(--green)]'}`}>
+                  {verifiedInCat} Verified
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-          return (
-            <EquipmentBreakoutCard
-              key={asset.id}
-              asset={asset}
-              isDarkMode={isDarkMode}
-              selected={isSelected}
-              compact
-              style={{ '--i': idx } as React.CSSProperties}
-              badgeText={`${verifiedTotal} Verified`}
-              metaText={`${allTotal} Kasus · ${asset.area.split(' · ')[0]}`}
-              onClick={() => handleSelectAsset(asset.id)}
-            />
-          );
-        })}
+        <div className="flex flex-wrap gap-1.5 pt-2.5 border-t border-[var(--line-soft)]">
+          {categoryAssets.map((a) => {
+            const activeTag = a.id === selectedAsset.id;
+            const hasVerified = reports.some(
+              (r) => r.asset_id === a.id && r.status === 'VERIFIED'
+            );
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => handleSelectAsset(a.id)}
+                className={`px-3 py-1.5 rounded-[7px] border font-heading text-xs font-bold inline-flex items-center gap-1.5 transition-colors ${
+                  activeTag
+                    ? 'border-[var(--cyan)] bg-[var(--cyan-pale)] text-[var(--cyan-dark)] shadow-sm'
+                    : 'border-[var(--line-soft)] bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                }`}
+              >
+                <span>{a.id}</span>
+                {hasVerified && (
+                  <CheckCircle2
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: 'var(--green)' }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {focusedReport ? (
@@ -168,6 +239,8 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         praduga_penyebab: focusedReport.praduga_penyebab,
                         usulan_tindakan: focusedReport.usulan_tindakan,
                         verifiedBy: focusedReport.verified_by,
+                        literatureRefs: focusedReport.literature_refs,
+                        sourceAttribution: firstEv?.source_attribution,
                       })
                     }
                     className="px-4 py-2.5 rounded-full border border-[var(--line-soft)] bg-[var(--soft)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-2"
@@ -296,6 +369,8 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                         praduga_penyebab: focusedReport.praduga_penyebab,
                         usulan_tindakan: focusedReport.usulan_tindakan,
                         verifiedBy: focusedReport.verified_by,
+                        literatureRefs: focusedReport.literature_refs,
+                        sourceAttribution: firstEv?.source_attribution,
                       })
                     }
                     className="px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--line)] hover:border-[var(--cyan)] font-heading text-sm font-bold text-[var(--ink)] inline-flex items-center gap-2 shrink-0"
@@ -478,6 +553,56 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                     </button>
                   );
                 })}
+              </div>
+            </section>
+          )}
+
+          {/* Bagian 3: Keterkaitan Pola Lintas-Aset Unit 11 CDU */}
+          {crossAssetPatterns.length > 0 && (
+            <section className="surface-card p-6 rounded-3xl space-y-4">
+              <div className="flex items-center gap-2">
+                <Network className="w-5 h-5 text-[var(--cyan-dark)]" />
+                <h2 className="font-heading text-lg font-bold text-[var(--ink)] m-0">
+                  Pola Keterkaitan Lintas-Aset ({selectedAsset.id})
+                </h2>
+              </div>
+
+              <div className="space-y-3">
+                {crossAssetPatterns.map((pat) => (
+                  <div key={pat.id} className="p-4 rounded-2xl bg-[var(--soft)] space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-heading font-bold text-sm sm:text-base text-[var(--ink)]">
+                        {pat.title}
+                      </div>
+                      <span className="font-heading text-xs font-extrabold uppercase text-[var(--cyan-dark)]">
+                        {pat.literatureCodes.join(' · ')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[var(--ink-soft)] m-0 leading-relaxed">
+                      {pat.mechanismSummary}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      {pat.affectedTags.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            const target = assets.find((a) => a.id === t);
+                            if (target?.categoryCode) setActiveCategory(target.categoryCode);
+                            handleSelectAsset(t);
+                          }}
+                          className={`px-2.5 py-1 rounded-[6px] font-heading text-xs font-bold transition-colors ${
+                            t === selectedAsset.id
+                              ? 'pop-btn'
+                              : 'bg-[var(--surface)] text-[var(--cyan-dark)] hover:bg-[var(--hover-bg)]'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
           )}

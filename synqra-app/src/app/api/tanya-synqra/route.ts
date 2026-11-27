@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CitationItem, Evidence, Report } from '@/types/synqra';
-import { INITIAL_EVIDENCES, INITIAL_REPORTS } from '@/lib/constants';
-import { GEMINI_MODEL } from '@/lib/gemini';
+import { INITIAL_ASSETS, INITIAL_EVIDENCES, INITIAL_REPORTS } from '@/lib/constants';
+import {
+  CDU11_ENGINEERING_BRIEF,
+  CDU11_SYSTEMIC_PATTERNS,
+  findRelevantLiterature,
+} from '@/lib/cduBalonganKnowledge';
+import { GEMINI_MODEL_FALLBACKS, matchCdu11AssetTag, withGeminiTimeout } from '@/lib/gemini';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase/client';
 
 const apiKey =
@@ -27,6 +32,10 @@ interface TanyaRequestBody {
   history?: TanyaHistoryItem[];
 }
 
+function stripForbiddenDashes(text: string): string {
+  return text.replace(/[\u2013\u2014]/g, '-').trim();
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as TanyaRequestBody;
@@ -39,7 +48,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ambil maksimal 6 pesan riwayat percakapan terakhir
     const rawHistory = Array.isArray(body.history) ? body.history : [];
     const history: TanyaHistoryItem[] = rawHistory
       .filter(
@@ -75,45 +83,34 @@ export async function POST(req: NextRequest) {
     const historyLower = history.map((m) => m.content).join(' ').toLowerCase();
     const fullSearchContext = `${historyLower} ${qLower}`;
 
-    // Deteksi konteks aset dari filter, pertanyaan saat ini, atau riwayat pesan
+    // Deteksi dinamis dari 66 kode tag + sinonim seksi Unit 11 CDU Balongan
+    const explicitFilter =
+      body.assetFilter && body.assetFilter !== 'ALL' ? body.assetFilter : null;
     const detectedAsset =
-      body.assetFilter && body.assetFilter !== 'ALL'
-        ? body.assetFilter
-        : qLower.includes('p-101') ||
-          qLower.includes('pompa') ||
-          qLower.includes('seal') ||
-          qLower.includes('vibrasi')
-          ? 'P-101A'
-          : qLower.includes('e-201') ||
-            qLower.includes('heat') ||
-            qLower.includes('exchanger') ||
-            qLower.includes('fouling') ||
-            qLower.includes('gasket')
-            ? 'E-201'
-            : qLower.includes('fcv') ||
-              qLower.includes('valve') ||
-              qLower.includes('katup') ||
-              qLower.includes('stroke') ||
-              qLower.includes('aktuator')
-              ? 'FCV-301'
-              : fullSearchContext.includes('p-101') ||
-                fullSearchContext.includes('pompa')
-                ? 'P-101A'
-                : fullSearchContext.includes('e-201') ||
-                  fullSearchContext.includes('heat') ||
-                  fullSearchContext.includes('exchanger')
-                  ? 'E-201'
-                  : fullSearchContext.includes('fcv') ||
-                    fullSearchContext.includes('valve')
-                    ? 'FCV-301'
-                    : null;
+      explicitFilter ||
+      matchCdu11AssetTag(question, INITIAL_ASSETS)?.id ||
+      matchCdu11AssetTag(fullSearchContext, INITIAL_ASSETS)?.id ||
+      null;
+
+    // Deteksi pola sistemik lintas-aset yang relevan dengan pertanyaan
+    const matchedPatterns = CDU11_SYSTEMIC_PATTERNS.filter((p) => {
+      const blob = `${p.title} ${p.mechanismSummary} ${p.affectedTags.join(' ')}`.toLowerCase();
+      if (detectedAsset && p.affectedTags.includes(detectedAsset)) return true;
+      const qWords = qLower.split(/\s+/).filter((w) => w.length >= 4);
+      return qWords.some((w) => blob.includes(w));
+    });
+    const patternCaseBoostIds = new Set(
+      matchedPatterns.flatMap((p) => p.relatedCaseIds)
+    );
+    const patternTagBoostIds = new Set(
+      matchedPatterns.flatMap((p) => p.affectedTags)
+    );
 
     const keywords = qLower
       .replace(/[^a-z0-9\s-]/g, ' ')
       .split(/\s+/)
       .filter((w) => w.length >= 3);
 
-    // Pembobotan hibrida dan pencatatan alasan kecocokan (matchReasons)
     const scored = allReports
       .map((r) => {
         let score = 0;
@@ -125,15 +122,19 @@ export async function POST(req: NextRequest) {
         const rKondisi = (r.kondisi_operasi || '').toLowerCase();
         const rTindakan = (r.usulan_tindakan || '').toLowerCase();
         const rDesc = (r.description || '').toLowerCase();
-        const searchable = `${r.id} ${r.asset_id} ${rTitle} ${rGejala} ${rKondisi} ${rPenyebab} ${rTindakan} ${rDesc}`;
+        const rLit = (r.literature_refs || []).join(' ').toLowerCase();
+        const searchable = `${r.id} ${r.asset_id} ${r.identitas_alat} ${rTitle} ${rGejala} ${rKondisi} ${rPenyebab} ${rTindakan} ${rDesc} ${rLit}`;
 
-        // 1. Kesesuaian Konteks Aset (Bobot: +35)
-        if (detectedAsset && r.asset_id === detectedAsset) {
-          score += 35;
+        if (explicitFilter && r.asset_id !== explicitFilter) {
+          score -= 40;
+        } else if (detectedAsset && r.asset_id === detectedAsset) {
+          score += 55;
           matchReasons.push(`Konteks Aset ${r.asset_id}`);
+        } else if (patternCaseBoostIds.has(r.id) || patternTagBoostIds.has(r.asset_id)) {
+          score += 24;
+          matchReasons.push('Pola Lintas-Aset Unit 11');
         }
 
-        // 2. Kecocokan Entitas Kata Kunci (Gejala, Penyebab, Solusi)
         let symptomHit = false;
         let causeHit = false;
         let actionHit = false;
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
 
         for (const kw of keywords) {
           if (searchable.includes(kw)) {
-            score += 12;
+            score += 13;
             if (rGejala.includes(kw)) symptomHit = true;
             else if (rPenyebab.includes(kw)) causeHit = true;
             else if (rTindakan.includes(kw)) actionHit = true;
@@ -151,12 +152,12 @@ export async function POST(req: NextRequest) {
 
         if (symptomHit) matchReasons.push('Kecocokan Gejala');
         if (causeHit) matchReasons.push('Korelasi Penyebab');
-        if (actionHit) matchReasons.push('Kecocokan Rekomendasi Tindakan');
+        if (actionHit) matchReasons.push('Kecocokan Tindakan');
         if (!symptomHit && !causeHit && !actionHit && genericHit) {
           matchReasons.push('Kesesuaian Kata Kunci');
         }
 
-        // 3. Prioritas Status Kasus (Kasus Terverifikasi mendapat bobot tertinggi +45)
+        // Prioritas Status Kasus: VERIFIED selalu diutamakan (+45)
         if (r.status === 'VERIFIED') {
           score += 45;
           matchReasons.push('Status Terverifikasi');
@@ -170,28 +171,21 @@ export async function POST(req: NextRequest) {
           matchReasons.push('Status Praduga Awal');
         }
 
-        // 4. Keberadaan Bukti Fisik
-        const hasEvidence = allEvidences.some((e) => e.report_id === r.id);
-        if (hasEvidence) {
+        if (allEvidences.some((e) => e.report_id === r.id)) {
           score += 8;
         }
 
         if (matchReasons.length === 0) {
-          matchReasons.push('Katalog Kasus Terkait');
+          matchReasons.push('Katalog Kasus Unit 11');
         }
 
         return { report: r, score, matchReasons };
       })
-      .sort((a, b) => {
-        const aRelevant = a.score > 15 ? 1 : 0;
-        const bRelevant = b.score > 15 ? 1 : 0;
-        if (aRelevant !== bRelevant) return bRelevant - aRelevant;
-        return b.score - a.score;
-      });
+      .sort((a, b) => b.score - a.score);
 
-    const topMatches = scored.slice(0, 4);
+    const topMatches = scored.slice(0, 5);
 
-    // Aturan Keras: Prioritaskan kasus VERIFIED di urutan teratas
+    // Aturan Keras GEMINI.md: Kasus VERIFIED wajib berada di urutan teratas sitasi [1], [2]...
     topMatches.sort((a, b) => {
       const rank: Record<string, number> = {
         VERIFIED: 3,
@@ -220,10 +214,22 @@ export async function POST(req: NextRequest) {
         praduga_penyebab: r.praduga_penyebab,
         usulan_tindakan: r.usulan_tindakan,
         verifiedBy: r.verified_by,
+        literatureRefs: r.literature_refs,
+        sourceAttribution: ev?.source_attribution
+          ? `${ev.source_attribution}${ev.license_label ? ` (${ev.license_label})` : ''}`
+          : undefined,
         matchReasons: item.matchReasons,
-        relevanceScore: item.score,
+        relevanceScore: Math.max(0, item.score),
       };
     });
+
+    const citedLitCodes = Array.from(
+      new Set(citations.flatMap((c) => c.literatureRefs || []))
+    );
+    const relevantLiterature = findRelevantLiterature(
+      `${question} ${detectedAsset || ''} ${citations.map((c) => c.assetId).join(' ')}`,
+      citedLitCodes
+    );
 
     const verifiedCount = citations.filter((c) => c.status === 'VERIFIED').length;
     const hasUnverified = citations.some((c) => c.status !== 'VERIFIED');
@@ -233,70 +239,99 @@ export async function POST(req: NextRequest) {
     let errorReason: string | undefined = undefined;
 
     if (genAI) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: GEMINI_MODEL,
-          generationConfig: { temperature: 0.2 },
-        });
+      const contextText = citations
+        .map(
+          (c) =>
+            `[${c.index}] ${c.reportId} | Aset: ${c.assetId} | Status: ${c.status}\n` +
+            `Judul: ${c.title}\n` +
+            `Gejala: ${c.gejala}\n` +
+            `Penyebab: ${c.praduga_penyebab}\n` +
+            `Tindakan: ${c.usulan_tindakan}\n` +
+            `Bukti: ${c.evidenceName}${c.literatureRefs?.length ? ` | Sumber Ilmiah: ${c.literatureRefs.join(', ')}` : ''}`
+        )
+        .join('\n\n');
 
-        const contextText = citations
-          .map(
-            (c) =>
-              `[${c.index}] ${c.reportId} | Aset: ${c.assetId} | Status: ${c.status}\n` +
-              `Judul: ${c.title}\n` +
-              `Gejala: ${c.gejala}\n` +
-              `Penyebab: ${c.praduga_penyebab}\n` +
-              `Tindakan: ${c.usulan_tindakan}\n` +
-              `Bukti: ${c.evidenceName}`
-          )
-          .join('\n\n');
+      const litContext = relevantLiterature.length
+        ? `\nREFERENSI PAPER & JURNAL ILMIAH UNIT 11 CDU BALONGAN:\n` +
+          relevantLiterature
+            .map((l) => `- [${l.code}] ${l.citation} -> Temuan: ${l.keyFindings}`)
+            .join('\n')
+        : '';
 
-        const historyPrompt =
-          history.length > 0
-            ? `\nRIWAYAT PERCAKAPAN SEBELUMNYA (Maksimal 6 pesan terakhir):\n` +
-              history
-                .map(
-                  (m) =>
-                    `${m.role === 'user' ? 'Pengguna' : 'Asisten SYNQRA'}: ${m.content}`
-                )
-                .join('\n') +
-              '\n'
-            : '';
+      const patternContext = matchedPatterns.length
+        ? `\nPOLA KETERKAITAN LINTAS-ASET TERKAIT:\n` +
+          matchedPatterns
+            .slice(0, 2)
+            .map((p) => `- ${p.title} (${p.affectedTags.join(', ')}): ${p.mechanismSummary}`)
+            .join('\n')
+        : '';
 
-        const prompt = `Anda adalah asisten teknis SYNQRA (Intelligence, Connected by Evidence) untuk industri migas dan petrokimia.
-Jawab pertanyaan pengguna HANYA berdasarkan konteks kasus di bawah ini dalam Bahasa Indonesia yang ringkas, terstruktur, dan jelas.
+      const historyPrompt =
+        history.length > 0
+          ? `\nRIWAYAT PERCAKAPAN SEBELUMNYA (Maksimal 6 pesan terakhir):\n` +
+            history
+              .map(
+                (m) =>
+                  `${m.role === 'user' ? 'Pengguna' : 'Asisten SYNQRA'}: ${m.content}`
+              )
+              .join('\n') +
+            '\n'
+          : '';
+
+      const prompt = `Anda adalah asisten teknis SYNQRA pada Unit 11 (CDU - Crude Distillation Unit) PT Pertamina RU VI Balongan.
+Jawab pertanyaan pengguna dalam Bahasa Indonesia teknis yang terstruktur, ringkas, dan jelas berdasarkan kasus Knowledge Base serta literatur ilmiah di bawah ini.
 
 ATURAN KERAS (WAJIB DIPATUHI):
-1. WAJIB sertakan nomor sitasi [1], [2], dst. di setiap klaim penyebab atau rekomendasi teknis.
-2. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi.
-3. Jika mengutip kasus berstatus PRADUGA/TRIAGE/INVESTIGATION, sebutkan secara eksplisit bahwa itu masih dugaan awal yang belum disahkan pakar.
-4. Dilarang mengarang data atau kesimpulan di luar konteks yang diberikan.
-5. Jika ada RIWAYAT PERCAKAPAN SEBELUMNYA, pahami konteks pertanyaan lanjutan dan berikan jawaban yang koheren.
-
-KONTEKS KASUS KNOWLEDGE BASE:
-${contextText}
+1. WAJIB sertakan nomor sitasi kasus [1], [2], dst. pada setiap klaim atau rekomendasi dari kasus lapangan.
+2. Bila mengutip referensi ilmiah (seperti PE25, AL24, MB17, PN25, ST25, ZH23, CI24, SH23, KO25), sebutkan kodenya secara eksplisit.
+3. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi terverifikasi pakar.
+4. Jika mengutip kasus berstatus PRADUGA / TRIAGE / INVESTIGATION, nyatakan eksplisit bahwa statusnya masih praduga/investigasi berjalan dan belum disahkan pakar.
+5. Dilarang mengarang ID kasus di luar konteks yang diberikan; gunakan tanda hubung biasa (-) dan hindari em-dash.
 ${historyPrompt}
+${CDU11_ENGINEERING_BRIEF}
+
+KONTEKS KASUS KNOWLEDGE BASE (URUT STATUS VERIFIED TERATAS):
+${contextText}
+${patternContext}
+${litContext}
+
 PERTANYAAN PENGGUNA TERBARU:
 ${question}`;
 
-        const res = await model.generateContent(prompt);
-        const text = res.response.text();
-        if (text && text.trim().length > 0) {
-          aiAnswer = text.trim();
-          engine = 'gemini-live';
-        } else {
+      for (const modelName of GEMINI_MODEL_FALLBACKS) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 900,
+            },
+          });
+
+          const res = await withGeminiTimeout(
+            model.generateContent(prompt),
+            9500,
+            modelName
+          );
+          const text = stripForbiddenDashes(res.response.text());
+          if (text && text.length > 0) {
+            aiAnswer = text;
+            engine = 'gemini-live';
+            errorReason = undefined;
+            break;
+          }
           errorReason = 'Gemini tidak mengembalikan respons teks.';
+        } catch (err) {
+          console.warn(`Gemini Tanya SYNQRA fallback (${modelName}):`, err);
+          errorReason =
+            err instanceof Error ? stripForbiddenDashes(err.message) : 'Gagal menghubungi Gemini API.';
         }
-      } catch (err) {
-        console.warn('Gemini Tanya SYNQRA fallback triggered:', err);
-        errorReason =
-          err instanceof Error ? err.message : 'Gagal menghubungi Gemini API.';
       }
     } else {
       errorReason = 'GEMINI_API_KEY belum dikonfigurasi di environment.';
     }
 
-    // Fallback lokal deterministik jika Gemini API offline / belum ada key
+    // Fallback lokal deterministik berbasis Kasus + Literatur Ilmiah Balongan
     if (!aiAnswer) {
       const verifiedCits = citations.filter((c) => c.status === 'VERIFIED');
       const unverifiedCits = citations.filter((c) => c.status !== 'VERIFIED');
@@ -304,11 +339,11 @@ ${question}`;
 
       if (verifiedCits.length > 0) {
         parts.push(
-          `Berdasarkan arsip Knowledge Base terverifikasi pakar, temuan yang paling relevan adalah:\n` +
+          `Berdasarkan arsip Knowledge Base terverifikasi pakar Unit 11 CDU RU VI Balongan:\n` +
             verifiedCits
               .map(
                 (c) =>
-                  `• **${c.title}** (${c.assetId}) [${c.index}]: Gejala "${c.gejala}". Penyebab terverifikasi: ${c.praduga_penyebab}. Tindakan rekomendasi: ${c.usulan_tindakan} [${c.index}].`
+                  `• **${c.title}** (${c.assetId}) [${c.index}]: Gejala "${c.gejala}". Penyebab terverifikasi: ${c.praduga_penyebab}. Tindakan: ${c.usulan_tindakan} [${c.index}].`
               )
               .join('\n')
         );
@@ -316,12 +351,22 @@ ${question}`;
 
       if (unverifiedCits.length > 0) {
         parts.push(
-          `Sebagai referensi tambahan (masih berstatus **PRADUGA / dalam pemeriksaan** dan belum disahkan pakar):\n` +
+          `Sebagai referensi kasus aktif (masih berstatus **PRADUGA / dalam investigasi** dan belum disahkan pakar):\n` +
             unverifiedCits
               .map(
                 (c) =>
-                  `• **${c.title}** (${c.assetId} · ${c.status}) [${c.index}]: Indikasi awal mengarah pada ${c.praduga_penyebab}. Usulan pemeriksaan: ${c.usulan_tindakan} [${c.index}].`
+                  `• **${c.title}** (${c.assetId} · ${c.status}) [${c.index}]: Dugaan awal mengarah pada ${c.praduga_penyebab}. Rencana tindak lanjut: ${c.usulan_tindakan} [${c.index}].`
               )
+              .join('\n')
+        );
+      }
+
+      if (relevantLiterature.length > 0) {
+        parts.push(
+          `Acuan literatur ilmiah terkait Unit 11 CDU Balongan:\n` +
+            relevantLiterature
+              .slice(0, 3)
+              .map((lit) => `• **${lit.code}** (${lit.category}): ${lit.keyFindings}`)
               .join('\n')
         );
       }
@@ -332,7 +377,7 @@ ${question}`;
         );
       }
 
-      aiAnswer = parts.join('\n\n');
+      aiAnswer = stripForbiddenDashes(parts.join('\n\n'));
     }
 
     return NextResponse.json({
@@ -348,7 +393,7 @@ ${question}`;
   } catch (err: unknown) {
     const message =
       err instanceof Error
-        ? err.message
+        ? stripForbiddenDashes(err.message)
         : 'Gagal memproses pencarian Tanya SYNQRA.';
     console.error('Error in /api/tanya-synqra:', err);
     return NextResponse.json({ error: message }, { status: 500 });

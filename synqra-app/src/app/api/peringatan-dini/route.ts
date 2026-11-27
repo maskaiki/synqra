@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { INITIAL_ASSETS, INITIAL_REPORTS } from '@/lib/constants';
-import { GEMINI_MODEL_FALLBACKS } from '@/lib/gemini';
+import {
+  CDU11_ENGINEERING_BRIEF,
+  CDU11_SYSTEMIC_PATTERNS,
+} from '@/lib/cduBalonganKnowledge';
+import { GEMINI_MODEL_FALLBACKS, withGeminiTimeout } from '@/lib/gemini';
 import {
   Asset,
   EarlyWarningAlert,
@@ -25,6 +29,8 @@ interface GeminiAlertPayload {
     summary?: string;
     recommendedAction?: string;
     relatedReportIds?: string[];
+    isCrossAssetPattern?: boolean;
+    affectedAssetIds?: string[];
   }>;
 }
 
@@ -76,7 +82,9 @@ function buildFallbackAlerts(
   const sixtyDaysMs = 60 * 24 * 3600 * 1000;
   const now = Date.now();
   const alerts: EarlyWarningAlert[] = [];
+  const reportById = new Map(allReports.map((r) => [r.id, r]));
 
+  // 1. Peringatan Dini Kejadian Berulang pada Tag Aset yang Sama (>= 2 laporan)
   for (const asset of allAssets) {
     const assetReports = allReports.filter((r) => r.asset_id === asset.id);
     if (assetReports.length < 2) continue;
@@ -86,85 +94,58 @@ function buildFallbackAlerts(
       return !Number.isNaN(t) && now - t <= sixtyDaysMs;
     });
     const scoped = recent60Days.length >= 2 ? recent60Days : assetReports;
-    const textBlob = (r: Report) =>
-      `${r.title} ${r.gejala} ${r.praduga_penyebab} ${r.usulan_tindakan}`.toLowerCase();
-
-    let patternTitle = `Pola Gangguan Berulang pada ${asset.id}`;
-    let matchedReports = scoped;
-    let summary = `Tercatat ${scoped.length} laporan pada ${asset.id} dengan gejala berulang di unit operasi.`;
-    let recommendedAction = `Jadwalkan audit keandalan terpadu dan tinjau histori CAPA pada ${asset.id}.`;
-
-    if (asset.id === 'P-101A') {
-      const vibSeal = scoped.filter((r) =>
-        /(vibrasi|getar|seal|kopling|alignment)/i.test(textBlob(r))
-      );
-      if (vibSeal.length >= 2) {
-        matchedReports = vibSeal;
-        patternTitle = 'Pola Berulang Vibrasi & Mechanical Seal P-101A';
-        summary = `${vibSeal.length} insiden terkait vibrasi poros, misalignment kopling, dan rembesan mechanical seal terdeteksi dalam 60 hari.`;
-        recommendedAction =
-          'Lakukan audit laser alignment kopling, pelepasan pipe strain, dan inspeksi jalur flush seal secara menyeluruh.';
-      }
-    } else if (asset.id === 'E-201') {
-      const fouling = scoped.filter((r) =>
-        /(fouling|kerak|delta|pressure drop|antifoulant)/i.test(textBlob(r))
-      );
-      const gasket = scoped.filter((r) =>
-        /(gasket|flange|rembes|baut)/i.test(textBlob(r))
-      );
-      if (fouling.length >= gasket.length && fouling.length >= 2) {
-        matchedReports = fouling;
-        patternTitle = 'Akumulasi Fouling & Penurunan Termal Berulang E-201';
-        summary = `${fouling.length} kejadian penurunan efisiensi termal dan kenaikan pressure drop akibat fouling tube bundle tercatat pada periode 60 hari.`;
-        recommendedAction =
-          'Pastikan laju alir minimum terjaga dan pasang alarm flow switch pada pompa dosing antifoulant.';
-      } else if (gasket.length >= 2) {
-        matchedReports = gasket;
-        patternTitle = 'Rembesan Flange & Gasket Thermal Cycling E-201';
-        summary = `${gasket.length} temuan rembesan pada flange dan gasket channel/floating head terjadi saat siklus perubahan suhu.`;
-        recommendedAction =
-          'Terapkan prosedur pemanasan bertahap maksimal 25 derajat C per jam dan verifikasi torsi baut pasca-startup.';
-      }
-    } else if (asset.id === 'FCV-301') {
-      const valvePattern = scoped.filter((r) =>
-        /(hunting|osilasi|stroke|aktuator|positioner|packing|regulator)/i.test(
-          textBlob(r)
-        )
-      );
-      if (valvePattern.length >= 2) {
-        matchedReports = valvePattern;
-        patternTitle = 'Gangguan Aktuator, Positioner & Stroke FCV-301';
-        summary = `${valvePattern.length} insiden osilasi bukaan, sticking stem packing, dan gangguan suplai udara aktuator muncul berulang dalam 60 hari.`;
-        recommendedAction =
-          'Jadwalkan penggantian filter regulator udara instrumen serta uji partial stroke test bulanan pada FCV-301.';
-      }
-    }
-
-    const activeHigh = matchedReports.filter(
+    const activeHigh = scoped.filter(
       (r) =>
         r.status !== 'VERIFIED' &&
         (r.risk_level === 'HIGH' || r.risk_level === 'CRITICAL')
     ).length;
 
     const severity: EarlyWarningSeverity =
-      matchedReports.length >= 3 && activeHigh >= 1
-        ? 'KRITIS'
-        : matchedReports.length >= 3 || activeHigh >= 1
-          ? 'WASPADA'
-          : 'PANTAU';
+      scoped.length >= 3 || activeHigh >= 1 ? 'KRITIS' : 'WASPADA';
+
+    const summary = `Tercatat ${scoped.length} laporan pada ${asset.id} (${asset.name}) dalam pemantauan aktif lintas shift.`;
+    const recommendedAction = `Jadwalkan audit keandalan terpadu dan tinjau kelengkapan bukti serta histori CAPA pada ${asset.id}.`;
 
     alerts.push({
-      id: `ew-${asset.id.toLowerCase()}`,
+      id: `ew-asset-${asset.id.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
       assetId: asset.id,
       severity,
-      patternTitle: stripForbiddenDashes(patternTitle),
-      frequencyLabel: `${matchedReports.length} kasus dalam 60 hari`,
+      patternTitle: stripForbiddenDashes(`Kejadian Berulang pada ${asset.id}`),
+      frequencyLabel: `${scoped.length} kasus terdeteksi`,
       summary: stripForbiddenDashes(summary),
       recommendedAction: stripForbiddenDashes(recommendedAction),
-      relatedReportIds: matchedReports.map((r) => r.id),
+      relatedReportIds: scoped.map((r) => r.id),
       assetName: asset.name,
-      recentCount: matchedReports.length,
+      recentCount: scoped.length,
       message: stripForbiddenDashes(summary),
+    });
+  }
+
+  // 2. 9 Pola Peringatan Dini Sistemik Lintas-Aset Unit 11 CDU RU VI Balongan
+  for (const pat of CDU11_SYSTEMIC_PATTERNS) {
+    const relatedReports = pat.relatedCaseIds
+      .map((id) => reportById.get(id))
+      .filter((r): r is Report => Boolean(r));
+    const tagMatched = allReports.filter(
+      (r) => pat.affectedTags.includes(r.asset_id) && !pat.relatedCaseIds.includes(r.id)
+    );
+    const mergedReports = [...relatedReports, ...tagMatched];
+    if (mergedReports.length < 2) continue;
+
+    alerts.push({
+      id: pat.id,
+      assetId: pat.primaryAssetId,
+      severity: pat.severity,
+      patternTitle: stripForbiddenDashes(pat.title),
+      frequencyLabel: `${mergedReports.length} kasus lintas-${pat.affectedTags.length} aset`,
+      summary: stripForbiddenDashes(pat.mechanismSummary),
+      recommendedAction: stripForbiddenDashes(pat.recommendedAction),
+      relatedReportIds: mergedReports.map((r) => r.id),
+      assetName: pat.affectedTags.slice(0, 3).join(', '),
+      recentCount: mergedReports.length,
+      message: stripForbiddenDashes(pat.mechanismSummary),
+      isCrossAssetPattern: true,
+      affectedAssetIds: pat.affectedTags,
     });
   }
 
@@ -185,14 +166,7 @@ export async function POST(req: NextRequest) {
         ? body.assets
         : INITIAL_ASSETS;
 
-    const validIdsByAsset = new Map<string, Set<string>>();
-    for (const asset of allAssets) {
-      validIdsByAsset.set(
-        asset.id,
-        new Set(allReports.filter((r) => r.asset_id === asset.id).map((r) => r.id))
-      );
-    }
-
+    const validReportIds = new Set(allReports.map((r) => r.id));
     const fallbackAlerts = buildFallbackAlerts(allReports, allAssets);
     const generatedAt = new Date().toISOString();
 
@@ -203,48 +177,52 @@ export async function POST(req: NextRequest) {
     if (genAI) {
       let lastError = 'Semua model Gemini gagal memindai pola berulang.';
 
-      const groupedContext = allAssets
-        .map((asset) => {
-          const reps = allReports.filter((r) => r.asset_id === asset.id);
-          const lines = reps
-            .map(
-              (r) =>
-                `  * ${r.id} | Status: ${r.status} | Risiko: ${r.risk_level || 'MEDIUM'} | Tgl: ${r.created_at.slice(0, 10)}\n` +
-                `    Judul: ${r.title}\n` +
-                `    Gejala: ${r.gejala}\n` +
-                `    Penyebab: ${r.praduga_penyebab}`
-            )
-            .join('\n');
-          return `ASET ${asset.id} (${asset.name}) [Total: ${reps.length} kasus]:\n${lines}`;
-        })
-        .join('\n\n');
+      // Kelompokkan ringkas per seksi / pola Unit 11 agar hemat token namun lengkap
+      const activeDigest = allReports
+        .filter((r) => r.status !== 'VERIFIED' || r.risk_level === 'HIGH' || r.risk_level === 'CRITICAL')
+        .slice(0, 48)
+        .map(
+          (r) =>
+            `* ${r.id} | Tag: ${r.asset_id} | Status: ${r.status} | Risiko: ${r.risk_level || 'MEDIUM'} | ${r.title} -> Penyebab: ${r.praduga_penyebab}`
+        )
+        .join('\n');
 
-      const prompt = `Anda adalah Sistem Deteksi Dini Keandalan Peralatan (Early Warning AI) pada platform SYNQRA untuk kilang migas.
-Analisislah seluruh riwayat kasus yang sudah dikelompokkan per aset di bawah ini untuk mendeteksi pola kegagalan berulang.
+      const systemicSeedText = CDU11_SYSTEMIC_PATTERNS.map(
+        (p) =>
+          `- [${p.id}] ${p.title} | Primary: ${p.primaryAssetId} | Tags: ${p.affectedTags.join(', ')} | IDs: ${p.relatedCaseIds.join(', ')}`
+      ).join('\n');
 
-RIWAYAT KASUS PER ASET:
-${groupedContext}
+      const prompt = `Anda adalah Sistem Deteksi Dini Keandalan Kilang (Early Warning AI) pada platform SYNQRA untuk Unit 11 (CDU) PT Pertamina RU VI Balongan.
+${CDU11_ENGINEERING_BRIEF}
+
+RINGKASAN KASUS UNIT 11 CDU (${allReports.length} total kasus):
+${activeDigest}
+
+PETA POLA KETERKAITAN HULU-HILIR UNIT 11:
+${systemicSeedText}
 
 ATURAN KERAS:
 1. Kembalikan HANYA JSON murni tanpa markdown code fence.
-2. Buat tepat 1 peringatan utama per aset yang memiliki pola berulang (>= 2 kasus serupa).
-3. "relatedReportIds" WAJIB berisi ID laporan nyata yang benar-benar ada pada aset tersebut di data di atas. DILARANG mengarang ID baru.
+2. Buat 6-9 peringatan dini utama yang mencakup pola sistemik lintas-aset hulu-hilir maupun aset dengan kejadian berulang.
+3. "relatedReportIds" WAJIB berisi ID laporan nyata yang ada pada daftar kasus di atas. DILARANG mengarang ID baru.
 4. "severity" harus tepat salah satu dari: "KRITIS", "WASPADA", atau "PANTAU".
-5. "summary" dan "recommendedAction" masing-masing cukup 1 kalimat pendek dalam Bahasa Indonesia langsung ke inti.
-6. DILARANG keras menggunakan tanda em-dash atau en-dash pada seluruh teks output.
+5. "summary" dan "recommendedAction" ditulis ringkas (1-2 kalimat) dalam Bahasa Indonesia teknis yang langsung ke inti.
+6. DILARANG menggunakan em-dash atau en-dash; gunakan tanda hubung biasa (-).
 
 FORMAT JSON:
 {
   "alerts": [
     {
-      "id": "ew-p101a",
-      "assetId": "P-101A",
+      "id": "pat-overhead-hcl-nh4cl",
+      "assetId": "11-C-101",
       "severity": "KRITIS",
       "patternTitle": "Judul pola singkat",
-      "frequencyLabel": "4 kasus dalam 60 hari",
-      "summary": "1 kalimat ringkasan pola.",
-      "recommendedAction": "1 kalimat saran pencegahan teknis.",
-      "relatedReportIds": ["REP-001", "REP-010"]
+      "frequencyLabel": "9 kasus lintas aset",
+      "summary": "Ringkasan mekanisme hulu-hilir.",
+      "recommendedAction": "Saran pencegahan teknis.",
+      "relatedReportIds": ["CDU11-V01", "CDU11-C02"],
+      "isCrossAssetPattern": true,
+      "affectedAssetIds": ["11-V-101 A/B", "11-C-101"]
     }
   ]
 }`;
@@ -259,55 +237,66 @@ FORMAT JSON:
             },
           });
 
-          const res = await model.generateContent(prompt);
+          const res = await withGeminiTimeout(
+            model.generateContent(prompt),
+            12000,
+            modelName
+          );
           const parsed = JSON.parse(
             cleanJsonString(res.response.text())
           ) as GeminiAlertPayload;
 
           const rawAlerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
           const normalizedAlerts: EarlyWarningAlert[] = [];
-          const seenAssets = new Set<string>();
+          const seenIds = new Set<string>();
 
           for (const item of rawAlerts) {
+            const rawId = stripForbiddenDashes(item.id?.trim() || '');
             const assetObj = allAssets.find(
               (a) => a.id.toUpperCase() === (item.assetId || '').trim().toUpperCase()
             );
-            if (!assetObj || seenAssets.has(assetObj.id)) continue;
+            const fallbackForItem =
+              fallbackAlerts.find((f) => f.id === rawId) ||
+              (assetObj ? fallbackAlerts.find((f) => f.assetId === assetObj.id) : undefined);
 
-            const validSet = validIdsByAsset.get(assetObj.id) || new Set<string>();
+            const resolvedAssetId = assetObj?.id || fallbackForItem?.assetId;
+            if (!resolvedAssetId) continue;
+
+            const finalId = rawId || fallbackForItem?.id || `ew-${resolvedAssetId.toLowerCase()}`;
+            if (seenIds.has(finalId)) continue;
+
             const filteredIds = Array.isArray(item.relatedReportIds)
               ? item.relatedReportIds
                   .map((id) => id.trim().toUpperCase())
-                  .filter((id) => validSet.has(id))
+                  .filter((id) => validReportIds.has(id))
               : [];
 
-            const fallbackForAsset = fallbackAlerts.find(
-              (f) => f.assetId === assetObj.id
-            );
             const finalIds =
               filteredIds.length > 0
                 ? Array.from(new Set(filteredIds))
-                : fallbackForAsset?.relatedReportIds || Array.from(validSet).slice(0, 3);
+                : fallbackForItem?.relatedReportIds || [];
 
             if (finalIds.length === 0) continue;
 
-            seenAssets.add(assetObj.id);
+            seenIds.add(finalId);
             const summary = stripForbiddenDashes(
               item.summary?.trim() ||
-                fallbackForAsset?.summary ||
-                `Terdeteksi ${finalIds.length} kasus berulang pada ${assetObj.id}.`
+                fallbackForItem?.summary ||
+                `Terdeteksi ${finalIds.length} kasus terkait pada ${resolvedAssetId}.`
             );
 
+            const affectedTags = Array.isArray(item.affectedAssetIds) && item.affectedAssetIds.length > 0
+              ? item.affectedAssetIds.map(stripForbiddenDashes)
+              : fallbackForItem?.affectedAssetIds;
+
             normalizedAlerts.push({
-              id: stripForbiddenDashes(
-                item.id?.trim() || `ew-${assetObj.id.toLowerCase()}`
-              ),
-              assetId: assetObj.id,
+              id: finalId,
+              assetId: resolvedAssetId,
               severity: normalizeSeverity(item.severity),
               patternTitle: stripForbiddenDashes(
                 item.patternTitle?.trim() ||
-                  fallbackForAsset?.patternTitle ||
-                  `Pola Berulang ${assetObj.id}`
+                  fallbackForItem?.patternTitle ||
+                  `Pola Berulang ${resolvedAssetId}`
               ),
               frequencyLabel: stripForbiddenDashes(
                 item.frequencyLabel?.trim() ||
@@ -316,19 +305,24 @@ FORMAT JSON:
               summary,
               recommendedAction: stripForbiddenDashes(
                 item.recommendedAction?.trim() ||
-                  fallbackForAsset?.recommendedAction ||
-                  `Lakukan inspeksi preventif menyeluruh pada ${assetObj.id}.`
+                  fallbackForItem?.recommendedAction ||
+                  `Lakukan inspeksi preventif menyeluruh pada ${resolvedAssetId}.`
               ),
               relatedReportIds: finalIds,
-              assetName: assetObj.name,
+              assetName: assetObj?.name || resolvedAssetId,
               recentCount: finalIds.length,
               message: summary,
+              isCrossAssetPattern: Boolean(
+                item.isCrossAssetPattern ?? (affectedTags && affectedTags.length > 1)
+              ),
+              affectedAssetIds: affectedTags,
             });
           }
 
-          // Pastikan seluruh aset dari fallback yang belum tercakup tetap muncul
+          // Pastikan aset berulang maupun pola inti fallback tetap tercover bila ada yang terlewat
           for (const fb of fallbackAlerts) {
-            if (!seenAssets.has(fb.assetId)) {
+            if (!seenIds.has(fb.id) && normalizedAlerts.length < 10) {
+              seenIds.add(fb.id);
               normalizedAlerts.push(fb);
             }
           }

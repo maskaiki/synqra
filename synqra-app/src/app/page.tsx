@@ -362,6 +362,7 @@ export default function SynqraApp() {
           {activePage === 'lapor' && (
             <LaporCepatView
               assets={assets}
+              reports={reports}
               roleInfo={roleInfo}
               isDarkMode={isDarkMode}
               onReportCreated={handleReportCreated}

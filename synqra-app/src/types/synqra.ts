@@ -15,6 +15,21 @@ export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type RiskConsequence = 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
 export type RiskLikelihood = 'Rare' | 'Possible' | 'Likely' | 'Frequent';
 
+export type AssetCategoryCode = 'C' | 'F' | 'E' | 'V' | 'P' | 'I';
+
+export type AssetRenderType =
+  | 'column'
+  | 'stripper'
+  | 'furnace'
+  | 'heat'
+  | 'finfan'
+  | 'desalter'
+  | 'vessel'
+  | 'pump'
+  | 'valve'
+  | 'compressor'
+  | 'heater';
+
 export interface SlaInfo {
   level: 'green' | 'yellow' | 'red';
   hoursElapsed: number;
@@ -38,7 +53,9 @@ export interface Asset {
   id: string;
   name: string;
   subtitle: string;
-  type: 'pump' | 'heat' | 'valve' | 'compressor' | 'vessel' | 'heater';
+  type: AssetRenderType;
+  categoryCode?: AssetCategoryCode;
+  unitCount?: number;
   area: string;
   dept: string;
   description: string;
@@ -76,11 +93,16 @@ export interface Report extends FailureEntities, Partial<RiskReport>, Partial<Ca
   finding_type?: 'Kondisi Abnormal' | 'Potensi Bahaya' | 'Near Miss';
   urgency?: 'Mendesak' | 'Normal';
   description: string;
+  sample_narrative?: string;
   reporter_name: string;
   reporter_role: UserRole;
   dept: string;
   evidence_note?: string;
+  required_evidence_hint?: string;
   image_url?: string;
+  literature_refs?: string[];
+  journal_image_ids?: string[];
+  fact_vs_scenario_note?: string;
   sla_reminder_count?: number;
   sla_last_reminder_at?: string;
   verified_by?: string;
@@ -110,6 +132,8 @@ export interface Evidence {
   uploaded_by: string;
   created_at: string;
   public_url?: string;
+  source_attribution?: string;
+  license_label?: string;
 }
 
 export interface CitationItem {
@@ -124,6 +148,8 @@ export interface CitationItem {
   praduga_penyebab: string;
   usulan_tindakan: string;
   verifiedBy?: string;
+  literatureRefs?: string[];
+  sourceAttribution?: string;
 }
 
 export type EarlyWarningSeverity = 'KRITIS' | 'WASPADA' | 'PANTAU';
@@ -140,6 +166,8 @@ export interface EarlyWarningAlert {
   assetName?: string;
   recentCount?: number;
   message?: string;
+  isCrossAssetPattern?: boolean;
+  affectedAssetIds?: string[];
 }
 
 export interface EarlyWarningResponse {

@@ -111,6 +111,17 @@ export const EvidenceLightboxModal: React.FC<EvidenceLightboxModalProps> = ({
                 </p>
               </div>
             )}
+
+            {(citation.sourceAttribution || (citation.literatureRefs && citation.literatureRefs.length > 0)) && (
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--ink-soft)] font-medium">
+                {citation.sourceAttribution && <span>{citation.sourceAttribution}</span>}
+                {citation.literatureRefs && citation.literatureRefs.length > 0 && (
+                  <span className="font-heading font-bold text-[var(--cyan-dark)]">
+                    Rujukan: {citation.literatureRefs.join(', ')}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Evidence Traceability Details */}

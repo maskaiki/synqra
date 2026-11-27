@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ROLES } from '@/lib/constants';
+import { COMPANY_UMBRELLA, ROLES } from '@/lib/constants';
 import { BRAND_MEDIA } from '@/lib/mediaAssets';
 import { UserRole } from '@/types/synqra';
 import { ArrowRight, Check, Moon, ShieldCheck, Sun } from 'lucide-react';
@@ -40,7 +40,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           height={BRAND_MEDIA.loginHeroOilRig.height}
           loading="eager"
           decoding="async"
-          className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[52%_62%] scale-[1.02] select-none"
+          className="pointer-events-none absolute inset-0 w-full h-full object-cover object-[72%_48%] scale-[1.02] select-none"
         />
 
         {/* Lapisan Gradasi Biru Navy & Teal untuk Keharmonisan Warna & Kontras Teks */}
@@ -94,12 +94,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
             style={{ '--i': 2 } as React.CSSProperties}
             className="text-base xl:text-lg text-white/95 leading-relaxed font-medium max-w-lg drop-shadow-[0_2px_12px_rgba(4,13,31,0.85)]"
           >
-            Hubungkan laporan suara, validasi bukti pakar, dan peta pengetahuan aset.
+            {COMPANY_UMBRELLA.fullTitle} · Hubungkan laporan suara, validasi bukti pakar, dan peta pengetahuan 66 aset kilang.
           </p>
         </div>
 
         <div className="relative z-10 text-sm text-white/85 font-medium">
-          © 2026 SYNQRA · Evidence-Based Reliability &amp; Process Safety Platform
+          © 2026 SYNQRA · {COMPANY_UMBRELLA.shortBadge}
         </div>
       </section>
 
@@ -140,7 +140,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             Selamat datang
           </h2>
           <p className="text-[15px] text-[var(--ink-soft)] mb-6">
-            Pilih peran pengguna untuk masuk ke workspace SYNQRA.
+            Pilih peran pengguna untuk masuk ke {COMPANY_UMBRELLA.shortBadge}.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">

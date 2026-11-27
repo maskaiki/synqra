@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Asset, Evidence, Report, ReportStatus, RoleInfo } from '@/types/synqra';
+import React, { useMemo, useState } from 'react';
+import { Asset, AssetCategoryCode, Evidence, Report, ReportStatus, RoleInfo } from '@/types/synqra';
 import { calculateSla } from '@/lib/constants';
+import { EQUIPMENT_CATEGORIES } from '@/lib/cduBalonganKnowledge';
 import { RiskBadge, SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
 import { ArrowRight, Lock, Plus, Search } from 'lucide-react';
@@ -27,6 +28,7 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
   onSelectReport,
   onCreateNew,
 }) => {
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | AssetCategoryCode>('ALL');
   const [assetFilter, setAssetFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | ReportStatus>('ALL');
   const [slaFilter, setSlaFilter] = useState<'ALL' | 'OVERDUE' | 'URGENT'>('ALL');
@@ -34,7 +36,23 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
 
   const normalize = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '');
 
+  const assetById = useMemo(
+    () => new Map(assets.map((a) => [a.id, a])),
+    [assets]
+  );
+
+  const scopedAssets = useMemo(
+    () =>
+      categoryFilter === 'ALL'
+        ? assets
+        : assets.filter((a) => a.categoryCode === categoryFilter),
+    [assets, categoryFilter]
+  );
+
   const filtered = reports.filter((r) => {
+    const assetObj = assetById.get(r.asset_id);
+    const matchCategory =
+      categoryFilter === 'ALL' || assetObj?.categoryCode === categoryFilter;
     const matchAsset = assetFilter === 'ALL' || r.asset_id === assetFilter;
     const matchStatus = statusFilter === 'ALL' || r.status === statusFilter;
     const sla = calculateSla(r.updated_at || r.created_at);
@@ -47,13 +65,21 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
 
     const q = query.trim().toLowerCase();
     const nq = normalize(q);
-    const fields = [r.id, r.title, r.asset_id, r.gejala, r.reporter_name];
+    const fields = [
+      r.id,
+      r.title,
+      r.asset_id,
+      r.identitas_alat,
+      r.gejala,
+      r.reporter_name,
+      ...(r.literature_refs || []),
+    ];
     const matchQuery =
       !q ||
       fields.some((f) => f.toLowerCase().includes(q)) ||
       (nq.length > 0 && fields.some((f) => normalize(f).includes(nq)));
 
-    return matchAsset && matchStatus && matchSla && matchQuery;
+    return matchCategory && matchAsset && matchStatus && matchSla && matchQuery;
   });
 
   return (
@@ -89,32 +115,54 @@ export const CasesListView: React.FC<CasesListViewProps> = ({
               className="w-full pl-11 pr-4 py-2.5 rounded-full border-0 bg-[var(--soft)] text-[var(--ink)] text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#00B8D9]/20 transition-shadow duration-200"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setAssetFilter('ALL')}
-              className={`px-4 py-2 rounded-full font-heading text-sm font-bold ${
-                assetFilter === 'ALL'
+              onClick={() => {
+                setCategoryFilter('ALL');
+                setAssetFilter('ALL');
+              }}
+              className={`px-3.5 py-2 rounded-full font-heading text-xs sm:text-sm font-bold ${
+                categoryFilter === 'ALL'
                   ? 'pop-btn shadow-sm'
                   : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
               }`}
             >
-              Semua
+              Semua ({assets.length})
             </button>
-            {assets.map((a) => (
+            {EQUIPMENT_CATEGORIES.map((cat) => (
               <button
-                key={a.id}
+                key={cat.code}
                 type="button"
-                onClick={() => setAssetFilter(a.id)}
-                className={`px-4 py-2 rounded-full font-heading text-sm font-bold ${
-                  assetFilter === a.id
+                onClick={() => {
+                  setCategoryFilter(cat.code);
+                  setAssetFilter('ALL');
+                }}
+                className={`px-3.5 py-2 rounded-full font-heading text-xs sm:text-sm font-bold ${
+                  categoryFilter === cat.code
                     ? 'pop-btn shadow-sm'
                     : 'bg-[var(--soft)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
                 }`}
               >
-                {a.id}
+                {cat.shortLabel}
               </button>
             ))}
+
+            <select
+              aria-label="Filter Kode Tag Alat"
+              value={assetFilter}
+              onChange={(e) => setAssetFilter(e.target.value)}
+              className="px-3.5 py-2 rounded-full border border-[var(--line-soft)] bg-[var(--soft)] text-[var(--ink)] font-heading text-xs sm:text-sm font-bold focus:outline-none focus:border-[var(--cyan)]"
+            >
+              <option value="ALL">
+                Semua Tag ({scopedAssets.length})
+              </option>
+              {scopedAssets.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.id} · {a.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

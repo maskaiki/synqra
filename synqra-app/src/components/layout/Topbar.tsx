@@ -57,7 +57,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         />
         <div className="flex items-center gap-2 font-heading text-[15px] font-bold min-w-0">
           <span className="hidden sm:inline text-[var(--cyan-dark)] font-extrabold shrink-0">
-            Workspace
+            Unit 11 CDU · Balongan
           </span>
           <span className="hidden sm:inline text-[var(--muted)] shrink-0">/</span>
           <span className="text-[var(--ink)] font-extrabold truncate">

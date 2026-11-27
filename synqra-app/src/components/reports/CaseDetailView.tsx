@@ -13,6 +13,7 @@ import {
   RoleInfo,
 } from '@/types/synqra';
 import { calculateSla, computeRiskLevel } from '@/lib/constants';
+import { LITERATURE_DATABASE } from '@/lib/cduBalonganKnowledge';
 import { uploadEvidenceFile } from '@/lib/dataService';
 import { RiskBadge, SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
@@ -20,7 +21,9 @@ import {
   AlertTriangle,
   ArrowLeft,
   BadgeCheck,
+  BookOpen,
   CheckCircle2,
+  ExternalLink,
   Eye,
   FileCheck2,
   Lock,
@@ -494,6 +497,65 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
               ))}
             </div>
           </section>
+
+          {/* Rujukan Literatur Ilmiah & Konteks Data Unit 11 CDU */}
+          {((report.literature_refs && report.literature_refs.length > 0) ||
+            report.fact_vs_scenario_note) && (
+            <section className="surface-card p-6 rounded-3xl space-y-4">
+              <div className="flex items-center gap-2 font-heading text-lg font-bold text-[var(--ink)]">
+                <BookOpen className="w-5 h-5 text-[var(--cyan-dark)]" />
+                <span>Rujukan Literatur Ilmiah &amp; Jejak Desain Unit 11 CDU</span>
+              </div>
+
+              {report.literature_refs && report.literature_refs.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {report.literature_refs.map((code) => {
+                    const lit = LITERATURE_DATABASE[code];
+                    if (!lit) {
+                      return (
+                        <div key={code} className="p-3.5 rounded-2xl bg-[var(--soft)] text-sm font-bold text-[var(--ink)]">
+                          Kode Sumber: {code}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={code} className="p-4 rounded-2xl bg-[var(--soft)] space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-heading text-xs font-extrabold text-[var(--cyan-dark)] uppercase">
+                            {lit.code} · {lit.category}
+                          </span>
+                          {lit.doiOrUrl.startsWith('http') && (
+                            <a
+                              href={lit.doiOrUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-heading font-bold text-[var(--cyan-dark)] hover:underline shrink-0"
+                            >
+                              <span>DOI</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                        <div className="text-sm font-bold text-[var(--ink)] leading-snug">
+                          {lit.citation}
+                        </div>
+                        <p className="text-sm text-[var(--ink-soft)] m-0 leading-snug">
+                          {lit.keyFindings}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {report.fact_vs_scenario_note && (
+                <div className="p-4 rounded-2xl bg-[var(--soft)] text-sm text-[var(--ink-soft)] leading-relaxed">
+                  <b className="text-[var(--ink)]">Basis Parameter &amp; Batasan Skenario: </b>
+                  <span>{report.fact_vs_scenario_note}</span>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       )}
 
@@ -536,6 +598,11 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                 <p className="text-sm font-medium text-[var(--ink-soft)]">
                   Unggah foto atau dokumen pengukuran di bawah untuk membuka kunci validasi.
                 </p>
+                {report.required_evidence_hint && (
+                  <p className="text-sm font-semibold text-[var(--ink)] m-0 pt-1">
+                    Bukti disarankan: {report.required_evidence_hint}
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -553,6 +620,10 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                       praduga_penyebab: report.praduga_penyebab,
                       usulan_tindakan: report.usulan_tindakan,
                       verifiedBy: report.verified_by,
+                      literatureRefs: report.literature_refs,
+                      sourceAttribution: ev.source_attribution
+                        ? `${ev.source_attribution}${ev.license_label ? ` (${ev.license_label})` : ''}`
+                        : undefined,
                     });
 
                   return (
@@ -594,6 +665,12 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                           <div className="text-sm text-[var(--ink-soft)]">
                             {ev.caption || 'Lampiran bukti inspeksi'} · Oleh {ev.uploaded_by}
                           </div>
+                          {ev.source_attribution && (
+                            <div className="text-xs text-[var(--muted)] mt-0.5 truncate">
+                              {ev.source_attribution}
+                              {ev.license_label ? ` · ${ev.license_label}` : ''}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <button
