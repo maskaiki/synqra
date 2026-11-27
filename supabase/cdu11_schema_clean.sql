@@ -103,3 +103,39 @@ VALUES (
     ARRAY['image/jpeg', 'image/png', 'image/webp', 'audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'application/pdf']
 )
 ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Pastikan akses anon/authenticated aktif untuk aplikasi demo & seed via API
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON TABLE public.assets, public.reports, public.case_comments, public.evidences TO anon, authenticated;
+
+ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.case_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.evidences ENABLE ROW LEVEL SECURITY;
+
+DO $$
+DECLARE
+    tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY ARRAY['assets', 'reports', 'case_comments', 'evidences'] LOOP
+        EXECUTE format('DROP POLICY IF EXISTS "synqra_public_all_%s" ON public.%I;', tbl, tbl);
+        EXECUTE format('CREATE POLICY "synqra_public_all_%s" ON public.%I FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);', tbl, tbl);
+    END LOOP;
+END $$;
+
+DROP POLICY IF EXISTS "synqra_evidences_read" ON storage.objects;
+CREATE POLICY "synqra_evidences_read" ON storage.objects
+    FOR SELECT TO anon, authenticated
+    USING (bucket_id = 'synqra-evidences');
+
+DROP POLICY IF EXISTS "synqra_evidences_write" ON storage.objects;
+CREATE POLICY "synqra_evidences_write" ON storage.objects
+    FOR INSERT TO anon, authenticated
+    WITH CHECK (bucket_id = 'synqra-evidences');
+
+DROP POLICY IF EXISTS "synqra_evidences_update" ON storage.objects;
+CREATE POLICY "synqra_evidences_update" ON storage.objects
+    FOR UPDATE TO anon, authenticated
+    USING (bucket_id = 'synqra-evidences')
+    WITH CHECK (bucket_id = 'synqra-evidences');
+
