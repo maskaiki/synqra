@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Asset, CitationItem, Evidence, Report } from '@/types/synqra';
-import { EQUIPMENT_CATEGORIES } from '@/lib/cduBalonganKnowledge';
+import { EQUIPMENT_CATEGORIES, LITERATURE_DATABASE } from '@/lib/cduBalonganKnowledge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SynqraLoader } from '@/components/ui/SynqraLoader';
 import {
@@ -76,8 +76,18 @@ function normalizeAnswerText(
     }
   }
 
-  // Rapikan spasi berlebih sebelum tanda baca setelah sitasi, misal "[2] ." -> "[2]."
-  normalized = normalized.replace(/(\[\d+\])\s+([.,;:!?])/g, '$1$2');
+  // Hapus sitasi angka tidak valid seperti [0] atau indeks yang tidak ada di citations
+  const validIndices = new Set(citations.map((c) => c.index));
+  normalized = normalized.replace(/[ \t]*\[(\d+)\]/g, (match, numStr: string) =>
+    validIndices.has(Number(numStr)) ? match : ''
+  );
+
+  // Rapikan spasi berlebih sebelum tanda baca setelah sitasi/paper code, misal "[2] ." -> "[2]."
+  normalized = normalized.replace(
+    /(\[(?:\d+|[A-Z0-9]{2,8})\])[ \t]+([.,;:!?])/g,
+    '$1$2'
+  );
+  normalized = normalized.replace(/[ \t]+([.,;:!?])/g, '$1');
   return normalized;
 }
 
@@ -104,7 +114,7 @@ function renderInlineTokens(
   keyPrefix: string
 ): React.ReactNode[] {
   const segment = stripStrayInlineSymbols(rawSegment);
-  const tokenRegex = /(\[\d+\]|\*\*[^\n]+?\*\*)/g;
+  const tokenRegex = /(\[(?:\d+|[A-Z0-9]{2,8})\]|\*\*[^\n]+?\*\*)/g;
   const parts = segment.split(tokenRegex);
 
   return parts
@@ -126,21 +136,35 @@ function renderInlineTokens(
               onClick={() => onOpenEvidence(cit)}
               title={`Buka bukti sumber ${cit.reportId}: ${cit.evidenceName}`}
               className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
-                followedByPunct ? 'ml-1 mr-0.5' : 'mx-1'
+                followedByPunct ? 'ml-1 mr-0' : 'mx-1'
               } rounded-[6px] bg-[#0B1F44] hover:bg-[#00B8D9] dark:bg-[#00B8D9] text-white hover:text-[#061A38] dark:text-[#061830] font-heading text-xs font-extrabold transition-colors align-baseline`}
             >
               [{num}]
             </button>
           );
         }
-        return (
-          <span
-            key={key}
-            className="font-heading text-xs font-bold text-[var(--cyan-dark)] mx-0.5"
-          >
-            [{num}]
-          </span>
-        );
+        return null;
+      }
+
+      const paperMatch = part.match(/^\[([A-Z0-9]{2,8})\]$/);
+      if (paperMatch) {
+        const code = paperMatch[1];
+        const lit = LITERATURE_DATABASE[code];
+        const nextPart = parts[idx + 1] || '';
+        const followedByPunct = /^[.,;:!?)]/.test(nextPart);
+        if (lit) {
+          return (
+            <span
+              key={key}
+              title={`${lit.code} (${lit.year}): ${lit.citation} | ${lit.keyFindings}`}
+              className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
+                followedByPunct ? 'ml-1 mr-0' : 'mx-1'
+              } rounded-[5px] bg-[var(--soft)] border border-[var(--line)] text-[var(--cyan-dark)] font-heading text-xs font-bold align-baseline cursor-help`}
+            >
+              [{code}]
+            </span>
+          );
+        }
       }
 
       if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {

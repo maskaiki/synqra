@@ -573,6 +573,34 @@ export const CDU11_ENGINEERING_BRIEF = `KONTEKS REKAYASA UNIT 11 (CDU) PT PERTAM
 - Sirkuit Pump-Around & Produk: Top Pump-Around (tray 5 -> 11-P-104 -> 11-E-104), Middle Pump-Around (tray 15 -> 11-P-105 -> 11-E-122 -> 11-E-106), Bottom Pump-Around (tray 25 -> 11-P-106 -> 11-E-120 -> 11-E-109); Side Stripper LGO 11-C-102 (81.930 kg/jam, valve 11-FV-032) & HGO 11-C-103 (45.720 kg/jam, valve 11-FV-031); Overhead 11-C-101 -> Fin-Fan 11-E-114 -> Accumulator 11-V-102; Naphtha Stabilizer 11-C-104 (umpan 63.600 kg/jam via 11-E-119, reboiler 11-E-120, drum 11-V-104, valve 11-LV-030); Naphtha-Kerosene Splitter 11-C-105 (reboiler 11-E-122, kondensor 11-E-123, drum 11-V-105, valve 11-FV-037); Kerosene Cooler 11-E-118/125/127 -> Clay Treater 11-V-113 A/B; Combined Gas Oil Cooler 11-E-112; Residue Valve 11-FV-033.
 - Data Korosi Aktual CAIS LEMIGAS (PE25): TAN HGO 1,10-1,65 mg KOH/g & TAN Residu 1,00-1,24 mg KOH/g (waspada Naphthenic Acid Corrosion di atas 220 C pada 11-C-103, 11-E-109, 11-FV-031, 11-P-108); risiko HCl & deposit garam NH4Cl di overhead (11-C-101, 11-E-104, 11-E-114, 11-V-102, 11-E-131, 11-V-116); risiko Wet H2S / HIC / NH4HS di seksi Stabilizer (11-C-104, 11-E-119, 11-E-121, 11-V-104).`;
 
+export const CDU11_OPERATING_SOP_BRIEF = `RINGKASAN SOP & PARAMETER OPERASI BAKU UNIT 11 CDU PT PERTAMINA RU VI BALONGAN:
+1. Cold Preheat & Desalter (11-E-101 s.d. 11-E-105, 11-V-101 A/B): Jaga aliran umpan ~748.330 kg/jam, kendalikan suhu inlet desalter 150-155 derajat C (dari 11-E-105) pada ~8 kg/cm2g, optimalkan injeksi demulsifier/wash water serta tegangan grid agar garam keluar <= 30 PTB (MB17, JP26, RA22).
+2. Pre-Flash & Hot Preheat Train (11-C-106, 11-V-116, 11-E-106 s.d. 11-E-111): Jaga suhu keluar hot preheat ~276,7 derajat C masuk furnace; batas aksi pembersihan HE (hydrojetting) adalah efisiensi termal < 80% atau kenaikan fouling Rd (AL24, YU21, GU24), dan lakukan uji kompatibilitas blend Duri/Minas/Jatibarang sebelum pergantian crude (EL22).
+3. Crude Charge Furnace & Fuel Gas (11-F-101, 11-V-103): Pemanasan umpan keluar 340-360 derajat C & steam stripping 350 derajat C; jaga suhu off-gas 11-V-103 > 50 derajat C dan bersihkan burner tip berkala (PL23), pantau TMT dengan termografi IR emisivitas 0,82 cegah hot spot dan coking coil (DU26, MA22).
+4. Main Fractionator, Overhead & Side Stripper (11-C-101, 11-E-114, 11-V-102, 11-C-102, 11-C-103): Kendalikan delta-P tray (Gamma Scan online bila indikasi flooding/tray runtuh, ST25, YP11), atur injeksi amonia & corrosion inhibitor untuk menjaga pH sour water 11-V-102 di rentang 5,5-6,5 cegah HCl & salmiak NH4Cl (PE25, AH21, CH22, OR24). Pada fraksi panas > 220 derajat C (11-C-103, 11-FV-031, 11-E-109), batasi TAN blending <= 1,5 mg KOH/g & pantau korosi asam naftenat (ambang High UT > 0,254-0,51 mm/tahun CAIS, PE25, CI24).
+5. Stabilizer, Splitter & Clay Treater (11-C-104, 11-V-104, 11-C-105, 11-V-113 A/B): Jaga kandungan H2S fasa air < 50 ppm & NH4HS < 2 wt%, kecepatan aliran < 20 ft/s, inspeksi AUT/PAUT indikasi Wet H2S/HIC sesuai API 579 pada 11-V-104 (KO25, OR22, AM26), serta monitor suhu cooler dan warna Saybolt kerosene 11-V-113 A/B.
+6. Pompa Sentrifugal, Mechanical Seal & Control Valve (11-P-*, 11-FV-*, 11-LV-*): Pastikan NPSHa aman dari kavitasi (> 3% drop head dihindari, ZH23), pantau vibrasi DE/NDE sesuai ISO 10816-3 (FI25) & spektrum BPFO/BPFI (HO22), terapkan prosedur penggantian mechanical seal & flushing Plan 11/steam quench RU VI Balongan termasuk alignment & uji bocor 30-60 menit (PN25, TM26), hindari throttling control valve < 20% bukaan dan jalankan diagnostik plot OP-PV terhadap stiction (SH23, JI25), serta periksa keseragaman torsi baut/gasket flange (KH23).`;
+
+export function formatAllLiteratureIndex(
+  extraRefs: LiteratureReference[] = []
+): string {
+  const merged = new Map<string, LiteratureReference>();
+  for (const ref of Object.values(LITERATURE_DATABASE)) {
+    merged.set(ref.code.toUpperCase(), ref);
+  }
+  for (const ref of extraRefs) {
+    if (ref?.code) {
+      merged.set(ref.code.toUpperCase(), ref);
+    }
+  }
+  return Array.from(merged.values())
+    .map(
+      (l) =>
+        `- [${l.code}] (${l.year}${l.isBalonganSpecific ? ' · RU VI Balongan' : ''}) ${l.category} | ${l.citation} -> Inti/SOP: ${l.keyFindings}`
+    )
+    .join('\n');
+}
+
 export function findRelevantLiterature(queryText: string, citedCodes: string[] = []): LiteratureReference[] {
   const results: LiteratureReference[] = [];
   const seen = new Set<string>();
@@ -586,6 +614,11 @@ export function findRelevantLiterature(queryText: string, citedCodes: string[] =
   }
 
   const q = queryText.toLowerCase();
+  const isBroadQuery =
+    /(sop|prosedur|operasi|pengoperasian|panduan|batas|ambang|parameter|paper|jurnal|referensi|literatur|pustaka|riset|pengetahuan|semua|apa saja|daftar|knowledge|standar)/i.test(
+      q
+    );
+
   const keywordMap: Array<[RegExp, string[]]> = [
     [/(cais|tan|naftenat|naphthenic|11-c-103|11-fv-031|11-e-109)/i, ['PE25', 'CI24', 'AM26']],
     [/(11-e-107|fouling|preheat|rd|pinch|11-e-106|11-e-110|11-e-111)/i, ['AL24', 'YU21', 'GU24']],
@@ -615,5 +648,15 @@ export function findRelevantLiterature(queryText: string, citedCodes: string[] =
     }
   }
 
-  return results.slice(0, 5);
+  if (isBroadQuery) {
+    for (const c of ['PE25', 'AL24', 'PN25', 'RDMP22', 'MB17', 'YP11', 'ST25', 'FI25', 'KO25', 'DU26', 'SH23', 'CA22']) {
+      if (LITERATURE_DATABASE[c] && !seen.has(c)) {
+        seen.add(c);
+        results.push(LITERATURE_DATABASE[c]);
+      }
+    }
+    return results.slice(0, 12);
+  }
+
+  return results.slice(0, 6);
 }

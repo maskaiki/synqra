@@ -3,9 +3,14 @@ import { CitationItem, Evidence, Report } from '@/types/synqra';
 import { INITIAL_ASSETS, INITIAL_EVIDENCES, INITIAL_REPORTS } from '@/lib/constants';
 import {
   CDU11_ENGINEERING_BRIEF,
+  CDU11_OPERATING_SOP_BRIEF,
   CDU11_SYSTEMIC_PATTERNS,
+  LITERATURE_DATABASE,
+  LiteratureReference,
   findRelevantLiterature,
+  formatAllLiteratureIndex,
 } from '@/lib/cduBalonganKnowledge';
+import { EVIDENCE_MEDIA_META, resolveBuiltInEvidenceUrl } from '@/lib/mediaAssets';
 import {
   formatGeminiError,
   GEMINI_MODEL_FALLBACKS,
@@ -37,7 +42,7 @@ interface TanyaRequestBody {
   history?: TanyaHistoryItem[];
 }
 
-function sanitizeTanyaAnswer(raw: string): string {
+function sanitizeTanyaAnswer(raw: string, maxCitationIndex = 5): string {
   const lines = stripForbiddenDashes(raw).replace(/\r\n/g, '\n').split('\n');
   const cleanedLines: string[] = [];
 
@@ -83,7 +88,15 @@ function sanitizeTanyaAnswer(raw: string): string {
           .map((n) => `[${n.trim()}]`)
           .join(' ')
     );
-    line = line.replace(/(\[\d+\])\s+([.,;:!?])/g, '$1$2');
+
+    // Hapus sitasi angka tidak valid seperti [0] atau indeks melebihi jumlah sitasi
+    line = line.replace(/[ \t]*\[(\d+)\]/g, (match, numStr: string) => {
+      const n = Number(numStr);
+      return n >= 1 && n <= maxCitationIndex ? match : '';
+    });
+
+    line = line.replace(/(\[(?:\d+|[A-Z0-9]{2,8})\])[ \t]+([.,;:!?])/g, '$1$2');
+    line = line.replace(/[ \t]+([.,;:!?])/g, '$1');
 
     cleanedLines.push(`${listPrefix}${line}`);
   }
@@ -123,19 +136,83 @@ export async function POST(req: NextRequest) {
     let allEvidences: Evidence[] = body.customEvidences?.length
       ? body.customEvidences
       : INITIAL_EVIDENCES;
+    let dbLiteratureRefs: LiteratureReference[] = [];
 
-    if (isSupabaseConfigured && supabase && !body.customReports?.length) {
-      const [repRes, evRes] = await Promise.all([
-        supabase.from('reports').select('*'),
-        supabase.from('evidences').select('*'),
-      ]);
-      if (!repRes.error && repRes.data?.length) {
-        allReports = repRes.data as Report[];
+    if (isSupabaseConfigured && supabase) {
+      const fetchPromises: Array<PromiseLike<unknown>> = [
+        supabase.from('literature_references').select('*'),
+      ];
+      if (!body.customReports?.length) {
+        fetchPromises.push(
+          supabase.from('reports').select('*'),
+          supabase.from('evidences').select('*')
+        );
       }
-      if (!evRes.error && evRes.data?.length) {
-        allEvidences = evRes.data as Evidence[];
+
+      const [litRes, repRes, evRes] = (await Promise.all(fetchPromises)) as [
+        { data: Array<Record<string, unknown>> | null; error: unknown },
+        { data: Report[] | null; error: unknown } | undefined,
+        { data: Evidence[] | null; error: unknown } | undefined,
+      ];
+
+      if (!litRes.error && Array.isArray(litRes.data) && litRes.data.length > 0) {
+        dbLiteratureRefs = litRes.data
+          .filter((row) => typeof row.code === 'string' && typeof row.citation === 'string')
+          .map((row) => ({
+            code: String(row.code),
+            citation: String(row.citation),
+            year: Number(row.year) || 2024,
+            category: String(row.category || 'Referensi Ilmiah'),
+            doiOrUrl: String(row.doi_or_url || ''),
+            keyFindings: String(row.key_findings || ''),
+            isBalonganSpecific: Boolean(row.is_balongan_specific),
+          }));
+      }
+
+      if (repRes && !repRes.error && repRes.data?.length) {
+        allReports = repRes.data;
+      }
+      if (evRes && !evRes.error && evRes.data?.length) {
+        allEvidences = evRes.data;
       }
     }
+
+    // Gabungkan metadata literature_refs & media built-in dari konstanta agar tidak hilang saat membaca Supabase
+    const initialReportMap = new Map(INITIAL_REPORTS.map((r) => [r.id, r]));
+    allReports = allReports.map((r) => {
+      const base = initialReportMap.get(r.id);
+      if (!base) return r;
+      return {
+        ...r,
+        literature_refs: r.literature_refs?.length ? r.literature_refs : base.literature_refs,
+        journal_image_ids: r.journal_image_ids?.length ? r.journal_image_ids : base.journal_image_ids,
+        fact_vs_scenario_note: r.fact_vs_scenario_note || base.fact_vs_scenario_note,
+        required_evidence_hint: r.required_evidence_hint || base.required_evidence_hint,
+      };
+    });
+
+    allEvidences = allEvidences.map((ev) => {
+      const builtInUrl = resolveBuiltInEvidenceUrl(ev);
+      const meta = ev.id ? EVIDENCE_MEDIA_META[ev.id] : undefined;
+      return {
+        ...ev,
+        ...(builtInUrl && !ev.public_url ? { public_url: builtInUrl } : {}),
+        ...(meta?.attribution && !ev.source_attribution ? { source_attribution: meta.attribution } : {}),
+        ...(meta?.license && !ev.license_label ? { license_label: meta.license } : {}),
+      };
+    });
+
+    const totalAssetsCount = INITIAL_ASSETS.length;
+    const totalReportsCount = allReports.length;
+    const totalVerifiedAll = allReports.filter((r) => r.status === 'VERIFIED').length;
+    const totalInvestigationAll = allReports.filter((r) => r.status === 'INVESTIGATION').length;
+    const totalTriageAll = allReports.filter((r) => r.status === 'TRIAGE').length;
+    const totalPradugaAll = allReports.filter((r) => r.status === 'PRADUGA').length;
+    const totalEvidencesCount = allEvidences.length;
+    const totalPapersCount = new Set([
+      ...Object.keys(LITERATURE_DATABASE),
+      ...dbLiteratureRefs.map((d) => d.code.toUpperCase()),
+    ]).size;
 
     const qLower = question.toLowerCase();
     const historyLower = history.map((m) => m.content).join(' ').toLowerCase();
@@ -311,11 +388,20 @@ export async function POST(req: NextRequest) {
         .join('\n\n');
 
       const litContext = relevantLiterature.length
-        ? `\nREFERENSI PAPER & JURNAL ILMIAH UNIT 11 CDU BALONGAN:\n` +
+        ? `\nREFERENSI PAPER & JURNAL PRIORITAS UNTUK KASUS TERKAIT:\n` +
           relevantLiterature
             .map((l) => `- [${l.code}] ${l.citation} -> Temuan: ${l.keyFindings}`)
             .join('\n')
         : '';
+
+      const allPapersCatalog = formatAllLiteratureIndex(dbLiteratureRefs);
+
+      const corpusInventoryContext = `INVENTORI AKTUAL BASIS PENGETAHUAN & KNOWLEDGE GRAPH SYNQRA (REAL-TIME):
+- Total Tag Aset Terdaftar (Unit 11 CDU RU VI Balongan): ${totalAssetsCount} tag peralatan.
+- Total Seluruh Kasus di Database: ${totalReportsCount} kasus, terdiri dari ${totalVerifiedAll} berstatus VERIFIED, ${totalInvestigationAll} INVESTIGATION, ${totalTriageAll} TRIAGE, dan ${totalPradugaAll} PRADUGA.
+- Total Bukti Inspeksi & Telemetri: ${totalEvidencesCount} item bukti.
+- Total Paper & Referensi Ilmiah Terindeks: ${totalPapersCount} dokumen (termasuk 6 studi spesifik RU VI Balongan: PE25, AL24, PN25, RDMP22, MB17, YP11).
+- Mengapa Sumber Sitasi Bukti di bawah hanya menampilkan ${citations.length} kartu (maksimal 5)? Karena chat Tanya SYNQRA membatasi tampilan kartu Sumber Sitasi Bukti ke 5 kasus paling relevan agar teknisi cepat fokus ke inti penanganan, sementara seluruh ${totalVerifiedAll} kasus VERIFIED dan relasi ${totalAssetsCount} asetnya tampil lengkap pada halaman Knowledge Graph, dan seluruh ${totalReportsCount} kasus dapat dibuka pada halaman Triage & Kasus.`;
 
       const patternContext = matchedPatterns.length
         ? `\nPOLA KETERKAITAN LINTAS-ASET TERKAIT:\n` +
@@ -338,32 +424,40 @@ export async function POST(req: NextRequest) {
           : '';
 
       const systemInstruction = `Anda adalah asisten teknis SYNQRA (Intelligence, Connected by Evidence) pada Unit 11 (CDU - Crude Distillation Unit) PT Pertamina RU VI Balongan.
-Jawab pertanyaan pengguna HANYA berdasarkan konteks kasus & literatur ilmiah Unit 11 CDU Balongan yang diberikan dalam Bahasa Indonesia yang ringkas, jelas, dan langsung dapat ditindaklanjuti teknisi lapangan.
+Jawab pertanyaan pengguna secara jujur, akurat, dan terstruktur HANYA berdasarkan data kasus, inventori Knowledge Graph, panduan SOP Unit 11, dan katalog ${totalPapersCount} paper ilmiah yang diberikan dalam Bahasa Indonesia yang jelas bagi engineer dan teknisi lapangan.
 
 ATURAN KERAS (WAJIB DIPATUHI):
-1. WAJIB sertakan nomor sitasi tunggal [1], [2], dst. tepat sebelum tanda titik kalimat pada setiap klaim penyebab atau rekomendasi teknis (contoh: "...karena coking internal [1]."). Jangan gabungkan angka di satu kurung (tulis [1] [2], bukan [1, 2]).
-2. Bila mengutip referensi ilmiah (seperti PE25, AL24, MB17, PN25, ST25, ZH23, CI24, SH23, KO25), sebutkan kodenya secara eksplisit.
-3. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi.
-4. Jika mengutip kasus berstatus PRADUGA/TRIAGE/INVESTIGATION, letakkan di bagian terpisah dan nyatakan eksplisit bahwa temuan itu masih dugaan awal/investigasi yang belum disahkan pakar.
-5. Dilarang mengarang ID kasus atau data di luar konteks; gunakan tanda hubung biasa (-) dan hindari em-dash.
+1. Nomor sitasi kasus HANYA bernomor [1] sampai [${citations.length}] sesuai daftar 5 KONTEKS KASUS di bawah. DILARANG keras menulis [0] atau nomor lebih besar dari ${citations.length}.
+2. Gunakan [1], [2], dst. HANYA untuk klaim fakta dari kasus spesifik di bawah, letakkan tepat sebelum tanda titik kalimat (contoh: "...karena coking internal [1]."). Jangan gabungkan angka dalam satu kurung (tulis [1] [2], bukan [1, 2]). Untuk informasi yang berasal dari inventori Knowledge Graph atau katalog paper/SOP (bukan kasus [1]..[${citations.length}]), sebutkan kode papernya (misal [PE25] [AL24]) atau angkanya langsung TANPA menempelkan sitasi kasus palsu.
+3. Bila mengutip referensi ilmiah, sebutkan kodenya secara eksplisit seperti [PE25], [AL24], [PN25], [RDMP22], [MB17], [YP11], [ST25], [FI25], dll.
+4. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi.
+5. Jika mengutip kasus berstatus PRADUGA/TRIAGE/INVESTIGATION, letakkan di bagian terpisah dan nyatakan eksplisit bahwa temuan itu masih dugaan awal/investigasi yang belum disahkan pakar.
+6. Dilarang mengarang ID kasus, alasan fiktif, atau data di luar konteks; gunakan tanda hubung biasa (-) dan hindari em-dash.
 
 ATURAN FORMAT & TIPOGRAFI (WAJIB DIPATUHI):
 - DILARANG menggunakan simbol pagar (#, ##, ###), garis pemisah (---), backtick (\`), atau tanda bintang miring (*kata*) maupun garis bawah (_kata_) untuk istilah Inggris. Tulis istilah teknis secara normal tanpa tanda bintang (contoh: flooding, fouling, mechanical seal, smart positioner).
-- Susun jawaban sederhana dan padat dalam maksimal 4 blok berikut:
+- Susun jawaban jelas dalam blok berikut (hanya tampilkan blok yang relevan dengan pertanyaan):
   1) Pembuka 1-2 kalimat ringkas yang langsung menjawab inti pertanyaan.
   2) Baris judul polos: Fakta Terverifikasi:
-     Diikuti daftar bernomor (1., 2.) dengan format: 1. **Judul Singkat:** Penjelasan inti 1-2 kalimat padat [1].
-  3) (Hanya bila ada rujukan non-VERIFIED yang relevan) Baris judul polos: Dugaan Awal (Belum Disahkan Pakar):
+     Diikuti daftar bernomor (1., 2., ...) dengan format: 1. **Judul Singkat:** Penjelasan padat [1]. atau [PE25].
+  3) (Hanya bila relevan dan ada rujukan non-VERIFIED) Baris judul polos: Dugaan Awal (Belum Disahkan Pakar):
      Diikuti poin ringkas (1 kalimat) yang menegaskan status praduga/investigasi [4].
   4) Baris judul polos: Langkah Rekomendasi:
-     Diikuti 2-3 langkah praktis bernomor (1., 2.) langsung ke tindakan lapangan [1].`;
+     Diikuti 2-3 langkah praktis bernomor (1., 2., ...) langsung ke tindakan lapangan.`;
 
       const userPrompt = `${CDU11_ENGINEERING_BRIEF}
 
-KONTEKS KASUS KNOWLEDGE BASE (URUT STATUS VERIFIED TERATAS):
+${corpusInventoryContext}
+
+${CDU11_OPERATING_SOP_BRIEF}
+
+KONTEKS 5 KASUS TERATAS KNOWLEDGE BASE (URUT STATUS VERIFIED TERATAS):
 ${contextText}
 ${patternContext}
 ${litContext}
+
+KATALOG LENGKAP ${totalPapersCount} PAPER & REFERENSI ILMIAH SYNQRA UNIT 11 CDU:
+${allPapersCatalog}
 ${historyPrompt}
 PERTANYAAN PENGGUNA TERBARU:
 ${question}`;
@@ -388,7 +482,7 @@ ${question}`;
 
           const text = interaction.output_text?.trim() || '';
           if (text.length > 0) {
-            aiAnswer = sanitizeTanyaAnswer(text);
+            aiAnswer = sanitizeTanyaAnswer(text, citations.length);
             engine = 'gemini-live';
             errorReason = undefined;
             break;
@@ -417,10 +511,22 @@ ${question}`;
       const unverifiedCits = citations.filter((c) => c.status !== 'VERIFIED');
       const parts: string[] = [];
 
-      if (verifiedCits.length > 0) {
+      if (/(kenapa|kok).*(5|lima)|knowledge graph|berapa.*kasus|total.*kasus/i.test(question)) {
+        parts.push(
+          `Database Unit 11 CDU Balongan memiliki ${totalReportsCount} kasus di ${totalAssetsCount} aset (${totalVerifiedAll} VERIFIED tampil di Knowledge Graph). Chat Tanya SYNQRA menampilkan maksimal 5 Sumber Sitasi Bukti paling relevan agar analisis tetap fokus.`
+        );
+      } else if (/(sop|prosedur|pengoperasian|parameter|paper|jurnal|referensi)/i.test(question)) {
+        parts.push(
+          `Ringkasan SOP operasi dan acuan ${totalPapersCount} paper Unit 11 CDU Balongan:`
+        );
+        parts.push(`Fakta Terverifikasi:\n${CDU11_OPERATING_SOP_BRIEF}`);
+      } else if (verifiedCits.length > 0) {
         parts.push(
           `Ringkasan temuan arsip Knowledge Base SYNQRA Unit 11 CDU Balongan yang paling relevan:`
         );
+      }
+
+      if (verifiedCits.length > 0 && !parts.some((p) => p.includes('Fakta Terverifikasi:'))) {
         parts.push(
           `Fakta Terverifikasi:\n` +
             verifiedCits
@@ -448,7 +554,7 @@ ${question}`;
         parts.push(
           `Acuan Literatur Unit 11 CDU:\n` +
             relevantLiterature
-              .slice(0, 3)
+              .slice(0, 5)
               .map((lit) => `• **${lit.code} (${lit.category}):** ${lit.keyFindings}`)
               .join('\n')
         );
@@ -470,7 +576,7 @@ ${question}`;
         );
       }
 
-      aiAnswer = sanitizeTanyaAnswer(parts.join('\n\n'));
+      aiAnswer = sanitizeTanyaAnswer(parts.join('\n\n'), citations.length);
     }
 
     return NextResponse.json({
@@ -482,6 +588,13 @@ ${question}`;
       detectedAsset,
       verifiedCount,
       hasUnverified,
+      corpusStats: {
+        totalAssets: totalAssetsCount,
+        totalReports: totalReportsCount,
+        verifiedReports: totalVerifiedAll,
+        totalEvidences: totalEvidencesCount,
+        totalPapers: totalPapersCount,
+      },
     });
   } catch (err: unknown) {
     const message =

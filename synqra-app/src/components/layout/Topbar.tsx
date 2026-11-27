@@ -70,7 +70,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         {dataSource === 'supabase' && (
           <span
             title="Terhubung ke Supabase PostgreSQL Live"
-            className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-heading font-bold text-[var(--cyan-dark)]"
+            className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] bg-[var(--soft)] border border-[var(--line)] text-xs font-heading font-bold text-[var(--cyan-dark)]"
           >
             <Database className="w-3.5 h-3.5" />
             <span>Live</span>
