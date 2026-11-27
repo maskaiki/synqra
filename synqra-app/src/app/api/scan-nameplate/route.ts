@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scanNameplateFromImage } from '@/lib/gemini';
 
+export const maxDuration = 60;
+
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4 MB
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',

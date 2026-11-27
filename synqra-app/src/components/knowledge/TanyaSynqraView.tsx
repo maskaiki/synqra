@@ -49,60 +49,360 @@ const SUGGESTED_QUESTIONS = [
   'Mengapa jalur HGO 11-FV-031 dan 11-C-103 rentan korosi asam naftenat (High-TAN)?',
 ];
 
+function normalizeAnswerText(
+  raw: string,
+  citations: CitationItemWithHybrid[]
+): string {
+  let normalized = raw.replace(/\r\n/g, '\n');
+
+  // Ubah multi-sitasi seperti [1, 2] atau [1; 3] menjadi [1] [2]
+  normalized = normalized.replace(
+    /\[(\d+(?:\s*[,;]\s*\d+)+)\]/g,
+    (_match, nums: string) =>
+      nums
+        .split(/\s*[,;]\s*/)
+        .map((n) => `[${n.trim()}]`)
+        .join(' ')
+  );
+
+  // Petakan referensi ID laporan seperti [CDU11-C01] ke indeks sitasinya jika cocok
+  for (const cit of citations) {
+    if (cit.reportId) {
+      const escapedId = cit.reportId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      normalized = normalized.replace(
+        new RegExp(`\\[${escapedId}\\]`, 'gi'),
+        `[${cit.index}]`
+      );
+    }
+  }
+
+  // Rapikan spasi berlebih sebelum tanda baca setelah sitasi, misal "[2] ." -> "[2]."
+  normalized = normalized.replace(/(\[\d+\])\s+([.,;:!?])/g, '$1$2');
+  return normalized;
+}
+
+// Bersihkan sisa simbol markdown inline (*kata*, _kata_, `kode`) agar tampilan selalu polos & rapi
+function stripStrayInlineSymbols(segment: string): string {
+  let cleaned = segment;
+  cleaned = cleaned.replace(
+    /\*\*([^*]+?)\*([^*\n]+?)\*([^*]*?)\*\*/g,
+    '**$1$2$3**'
+  );
+  cleaned = cleaned.replace(/(^|[^\w*])\*([^*\n]+?)\*(?!\*)/g, '$1$2');
+  cleaned = cleaned.replace(
+    /(^|\s|\()_([^_\n]+?)_(?=$|[\s.,;:!?)])/g,
+    '$1$2'
+  );
+  cleaned = cleaned.replace(/`([^`\n]+)`/g, '$1');
+  return cleaned;
+}
+
+function renderInlineTokens(
+  rawSegment: string,
+  citations: CitationItemWithHybrid[],
+  onOpenEvidence: (citation: CitationItem) => void,
+  keyPrefix: string
+): React.ReactNode[] {
+  const segment = stripStrayInlineSymbols(rawSegment);
+  const tokenRegex = /(\[\d+\]|\*\*[^\n]+?\*\*)/g;
+  const parts = segment.split(tokenRegex);
+
+  return parts
+    .filter((part) => part.length > 0)
+    .map((part, idx) => {
+      const key = `${keyPrefix}-${idx}`;
+
+      const citMatch = part.match(/^\[(\d+)\]$/);
+      if (citMatch) {
+        const num = Number(citMatch[1]);
+        const cit = citations.find((c) => c.index === num);
+        const nextPart = parts[idx + 1] || '';
+        const followedByPunct = /^[.,;:!?)]/.test(nextPart);
+        if (cit) {
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onOpenEvidence(cit)}
+              title={`Buka bukti sumber ${cit.reportId}: ${cit.evidenceName}`}
+              className={`inline-flex items-center justify-center px-1.5 py-0.5 ${
+                followedByPunct ? 'ml-1 mr-0.5' : 'mx-1'
+              } rounded-[6px] bg-[#0B1F44] hover:bg-[#00B8D9] dark:bg-[#00B8D9] text-white hover:text-[#061A38] dark:text-[#061830] font-heading text-xs font-extrabold transition-colors align-baseline`}
+            >
+              [{num}]
+            </button>
+          );
+        }
+        return (
+          <span
+            key={key}
+            className="font-heading text-xs font-bold text-[var(--cyan-dark)] mx-0.5"
+          >
+            [{num}]
+          </span>
+        );
+      }
+
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        const inner = part.slice(2, -2).replace(/\*/g, '');
+        return (
+          <strong
+            key={key}
+            className="font-heading font-semibold text-[var(--ink)]"
+          >
+            {renderInlineTokens(inner, citations, onOpenEvidence, `${key}-b`)}
+          </strong>
+        );
+      }
+
+      const cleanPlain = part.replace(/\*/g, '');
+      return <span key={key}>{cleanPlain}</span>;
+    });
+}
+
+function detectSectionHeading(trimmed: string): string | null {
+  if (trimmed.startsWith('@@SECTION@@')) {
+    return trimmed.replace(/^@@SECTION@@/, '').replace(/:+$/, '').trim();
+  }
+  const mdHeading = trimmed.match(/^#{1,6}\s+(.+?)(?:\s+#+)?$/);
+  if (mdHeading) {
+    return mdHeading[1]
+      .replace(/^\*{1,3}(.+?)\*{1,3}$/, '$1')
+      .replace(/^\d+\.\s+/, '')
+      .replace(/:+$/, '')
+      .trim();
+  }
+  const plainSection = trimmed.match(
+    /^\*{0,2}((?:Fakta|Penyebab|Temuan|Dugaan Awal|Langkah Rekomendasi|Rekomendasi Tindakan|Acuan Literatur|Ringkasan|Kesimpulan|Catatan Penting)[^:\n]{0,55}):\*{0,2}$/i
+  );
+  if (plainSection) {
+    return plainSection[1].replace(/\*/g, '').trim();
+  }
+  return null;
+}
+
+function getSectionAccentColor(title: string): string {
+  const lower = title.toLowerCase();
+  if (
+    lower.includes('verif') ||
+    lower.includes('fakta') ||
+    lower.includes('resmi')
+  ) {
+    return 'var(--green)';
+  }
+  if (
+    lower.includes('dugaan') ||
+    lower.includes('praduga') ||
+    lower.includes('triage') ||
+    lower.includes('belum disahkan')
+  ) {
+    return 'var(--amber)';
+  }
+  return 'var(--cyan)';
+}
+
 function renderAnswerWithCitations(
   text: string,
   citations: CitationItemWithHybrid[],
   onOpenEvidence: (citation: CitationItem) => void
 ) {
-  const lines = text.split('\n');
-  return lines.map((line, lineIdx) => {
-    if (!line.trim()) return <div key={lineIdx} className="h-2" />;
-    const tokens = line.split(/(\[\d+\])/g);
-    return (
-      <p
-        key={lineIdx}
-        className="text-[15px] leading-relaxed text-[var(--ink)] font-medium m-0"
-      >
-        {tokens.map((tok, tIdx) => {
-          const match = tok.match(/^\[(\d+)\]$/);
-          if (match) {
-            const num = Number(match[1]);
-            const cit = citations.find((c) => c.index === num);
-            if (cit) {
-              return (
-                <button
-                  key={tIdx}
-                  type="button"
-                  onClick={() => onOpenEvidence(cit)}
-                  title={`Buka bukti sumber ${cit.reportId}: ${cit.evidenceName}`}
-                  className="inline-flex items-center justify-center px-2 py-0.5 mx-1 rounded-[6px] bg-[#0B1F44] hover:bg-[#00B8D9] dark:bg-[#00B8D9] text-white hover:text-[#061A38] dark:text-[#061830] font-heading text-xs font-extrabold transition-colors align-baseline"
-                >
-                  [{num}]
-                </button>
-              );
-            }
-          }
-          const boldParts = tok.split(/(\*\*[^*]+\*\*)/g);
-          return (
-            <React.Fragment key={tIdx}>
-              {boldParts.map((bp, bIdx) =>
-                bp.startsWith('**') && bp.endsWith('**') ? (
-                  <strong
-                    key={bIdx}
-                    className="font-bold text-[var(--ink)]"
+  const normalizedText = normalizeAnswerText(text, citations);
+  const lines = normalizedText.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    if (!trimmed || /^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      i += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith('```')) {
+      const codeLines: string[] = [];
+      i += 1;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) {
+        codeLines.push(lines[i]);
+        i += 1;
+      }
+      if (i < lines.length) i += 1;
+      elements.push(
+        <pre
+          key={`code-${i}`}
+          className="my-2 p-3.5 rounded-xl bg-[var(--soft)] border border-[var(--line)] text-sm font-mono text-[var(--ink)] overflow-x-auto m-0"
+        >
+          <code>{codeLines.join('\n')}</code>
+        </pre>
+      );
+      continue;
+    }
+
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      const tableLines: string[] = [];
+      while (
+        i < lines.length &&
+        lines[i].trim().startsWith('|') &&
+        lines[i].trim().endsWith('|')
+      ) {
+        tableLines.push(lines[i].trim());
+        i += 1;
+      }
+      const rows = tableLines
+        .map((tl) => tl.split('|').slice(1, -1).map((c) => c.trim()))
+        .filter(
+          (cols) =>
+            cols.length > 0 && !cols.every((c) => /^:?-{2,}:?$/.test(c))
+        );
+
+      if (rows.length > 0) {
+        const [headerRow, ...bodyRows] = rows;
+        elements.push(
+          <div
+            key={`tbl-${i}`}
+            className="my-2 overflow-x-auto rounded-xl border border-[var(--line)]"
+          >
+            <table className="w-full text-left border-collapse text-sm">
+              <thead className="bg-[var(--soft)] border-b border-[var(--line)]">
+                <tr>
+                  {headerRow.map((cell, cIdx) => (
+                    <th
+                      key={cIdx}
+                      className="px-3.5 py-2 font-heading font-bold text-[var(--ink)]"
+                    >
+                      {renderInlineTokens(cell, citations, onOpenEvidence, `th-${i}-${cIdx}`)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {bodyRows.map((row, rIdx) => (
+                  <tr
+                    key={rIdx}
+                    className="border-b last:border-b-0 border-[var(--line-soft)]"
                   >
-                    {bp.slice(2, -2)}
-                  </strong>
-                ) : (
-                  <span key={bIdx}>{bp}</span>
-                )
-              )}
-            </React.Fragment>
-          );
-        })}
+                    {row.map((cell, cIdx) => (
+                      <td
+                        key={cIdx}
+                        className="px-3.5 py-2 text-[var(--ink)] font-medium"
+                      >
+                        {renderInlineTokens(
+                          cell,
+                          citations,
+                          onOpenEvidence,
+                          `td-${i}-${rIdx}-${cIdx}`
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      continue;
+    }
+
+    const sectionTitle = detectSectionHeading(trimmed);
+    if (sectionTitle) {
+      const accentColor = getSectionAccentColor(sectionTitle);
+      elements.push(
+        <div
+          key={`sec-${i}`}
+          className={`${
+            elements.length > 0 ? 'pt-3.5 mt-1 border-t border-[var(--line-soft)]' : 'pt-0.5'
+          } flex items-center gap-2.5`}
+        >
+          <span
+            aria-hidden="true"
+            style={{ backgroundColor: accentColor }}
+            className="w-1 h-4 rounded-sm shrink-0"
+          />
+          <h3 className="font-heading text-[15px] font-bold tracking-tight text-[var(--ink)] m-0">
+            {renderInlineTokens(sectionTitle, citations, onOpenEvidence, `sec-${i}`)}
+          </h3>
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith('>')) {
+      const quoteText = trimmed.replace(/^>\s?/, '');
+      elements.push(
+        <blockquote
+          key={`bq-${i}`}
+          className="my-1.5 pl-3.5 py-2 pr-3 border-l-[3.5px] border-[var(--cyan)] bg-[var(--soft)] rounded-r-xl text-[15px] leading-[1.68] text-[var(--ink)] font-medium m-0"
+        >
+          {renderInlineTokens(quoteText, citations, onOpenEvidence, `bq-${i}`)}
+        </blockquote>
+      );
+      i += 1;
+      continue;
+    }
+
+    const orderedMatch = rawLine.match(/^(\s*)(\d+)[.)]\s+(.+)$/);
+    if (orderedMatch) {
+      const indentSpaces = orderedMatch[1].length;
+      const numberLabel = orderedMatch[2];
+      const itemContent = orderedMatch[3].trim();
+      elements.push(
+        <div
+          key={`ol-${i}`}
+          className={`flex items-start gap-3 text-[15px] leading-[1.68] text-[var(--ink)] font-normal ${
+            indentSpaces >= 2 ? 'pl-6' : ''
+          }`}
+        >
+          <span className="mt-0.5 w-6 h-6 rounded-[7px] bg-[var(--cyan-pale)] text-[var(--cyan-dark)] font-heading text-xs font-extrabold flex items-center justify-center shrink-0 select-none">
+            {numberLabel}
+          </span>
+          <div className="min-w-0 flex-1">
+            {renderInlineTokens(itemContent, citations, onOpenEvidence, `ol-${i}`)}
+          </div>
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    const unorderedMatch = rawLine.match(/^(\s*)[-*•]\s+(.+)$/);
+    if (unorderedMatch) {
+      const indentSpaces = unorderedMatch[1].length;
+      const itemContent = unorderedMatch[2].trim();
+      elements.push(
+        <div
+          key={`ul-${i}`}
+          className={`flex items-start gap-3 text-[15px] leading-[1.68] text-[var(--ink)] font-normal ${
+            indentSpaces >= 2 ? 'pl-6' : ''
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className="mt-2.5 w-1.5 h-1.5 rounded-sm bg-[var(--cyan-dark)] shrink-0 select-none"
+          />
+          <div className="min-w-0 flex-1">
+            {renderInlineTokens(itemContent, citations, onOpenEvidence, `ul-${i}`)}
+          </div>
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    elements.push(
+      <p
+        key={`p-${i}`}
+        className="text-[15px] leading-[1.7] text-[var(--ink)] font-normal m-0"
+      >
+        {renderInlineTokens(trimmed, citations, onOpenEvidence, `p-${i}`)}
       </p>
     );
-  });
+    i += 1;
+  }
+
+  return elements;
 }
 
 const ChatMessageBubble = React.memo(function ChatMessageBubble({
@@ -442,7 +742,6 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
     e.preventDefault();
     runQuery(question);
   };
-
   return (
     <div className="space-y-6 max-w-5xl animate-fade-in pb-12">
       {/* Header dengan Tombol Mulai Sesi Baru */}

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CitationItem, Evidence, Report } from '@/types/synqra';
 import { INITIAL_ASSETS, INITIAL_EVIDENCES, INITIAL_REPORTS } from '@/lib/constants';
 import {
@@ -7,12 +6,18 @@ import {
   CDU11_SYSTEMIC_PATTERNS,
   findRelevantLiterature,
 } from '@/lib/cduBalonganKnowledge';
-import { GEMINI_MODEL_FALLBACKS, matchCdu11AssetTag, withGeminiTimeout } from '@/lib/gemini';
+import {
+  formatGeminiError,
+  GEMINI_MODEL_FALLBACKS,
+  getGenAI,
+  isInvalidKeyError,
+  matchCdu11AssetTag,
+  stripForbiddenDashes,
+  withGeminiTimeout,
+} from '@/lib/gemini';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase/client';
 
-const apiKey =
-  process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+export const maxDuration = 60;
 
 export interface TanyaHistoryItem {
   role: 'user' | 'assistant';
@@ -32,8 +37,61 @@ interface TanyaRequestBody {
   history?: TanyaHistoryItem[];
 }
 
-function stripForbiddenDashes(text: string): string {
-  return text.replace(/[\u2013\u2014]/g, '-').trim();
+function sanitizeTanyaAnswer(raw: string): string {
+  const lines = stripForbiddenDashes(raw).replace(/\r\n/g, '\n').split('\n');
+  const cleanedLines: string[] = [];
+
+  for (const originalLine of lines) {
+    let line = originalLine.trimEnd();
+    const trimmed = line.trim();
+
+    if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      cleanedLines.push('');
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^#{1,6}\s+(.+?)(?:\s+#+)?$/);
+    if (headingMatch) {
+      let headingText = headingMatch[1]
+        .replace(/^\*{1,3}(.+?)\*{1,3}$/, '$1')
+        .replace(/^\d+\.\s+/, '')
+        .trim();
+      if (!headingText.endsWith(':')) {
+        headingText = `${headingText}:`;
+      }
+      cleanedLines.push(`@@SECTION@@${headingText}`);
+      continue;
+    }
+
+    let listPrefix = '';
+    const bulletMatch = line.match(/^(\s*)[-*•]\s+(.+)$/);
+    if (bulletMatch) {
+      listPrefix = `${bulletMatch[1]}• `;
+      line = bulletMatch[2];
+    }
+
+    line = line.replace(/\*\*([^*]+?)\*([^*\n]+?)\*([^*]*?)\*\*/g, '**$1$2$3**');
+    line = line.replace(/(^|[^\w*])\*([^*\n]+?)\*(?!\*)/g, '$1$2');
+    line = line.replace(/(^|\s|\()_([^_\n]+?)_(?=$|[\s.,;:!?)])/g, '$1$2');
+    line = line.replace(/`([^`\n]+)`/g, '$1');
+
+    line = line.replace(
+      /\[(\d+(?:\s*[,;]\s*\d+)+)\]/g,
+      (_m, nums: string) =>
+        nums
+          .split(/\s*[,;]\s*/)
+          .map((n) => `[${n.trim()}]`)
+          .join(' ')
+    );
+    line = line.replace(/(\[\d+\])\s+([.,;:!?])/g, '$1$2');
+
+    cleanedLines.push(`${listPrefix}${line}`);
+  }
+
+  return cleanedLines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -238,7 +296,8 @@ export async function POST(req: NextRequest) {
     let engine: 'gemini-live' | 'local-fallback' = 'local-fallback';
     let errorReason: string | undefined = undefined;
 
-    if (genAI) {
+    const ai = getGenAI();
+    if (ai) {
       const contextText = citations
         .map(
           (c) =>
@@ -278,54 +337,75 @@ export async function POST(req: NextRequest) {
             '\n'
           : '';
 
-      const prompt = `Anda adalah asisten teknis SYNQRA pada Unit 11 (CDU - Crude Distillation Unit) PT Pertamina RU VI Balongan.
-Jawab pertanyaan pengguna dalam Bahasa Indonesia teknis yang terstruktur, ringkas, dan jelas berdasarkan kasus Knowledge Base serta literatur ilmiah di bawah ini.
+      const systemInstruction = `Anda adalah asisten teknis SYNQRA (Intelligence, Connected by Evidence) pada Unit 11 (CDU - Crude Distillation Unit) PT Pertamina RU VI Balongan.
+Jawab pertanyaan pengguna HANYA berdasarkan konteks kasus & literatur ilmiah Unit 11 CDU Balongan yang diberikan dalam Bahasa Indonesia yang ringkas, jelas, dan langsung dapat ditindaklanjuti teknisi lapangan.
 
 ATURAN KERAS (WAJIB DIPATUHI):
-1. WAJIB sertakan nomor sitasi kasus [1], [2], dst. pada setiap klaim atau rekomendasi dari kasus lapangan.
+1. WAJIB sertakan nomor sitasi tunggal [1], [2], dst. tepat sebelum tanda titik kalimat pada setiap klaim penyebab atau rekomendasi teknis (contoh: "...karena coking internal [1]."). Jangan gabungkan angka di satu kurung (tulis [1] [2], bukan [1, 2]).
 2. Bila mengutip referensi ilmiah (seperti PE25, AL24, MB17, PN25, ST25, ZH23, CI24, SH23, KO25), sebutkan kodenya secara eksplisit.
-3. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi terverifikasi pakar.
-4. Jika mengutip kasus berstatus PRADUGA / TRIAGE / INVESTIGATION, nyatakan eksplisit bahwa statusnya masih praduga/investigasi berjalan dan belum disahkan pakar.
-5. Dilarang mengarang ID kasus di luar konteks yang diberikan; gunakan tanda hubung biasa (-) dan hindari em-dash.
-${historyPrompt}
-${CDU11_ENGINEERING_BRIEF}
+3. Dahulukan referensi berstatus VERIFIED sebagai fakta resmi.
+4. Jika mengutip kasus berstatus PRADUGA/TRIAGE/INVESTIGATION, letakkan di bagian terpisah dan nyatakan eksplisit bahwa temuan itu masih dugaan awal/investigasi yang belum disahkan pakar.
+5. Dilarang mengarang ID kasus atau data di luar konteks; gunakan tanda hubung biasa (-) dan hindari em-dash.
+
+ATURAN FORMAT & TIPOGRAFI (WAJIB DIPATUHI):
+- DILARANG menggunakan simbol pagar (#, ##, ###), garis pemisah (---), backtick (\`), atau tanda bintang miring (*kata*) maupun garis bawah (_kata_) untuk istilah Inggris. Tulis istilah teknis secara normal tanpa tanda bintang (contoh: flooding, fouling, mechanical seal, smart positioner).
+- Susun jawaban sederhana dan padat dalam maksimal 4 blok berikut:
+  1) Pembuka 1-2 kalimat ringkas yang langsung menjawab inti pertanyaan.
+  2) Baris judul polos: Fakta Terverifikasi:
+     Diikuti daftar bernomor (1., 2.) dengan format: 1. **Judul Singkat:** Penjelasan inti 1-2 kalimat padat [1].
+  3) (Hanya bila ada rujukan non-VERIFIED yang relevan) Baris judul polos: Dugaan Awal (Belum Disahkan Pakar):
+     Diikuti poin ringkas (1 kalimat) yang menegaskan status praduga/investigasi [4].
+  4) Baris judul polos: Langkah Rekomendasi:
+     Diikuti 2-3 langkah praktis bernomor (1., 2.) langsung ke tindakan lapangan [1].`;
+
+      const userPrompt = `${CDU11_ENGINEERING_BRIEF}
 
 KONTEKS KASUS KNOWLEDGE BASE (URUT STATUS VERIFIED TERATAS):
 ${contextText}
 ${patternContext}
 ${litContext}
-
+${historyPrompt}
 PERTANYAAN PENGGUNA TERBARU:
 ${question}`;
 
+      const errors: string[] = [];
+
       for (const modelName of GEMINI_MODEL_FALLBACKS) {
         try {
-          const model = genAI.getGenerativeModel({
-            model: modelName,
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 900,
-            },
-          });
-
-          const res = await withGeminiTimeout(
-            model.generateContent(prompt),
+          const interaction = await withGeminiTimeout(
+            ai.interactions.create({
+              model: modelName,
+              input: userPrompt,
+              system_instruction: systemInstruction,
+              generation_config: {
+                thinking_level: 'low',
+              },
+              store: false,
+            }),
             9500,
             modelName
           );
-          const text = stripForbiddenDashes(res.response.text());
-          if (text && text.length > 0) {
-            aiAnswer = text;
+
+          const text = interaction.output_text?.trim() || '';
+          if (text.length > 0) {
+            aiAnswer = sanitizeTanyaAnswer(text);
             engine = 'gemini-live';
             errorReason = undefined;
             break;
           }
-          errorReason = 'Gemini tidak mengembalikan respons teks.';
+          errors.push(`[${modelName}] Respons teks kosong.`);
         } catch (err) {
-          console.warn(`Gemini Tanya SYNQRA fallback (${modelName}):`, err);
-          errorReason =
-            err instanceof Error ? stripForbiddenDashes(err.message) : 'Gagal menghubungi Gemini API.';
+          const formatted = formatGeminiError(err);
+          errors.push(`[${modelName}] ${formatted}`);
+          console.warn(`Gemini Tanya SYNQRA fallback (${modelName}):`, formatted);
+          if (isInvalidKeyError(formatted)) {
+            break;
+          }
         }
+      }
+
+      if (!aiAnswer && errors.length > 0) {
+        errorReason = errors[0];
       }
     } else {
       errorReason = 'GEMINI_API_KEY belum dikonfigurasi di environment.';
@@ -339,11 +419,14 @@ ${question}`;
 
       if (verifiedCits.length > 0) {
         parts.push(
-          `Berdasarkan arsip Knowledge Base terverifikasi pakar Unit 11 CDU RU VI Balongan:\n` +
+          `Ringkasan temuan arsip Knowledge Base SYNQRA Unit 11 CDU Balongan yang paling relevan:`
+        );
+        parts.push(
+          `Fakta Terverifikasi:\n` +
             verifiedCits
               .map(
-                (c) =>
-                  `• **${c.title}** (${c.assetId}) [${c.index}]: Gejala "${c.gejala}". Penyebab terverifikasi: ${c.praduga_penyebab}. Tindakan: ${c.usulan_tindakan} [${c.index}].`
+                (c, i) =>
+                  `${i + 1}. **${c.title} (${c.assetId}):** ${c.praduga_penyebab} [${c.index}].`
               )
               .join('\n')
         );
@@ -351,11 +434,11 @@ ${question}`;
 
       if (unverifiedCits.length > 0) {
         parts.push(
-          `Sebagai referensi kasus aktif (masih berstatus **PRADUGA / dalam investigasi** dan belum disahkan pakar):\n` +
+          `Dugaan Awal (Belum Disahkan Pakar):\n` +
             unverifiedCits
               .map(
                 (c) =>
-                  `• **${c.title}** (${c.assetId} · ${c.status}) [${c.index}]: Dugaan awal mengarah pada ${c.praduga_penyebab}. Rencana tindak lanjut: ${c.usulan_tindakan} [${c.index}].`
+                  `• **${c.title} (${c.assetId}, status ${c.status}):** Indikasi awal mengarah pada ${c.praduga_penyebab} dan belum disahkan pakar [${c.index}].`
               )
               .join('\n')
         );
@@ -363,10 +446,20 @@ ${question}`;
 
       if (relevantLiterature.length > 0) {
         parts.push(
-          `Acuan literatur ilmiah terkait Unit 11 CDU Balongan:\n` +
+          `Acuan Literatur Unit 11 CDU:\n` +
             relevantLiterature
               .slice(0, 3)
-              .map((lit) => `• **${lit.code}** (${lit.category}): ${lit.keyFindings}`)
+              .map((lit) => `• **${lit.code} (${lit.category}):** ${lit.keyFindings}`)
+              .join('\n')
+        );
+      }
+
+      if (citations.length > 0) {
+        parts.push(
+          `Langkah Rekomendasi:\n` +
+            citations
+              .slice(0, 3)
+              .map((c, i) => `${i + 1}. ${c.usulan_tindakan} [${c.index}].`)
               .join('\n')
         );
       }
@@ -377,7 +470,7 @@ ${question}`;
         );
       }
 
-      aiAnswer = stripForbiddenDashes(parts.join('\n\n'));
+      aiAnswer = sanitizeTanyaAnswer(parts.join('\n\n'));
     }
 
     return NextResponse.json({

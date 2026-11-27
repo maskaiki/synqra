@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { INITIAL_ASSETS, INITIAL_REPORTS } from '@/lib/constants';
 import {
   CDU11_ENGINEERING_BRIEF,
   CDU11_SYSTEMIC_PATTERNS,
 } from '@/lib/cduBalonganKnowledge';
-import { GEMINI_MODEL_FALLBACKS, withGeminiTimeout } from '@/lib/gemini';
+import {
+  cleanJsonString,
+  formatGeminiError,
+  GEMINI_MODEL_FALLBACKS,
+  getGenAI,
+  isInvalidKeyError,
+  withGeminiTimeout,
+} from '@/lib/gemini';
 import {
   Asset,
   EarlyWarningAlert,
@@ -13,6 +19,8 @@ import {
   EarlyWarningSeverity,
   Report,
 } from '@/types/synqra';
+
+export const maxDuration = 60;
 
 interface PeringatanDiniRequestBody {
   reports?: Report[];
@@ -34,32 +42,47 @@ interface GeminiAlertPayload {
   }>;
 }
 
+const EARLY_WARNING_SCHEMA = {
+  type: 'object',
+  properties: {
+    alerts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          assetId: { type: 'string' },
+          severity: {
+            type: 'string',
+            enum: ['KRITIS', 'WASPADA', 'PANTAU'],
+          },
+          patternTitle: { type: 'string' },
+          frequencyLabel: { type: 'string' },
+          summary: { type: 'string' },
+          recommendedAction: { type: 'string' },
+          relatedReportIds: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        required: [
+          'id',
+          'assetId',
+          'severity',
+          'patternTitle',
+          'frequencyLabel',
+          'summary',
+          'recommendedAction',
+          'relatedReportIds',
+        ],
+      },
+    },
+  },
+  required: ['alerts'],
+};
+
 function stripForbiddenDashes(text: string): string {
   return text.replace(/[\u2013\u2014]/g, '-').trim();
-}
-
-function cleanJsonString(raw: string): string {
-  return raw
-    .trim()
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
-}
-
-function formatGeminiError(err: unknown): string {
-  if (err && typeof err === 'object') {
-    const errObj = err as { status?: number; message?: string };
-    const statusPrefix = errObj.status ? `HTTP ${errObj.status}: ` : '';
-    const rawMsg = errObj.message || String(err);
-    return stripForbiddenDashes(`${statusPrefix}${rawMsg.split('\n')[0].slice(0, 180)}`);
-  }
-  return stripForbiddenDashes(String(err).slice(0, 180));
-}
-
-function isInvalidKeyError(msg: string): boolean {
-  const upper = msg.toUpperCase();
-  return upper.includes('API_KEY_INVALID') || upper.includes('API KEY NOT VALID');
 }
 
 function normalizeSeverity(raw: unknown): EarlyWarningSeverity {
@@ -169,13 +192,10 @@ export async function POST(req: NextRequest) {
     const validReportIds = new Set(allReports.map((r) => r.id));
     const fallbackAlerts = buildFallbackAlerts(allReports, allAssets);
     const generatedAt = new Date().toISOString();
+    const ai = getGenAI();
 
-    const apiKey =
-      process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-    const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-    if (genAI) {
-      let lastError = 'Semua model Gemini gagal memindai pola berulang.';
+    if (ai) {
+      const errors: string[] = [];
 
       // Kelompokkan ringkas per seksi / pola Unit 11 agar hemat token namun lengkap
       const activeDigest = allReports
@@ -192,58 +212,50 @@ export async function POST(req: NextRequest) {
           `- [${p.id}] ${p.title} | Primary: ${p.primaryAssetId} | Tags: ${p.affectedTags.join(', ')} | IDs: ${p.relatedCaseIds.join(', ')}`
       ).join('\n');
 
-      const prompt = `Anda adalah Sistem Deteksi Dini Keandalan Kilang (Early Warning AI) pada platform SYNQRA untuk Unit 11 (CDU) PT Pertamina RU VI Balongan.
+      const systemInstruction = `Anda adalah Sistem Deteksi Dini Keandalan Kilang (Early Warning AI) pada platform SYNQRA untuk Unit 11 (CDU) PT Pertamina RU VI Balongan.
 ${CDU11_ENGINEERING_BRIEF}
 
-RINGKASAN KASUS UNIT 11 CDU (${allReports.length} total kasus):
+ATURAN KERAS:
+1. Kembalikan HANYA JSON murni sesuai skema tanpa markdown code fence.
+2. Buat 6-9 peringatan dini utama yang mencakup pola sistemik lintas-aset hulu-hilir maupun aset dengan kejadian berulang.
+3. "relatedReportIds" WAJIB berisi ID laporan nyata yang ada pada daftar kasus. DILARANG mengarang ID baru.
+4. "severity" harus tepat salah satu dari: "KRITIS", "WASPADA", atau "PANTAU".
+5. "summary" dan "recommendedAction" masing-masing cukup 1-2 kalimat ringkas dalam Bahasa Indonesia langsung ke inti.
+6. DILARANG keras menggunakan tanda em-dash atau en-dash pada seluruh teks output.`;
+
+      const userPrompt = `RINGKASAN KASUS UNIT 11 CDU (${allReports.length} total kasus):
 ${activeDigest}
 
 PETA POLA KETERKAITAN HULU-HILIR UNIT 11:
-${systemicSeedText}
-
-ATURAN KERAS:
-1. Kembalikan HANYA JSON murni tanpa markdown code fence.
-2. Buat 6-9 peringatan dini utama yang mencakup pola sistemik lintas-aset hulu-hilir maupun aset dengan kejadian berulang.
-3. "relatedReportIds" WAJIB berisi ID laporan nyata yang ada pada daftar kasus di atas. DILARANG mengarang ID baru.
-4. "severity" harus tepat salah satu dari: "KRITIS", "WASPADA", atau "PANTAU".
-5. "summary" dan "recommendedAction" ditulis ringkas (1-2 kalimat) dalam Bahasa Indonesia teknis yang langsung ke inti.
-6. DILARANG menggunakan em-dash atau en-dash; gunakan tanda hubung biasa (-).
-
-FORMAT JSON:
-{
-  "alerts": [
-    {
-      "id": "pat-overhead-hcl-nh4cl",
-      "assetId": "11-C-101",
-      "severity": "KRITIS",
-      "patternTitle": "Judul pola singkat",
-      "frequencyLabel": "9 kasus lintas aset",
-      "summary": "Ringkasan mekanisme hulu-hilir.",
-      "recommendedAction": "Saran pencegahan teknis.",
-      "relatedReportIds": ["CDU11-V01", "CDU11-C02"],
-      "isCrossAssetPattern": true,
-      "affectedAssetIds": ["11-V-101 A/B", "11-C-101"]
-    }
-  ]
-}`;
+${systemicSeedText}`;
 
       for (const modelName of GEMINI_MODEL_FALLBACKS) {
         try {
-          const model = genAI.getGenerativeModel({
-            model: modelName,
-            generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.15,
-            },
-          });
-
-          const res = await withGeminiTimeout(
-            model.generateContent(prompt),
-            12000,
+          const interaction = await withGeminiTimeout(
+            ai.interactions.create({
+              model: modelName,
+              input: userPrompt,
+              system_instruction: systemInstruction,
+              generation_config: {
+                thinking_level: 'low',
+              },
+              response_format: {
+                type: 'text',
+                mime_type: 'application/json',
+                schema: EARLY_WARNING_SCHEMA,
+              },
+              store: false,
+            }),
+            11000,
             modelName
           );
+
+          const rawText = interaction.output_text || '';
+          if (!rawText.trim()) {
+            throw new Error('Respons JSON kosong dari model.');
+          }
           const parsed = JSON.parse(
-            cleanJsonString(res.response.text())
+            cleanJsonString(rawText)
           ) as GeminiAlertPayload;
 
           const rawAlerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
@@ -340,8 +352,8 @@ FORMAT JSON:
 
           return NextResponse.json({ success: true, ...payload });
         } catch (err) {
-          const formatted = formatGeminiError(err);
-          lastError = `[${modelName}] ${formatted}`;
+          const formatted = stripForbiddenDashes(formatGeminiError(err));
+          errors.push(`[${modelName}] ${formatted}`);
           console.warn(`Gemini early warning fallback (${modelName}):`, formatted);
           if (isInvalidKeyError(formatted)) {
             break;
@@ -352,7 +364,7 @@ FORMAT JSON:
       const fallbackResp: EarlyWarningResponse = {
         alerts: fallbackAlerts,
         engine: 'local-fallback',
-        errorReason: lastError,
+        errorReason: errors[0] || 'Semua model Gemini gagal memindai pola berulang.',
         generatedAt,
       };
       return NextResponse.json({ success: true, ...fallbackResp });

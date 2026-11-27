@@ -208,6 +208,10 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const stopResolverRef = useRef<((blob: Blob | null) => void) | null>(null);
+  const speechRecRef = useRef<{ stop: () => void } | null>(null);
+  const liveSpeechTextRef = useRef<string>('');
+  const [liveSpeechPreview, setLiveSpeechPreview] = useState<string>('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const photoPreviewRef = useRef<string | null>(null);
@@ -242,6 +246,69 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
   const displayedAssets = showAllAssets || assetQuery.trim() ? filteredAssets : filteredAssets.slice(0, 6);
 
+  const stopBrowserSpeechHelper = () => {
+    if (speechRecRef.current) {
+      try {
+        speechRecRef.current.stop();
+      } catch {
+        // Abaikan error saat menghentikan SpeechRecognition
+      }
+      speechRecRef.current = null;
+    }
+  };
+
+  const startBrowserSpeechHelper = () => {
+    liveSpeechTextRef.current = '';
+    setLiveSpeechPreview('');
+    if (typeof window === 'undefined') return;
+
+    type SpeechRecResultItem = { 0: { transcript: string }; isFinal: boolean };
+    type SpeechRecEvent = { results: ArrayLike<SpeechRecResultItem> };
+    type SpeechRecInstance = {
+      lang: string;
+      continuous: boolean;
+      interimResults: boolean;
+      onresult: ((ev: SpeechRecEvent) => void) | null;
+      onerror: (() => void) | null;
+      start: () => void;
+      stop: () => void;
+    };
+    type SpeechRecConstructor = new () => SpeechRecInstance;
+
+    const win = window as unknown as {
+      SpeechRecognition?: SpeechRecConstructor;
+      webkitSpeechRecognition?: SpeechRecConstructor;
+    };
+    const SpeechCtor = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechCtor) return;
+
+    try {
+      const rec = new SpeechCtor();
+      rec.lang = 'id-ID';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = (ev: SpeechRecEvent) => {
+        let combined = '';
+        for (let idx = 0; idx < ev.results.length; idx += 1) {
+          const seg = ev.results[idx]?.[0]?.transcript || '';
+          combined += seg + ' ';
+        }
+        const cleaned = combined.replace(/\s+/g, ' ').trim();
+        if (cleaned) {
+          liveSpeechTextRef.current = cleaned;
+          setLiveSpeechPreview(cleaned);
+        }
+      };
+      rec.onerror = () => {
+        // Silent fallback: perekaman utama tetap ditangani MediaRecorder + Gemini API
+      };
+      rec.start();
+      speechRecRef.current = rec;
+    } catch {
+      // Browser tidak mengizinkan paralel SpeechRecognition, lanjutkan MediaRecorder murni
+    }
+  };
+
   const revokeAudioUrl = () => {
     if (audioUrlRef.current) {
       URL.revokeObjectURL(audioUrlRef.current);
@@ -253,6 +320,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      stopBrowserSpeechHelper();
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
       }
@@ -316,17 +384,31 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
       recorder.onstop = () => {
         const mimeType = recorder.mimeType || supportedMime || 'audio/webm';
         const blob = new Blob(chunksRef.current, { type: mimeType });
-        const previewUrl = URL.createObjectURL(blob);
-        audioUrlRef.current = previewUrl;
-        setRecordedBlob(blob);
-        setAudioUrl(previewUrl);
-        setMicStatus('recorded');
         stream.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
+
+        if (blob.size > 0) {
+          const previewUrl = URL.createObjectURL(blob);
+          audioUrlRef.current = previewUrl;
+          setRecordedBlob(blob);
+          setAudioUrl(previewUrl);
+          setMicStatus('recorded');
+        } else {
+          setRecordedBlob(null);
+          setMicStatus('idle');
+          setErrorMsg('Rekaman suara kosong. Pastikan mikrofon aktif lalu coba rekam kembali.');
+        }
+
+        if (stopResolverRef.current) {
+          const resolve = stopResolverRef.current;
+          stopResolverRef.current = null;
+          resolve(blob.size > 0 ? blob : null);
+        }
       };
 
       mediaRecorderRef.current = recorder;
-      recorder.start();
+      recorder.start(250);
+      startBrowserSpeechHelper();
       setIsRecording(true);
       setMicStatus('live');
       setRecordSeconds(0);
@@ -334,6 +416,7 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
         setRecordSeconds((s) => s + 1);
       }, 1000);
     } catch (err: unknown) {
+      stopBrowserSpeechHelper();
       setIsRecording(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -350,20 +433,37 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
     }
   };
 
-  const stopRecording = () => {
+  const stopRecordingAndWait = (): Promise<Blob | null> => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    stopBrowserSpeechHelper();
     setIsRecording(false);
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
+    const activeRecorder = mediaRecorderRef.current;
+    if (activeRecorder && activeRecorder.state !== 'inactive') {
       mediaRecorderRef.current = null;
+      return new Promise<Blob | null>((resolve) => {
+        stopResolverRef.current = resolve;
+        try {
+          activeRecorder.stop();
+        } catch {
+          stopResolverRef.current = null;
+          resolve(null);
+        }
+      });
     }
+    return Promise.resolve(recordedBlob);
+  };
+
+  const stopRecording = () => {
+    void stopRecordingAndWait();
   };
 
   const handleReRecord = () => {
     setRecordedBlob(null);
+    liveSpeechTextRef.current = '';
+    setLiveSpeechPreview('');
     revokeAudioUrl();
     setRecordSeconds(0);
     setMicStatus('idle');
@@ -538,19 +638,25 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
 
   const handleExtractAI = async (forcedMode?: 'audio' | 'text') => {
     setErrorMsg(null);
+
+    let activeAudioBlob = recordedBlob;
+    if (inputMode === 'voice' && isRecording) {
+      activeAudioBlob = await stopRecordingAndWait();
+    }
+
     const useAudio =
       forcedMode === 'audio'
-        ? Boolean(recordedBlob)
+        ? Boolean(activeAudioBlob)
         : forcedMode === 'text'
           ? false
-          : inputMode === 'voice' && Boolean(recordedBlob);
+          : inputMode === 'voice' && Boolean(activeAudioBlob);
 
-    if (!useAudio && !narrative.trim()) {
+    if (!useAudio && !narrative.trim() && !liveSpeechTextRef.current.trim()) {
       setErrorMsg('Rekam suara atau isi narasi singkat sebelum ekstraksi AI.');
       return;
     }
 
-    if (useAudio && recordedBlob && recordedBlob.size > MAX_AUDIO_BYTES) {
+    if (useAudio && activeAudioBlob && activeAudioBlob.size > MAX_AUDIO_BYTES) {
       setErrorMsg('Ukuran rekaman audio melebihi batas maksimal 10 MB.');
       return;
     }
@@ -558,21 +664,28 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
     setIsExtracting(true);
     try {
       let res: Response;
-      if (useAudio && recordedBlob) {
+      if (useAudio && activeAudioBlob) {
         const fd = new FormData();
-        const ext = recordedBlob.type.includes('mp4')
-          ? 'mp4'
-          : recordedBlob.type.includes('ogg')
-            ? 'ogg'
-            : 'webm';
-        fd.append('audio', recordedBlob, `voice-note.${ext}`);
+        const ext =
+          activeAudioBlob.type.includes('mp4') || activeAudioBlob.type.includes('m4a')
+            ? 'm4a'
+            : activeAudioBlob.type.includes('ogg')
+              ? 'ogg'
+              : activeAudioBlob.type.includes('wav')
+                ? 'wav'
+                : 'webm';
+        fd.append('audio', activeAudioBlob, `voice-note.${ext}`);
         fd.append('asset_id', selectedAssetId);
+        if (liveSpeechTextRef.current.trim()) {
+          fd.append('client_transcript', liveSpeechTextRef.current.trim());
+        }
         res = await fetch('/api/lapor-cepat', { method: 'POST', body: fd });
       } else {
+        const textToExtract = narrative.trim() || liveSpeechTextRef.current.trim();
         res = await fetch('/api/lapor-cepat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: narrative, asset_id: selectedAssetId }),
+          body: JSON.stringify({ text: textToExtract, asset_id: selectedAssetId }),
         });
       }
 
@@ -1192,6 +1305,12 @@ export const LaporCepatView: React.FC<LaporCepatViewProps> = ({
                   <span key={i} className="voice-wave-bar" />
                 ))}
               </div>
+
+              {liveSpeechPreview && (
+                <div className="max-w-lg mx-auto px-4 py-2.5 rounded-2xl bg-[var(--surface-elevated)] border border-[var(--line)] text-sm text-[var(--ink)] font-medium">
+                  &ldquo;{liveSpeechPreview}&rdquo;
+                </div>
+              )}
 
               {(micStatus === 'denied' || micStatus === 'unavailable') && micNotice && (
                 <div
