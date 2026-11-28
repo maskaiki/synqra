@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  AnalyticsTabKey,
   Asset,
   CaseComment,
   CitationItem,
@@ -9,6 +10,7 @@ import {
   MainPage,
   Report,
   UserRole,
+  WorkerLearningState,
 } from '@/types/synqra';
 import {
   calculateSla,
@@ -38,6 +40,15 @@ import { KnowledgeGraphView } from '@/components/knowledge/KnowledgeGraphView';
 import { TanyaSynqraView } from '@/components/knowledge/TanyaSynqraView';
 import { AnalyticsRoiView } from '@/components/analytics/AnalyticsRoiView';
 import { EvidenceLightboxModal } from '@/components/knowledge/EvidenceLightboxModal';
+import { CompetencyPassportModal } from '@/components/learning/CompetencyPassportModal';
+import {
+  awardWorkerPoints,
+  createInitialLearningState,
+  getTodayKey,
+  loadLearningState,
+  resetLearningState,
+  saveLearningState,
+} from '@/lib/learningEngine';
 import { Check } from 'lucide-react';
 
 export default function SynqraApp() {
@@ -57,6 +68,11 @@ export default function SynqraApp() {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [selectedGraphAssetId, setSelectedGraphAssetId] = useState<string | undefined>(undefined);
   const [activeCitation, setActiveCitation] = useState<CitationItem | null>(null);
+  const [learningState, setLearningState] = useState<WorkerLearningState>(
+    createInitialLearningState
+  );
+  const [isPassportOpen, setIsPassportOpen] = useState(false);
+  const [analyticsInitialTab, setAnalyticsInitialTab] = useState<AnalyticsTabKey>('warnings');
   const [toast, setToast] = useState<{ id: number; msg: string; leaving: boolean } | null>(
     null
   );
@@ -88,6 +104,8 @@ export default function SynqraApp() {
     setIsDarkMode(shouldDark);
     document.documentElement.classList.toggle('dark', shouldDark);
 
+    setLearningState(loadLearningState());
+
     loadWorkspaceData().then((snap) => {
       setAssets(snap.assets);
       setReports(snap.reports);
@@ -104,6 +122,18 @@ export default function SynqraApp() {
       saveLocalWorkspace(reports, comments, evidences);
     }
   }, [reports, comments, evidences, hydrated, dataSource]);
+
+  useEffect(() => {
+    if (hydrated) {
+      saveLearningState(learningState);
+    }
+  }, [learningState, hydrated]);
+
+  useEffect(() => {
+    if (hydrated) {
+      saveLearningState(learningState);
+    }
+  }, [learningState, hydrated]);
 
   const toggleTheme = () => {
     setIsDarkMode((prev) => {
@@ -154,7 +184,8 @@ export default function SynqraApp() {
     setReports(snap.reports);
     setComments(snap.comments);
     setEvidences(snap.evidences);
-    showToast('Data demo berhasil dikembalikan ke kondisi awal.');
+    setLearningState(resetLearningState());
+    showToast('Data demo & poin kompetensi berhasil dikembalikan ke kondisi awal.');
   };
 
   const handleOpenReport = (report: Report) => {
@@ -181,12 +212,25 @@ export default function SynqraApp() {
     setSelectedReportId(newReport.id);
     setActivePage('case-detail');
 
+    const ptRes = awardWorkerPoints(learningState, {
+      userRole: currentRole,
+      eventType: 'report_submitted',
+      points: 5,
+      label: `Laporan Temuan Lengkap: ${newReport.asset_id}`,
+      referenceId: newReport.id,
+      dailyCapCount: 3,
+    });
+    if (ptRes.awardedPoints > 0) {
+      setLearningState(ptRes.nextState);
+    }
+    const pointSuffix = ptRes.awardedPoints > 0 ? ` (+${ptRes.awardedPoints} Poin)` : '';
+
     if (!repRes.ok) {
-      showToast(`Laporan ${newReport.id} tersimpan lokal, namun gagal ke Supabase: ${repRes.error}`);
+      showToast(`Laporan ${newReport.id} tersimpan lokal${pointSuffix}, namun gagal ke Supabase: ${repRes.error}`);
     } else if (evError) {
-      showToast(`Laporan ${newReport.id} tersimpan, namun metadata bukti gagal dicatat: ${evError}`);
+      showToast(`Laporan ${newReport.id} tersimpan${pointSuffix}, namun metadata bukti gagal dicatat: ${evError}`);
     } else {
-      showToast(`Laporan ${newReport.id} berhasil disimpan dengan status awal PRADUGA.`);
+      showToast(`Laporan ${newReport.id} disimpan berstatus PRADUGA${pointSuffix}.`);
     }
   };
 
@@ -195,15 +239,36 @@ export default function SynqraApp() {
     patch: Partial<Report>,
     toastText: string
   ) => {
+    const existingReport = reports.find((r) => r.id === reportId);
+    const becomingVerified =
+      patch.status === 'VERIFIED' && existingReport && existingReport.status !== 'VERIFIED';
+
     const updatedAt = new Date().toISOString();
     setReports((prev) =>
       prev.map((r) => (r.id === reportId ? { ...r, ...patch, updated_at: updatedAt } : r))
     );
+
+    let bonusNote = '';
+    if (becomingVerified && existingReport) {
+      const targetRole = existingReport.reporter_role || 'frontline_omi';
+      const verRes = awardWorkerPoints(learningState, {
+        userRole: targetRole,
+        eventType: 'report_verified',
+        points: 10,
+        label: `Bonus Mutu Bukti: ${existingReport.id} disahkan Validator HSE`,
+        referenceId: existingReport.id,
+      });
+      if (verRes.awardedPoints > 0) {
+        setLearningState(verRes.nextState);
+        bonusNote = ` (+10 Poin Mutu Bukti dikirim ke ${existingReport.reporter_name})`;
+      }
+    }
+
     const res = await persistReportUpdate(reportId, { ...patch, updated_at: updatedAt });
     if (!res.ok) {
       showToast(`Gagal menyinkronkan perubahan ke Supabase: ${res.error}`);
     } else {
-      showToast(toastText);
+      showToast(`${toastText}${bonusNote}`);
     }
   };
 
@@ -287,6 +352,75 @@ export default function SynqraApp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleConfirmBriefingRead = () => {
+    const res = awardWorkerPoints(learningState, {
+      userRole: currentRole,
+      eventType: 'briefing_read',
+      points: 5,
+      label: 'Konfirmasi Baca Prioritas & Briefing Awal Shift',
+      dailyCapCount: 1,
+    });
+    if (res.awardedPoints > 0) {
+      setLearningState(res.nextState);
+      showToast(`Briefing awal shift dikonfirmasi (+${res.awardedPoints} Poin).`);
+    }
+  };
+
+  const handleConfirmBriefingCheck = () => {
+    const res = awardWorkerPoints(learningState, {
+      userRole: currentRole,
+      eventType: 'briefing_check',
+      points: 2,
+      label: 'Cek Pemahaman Fokus Patroli Shift',
+      dailyCapCount: 1,
+    });
+    if (res.awardedPoints > 0) {
+      setLearningState(res.nextState);
+      showToast(`Cek pemahaman shift selesai (+${res.awardedPoints} Poin).`);
+    }
+  };
+
+  const handleCompleteSimulation = (
+    reportId: string,
+    earnedPoints: number,
+    correctCount: number
+  ) => {
+    const res = awardWorkerPoints(learningState, {
+      userRole: currentRole,
+      eventType: 'case_simulation',
+      points: earnedPoints,
+      label: `Simulasi Kasus ${correctCount}/5 Tepat: ${reportId}`,
+      referenceId: reportId,
+      dailyCapCount: 2,
+    });
+    if (res.awardedPoints > 0) {
+      setLearningState(res.nextState);
+      showToast(`Simulasi [${reportId}] tuntas (+${res.awardedPoints} Poin Kompetensi).`);
+    } else {
+      showToast(`Latihan ulang [${reportId}] selesai (${correctCount}/5 tepat).`);
+    }
+  };
+
+  const handleTanyaQueryCompleted = (query: string) => {
+    const shortQ = query.length > 36 ? `${query.slice(0, 36)}...` : query;
+    const res = awardWorkerPoints(learningState, {
+      userRole: currentRole,
+      eventType: 'tanya_query',
+      points: 1,
+      label: `Penelusuran Pengetahuan: "${shortQ}"`,
+      dailyCapCount: 5,
+    });
+    if (res.awardedPoints > 0) {
+      setLearningState(res.nextState);
+    }
+  };
+
+  const handleJumpToSimulation = () => {
+    setAnalyticsInitialTab('simulation');
+    setActivePage('analytics');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (!isLoggedIn) {
     return (
       <LoginView
@@ -309,12 +443,21 @@ export default function SynqraApp() {
   const activeReportAsset =
     assets.find((a) => a.id === activeReport.asset_id) || assets[0];
 
+  const todayKey = getTodayKey();
+  const currentPoints = learningState.pointsByRole[currentRole] || 0;
+  const briefingReadToday = learningState.briefingReadDateByRole[currentRole] === todayKey;
+  const briefingCheckedToday = learningState.briefingCheckDateByRole[currentRole] === todayKey;
+  const completedSimulationIds = learningState.completedSimulationsByRole[currentRole] || [];
+
   return (
     <div className="min-h-screen flex text-[var(--ink)]">
       {/* Left Sidebar + Mobile Bottom Nav */}
       <Sidebar
         activePage={activePage}
         onNavigate={(page) => {
+          if (page === 'analytics') {
+            setAnalyticsInitialTab('warnings');
+          }
           setActivePage(page);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
@@ -342,6 +485,8 @@ export default function SynqraApp() {
           assets={assets}
           onSelectReport={handleOpenReport}
           onSendSlaReminder={handleSendSlaReminder}
+          currentPoints={currentPoints}
+          onOpenPassport={() => setIsPassportOpen(true)}
         />
 
         <main className="w-full max-w-[1380px] mx-auto px-4 sm:px-8 py-6">
@@ -356,6 +501,12 @@ export default function SynqraApp() {
               onOpenReport={handleOpenReport}
               onInspectAsset={handleInspectAsset}
               onSendSlaReminder={handleSendSlaReminder}
+              briefingReadToday={briefingReadToday}
+              briefingCheckedToday={briefingCheckedToday}
+              completedSimulationIds={completedSimulationIds}
+              onConfirmBriefingRead={handleConfirmBriefingRead}
+              onConfirmBriefingCheck={handleConfirmBriefingCheck}
+              onOpenSimulation={handleJumpToSimulation}
             />
           )}
 
@@ -417,6 +568,7 @@ export default function SynqraApp() {
               reports={reports}
               evidences={evidences}
               onOpenEvidence={setActiveCitation}
+              onQueryCompleted={handleTanyaQueryCompleted}
             />
           )}
 
@@ -429,6 +581,9 @@ export default function SynqraApp() {
               roleInfo={roleInfo}
               isDarkMode={isDarkMode}
               onOpenReport={handleOpenReport}
+              initialTab={analyticsInitialTab}
+              completedCaseIds={completedSimulationIds}
+              onCompleteSimulation={handleCompleteSimulation}
             />
           )}
           </div>
@@ -439,6 +594,16 @@ export default function SynqraApp() {
       <EvidenceLightboxModal
         citation={activeCitation}
         onClose={() => setActiveCitation(null)}
+      />
+
+      {/* Competency Passport & Shift Points Modal */}
+      <CompetencyPassportModal
+        isOpen={isPassportOpen}
+        onClose={() => setIsPassportOpen(false)}
+        onStartSimulation={handleJumpToSimulation}
+        roleInfo={roleInfo}
+        learningState={learningState}
+        reports={reports}
       />
 
       {/* Toast Notification */}

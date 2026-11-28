@@ -28,6 +28,12 @@ interface HomeViewProps {
   onOpenReport: (report: Report) => void;
   onInspectAsset?: (assetId: string) => void;
   onSendSlaReminder: (targets: Report[]) => void;
+  briefingReadToday?: boolean;
+  briefingCheckedToday?: boolean;
+  completedSimulationIds?: string[];
+  onConfirmBriefingRead?: () => void;
+  onConfirmBriefingCheck?: () => void;
+  onOpenSimulation?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -38,7 +44,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
   onOpenReport,
   onInspectAsset,
+  briefingReadToday = false,
+  briefingCheckedToday = false,
+  completedSimulationIds = [],
+  onConfirmBriefingRead,
+  onConfirmBriefingCheck,
+  onOpenSimulation,
 }) => {
+  const [quickCheckSelected, setQuickCheckSelected] = React.useState<number | null>(null);
   const activeCount = reports.filter((r) => r.status !== 'VERIFIED').length;
   const verifiedCount = reports.filter((r) => r.status === 'VERIFIED').length;
   const earlyWarnings = detectEarlyWarnings(reports, assets);
@@ -49,6 +62,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   );
   const criticalTop = reports.find(
     (r) => r.status !== 'VERIFIED' && (r.risk_level === 'CRITICAL' || r.risk_level === 'HIGH')
+  );
+  const unpracticedVerified = reports.find(
+    (r) => r.status === 'VERIFIED' && !completedSimulationIds.includes(r.id)
   );
   const briefingPoints: { tag: string; detail: string; report?: Report }[] = [
     overdueTop
@@ -76,11 +92,20 @@ export const HomeView: React.FC<HomeViewProps> = ({
           detail: criticalTop.title,
           report: criticalTop,
         }
-      : {
-          tag: 'Operasi',
-          detail: 'Semua unit dalam batas normal.',
-        },
+      : unpracticedVerified
+        ? {
+            tag: `Penyegaran · ${unpracticedVerified.asset_id}`,
+            detail: unpracticedVerified.title,
+            report: unpracticedVerified,
+          }
+        : {
+            tag: 'Operasi',
+            detail: 'Semua unit dalam batas normal.',
+          },
   ];
+
+  const focusAssetTag =
+    overdueTop?.asset_id || earlyWarnings[0]?.assetId || criticalTop?.asset_id || '11-C-106';
 
   const firstName = roleInfo.name.split(' ')[0];
 
@@ -390,6 +415,85 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             ))}
           </div>
+
+          {/* Check-In Briefing Awal Shift (+5 Poin) & Cek Pemahaman (+2 Poin) */}
+          {onConfirmBriefingRead && (
+            <div className="pt-3.5 border-t border-[var(--line-soft)] space-y-3">
+              {!briefingReadToday ? (
+                <button
+                  type="button"
+                  onClick={onConfirmBriefingRead}
+                  className="group press-soft w-full py-2.5 px-4 rounded-full pop-btn font-heading font-bold text-sm inline-flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Konfirmasi Briefing Shift (+5 Poin)</span>
+                </button>
+              ) : !briefingCheckedToday ? (
+                <div className="p-3.5 rounded-2xl bg-[var(--soft)] border border-[var(--line)] space-y-2.5 animate-fade-in">
+                  <div className="font-heading text-xs font-extrabold uppercase tracking-wider text-[var(--cyan-dark)]">
+                    Cek Pemahaman Shift (+2 Poin)
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--ink)] m-0 leading-snug">
+                    Aset mana yang menjadi fokus pemantauan utama saat patroli awal shift ini?
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuickCheckSelected(0);
+                        onConfirmBriefingCheck?.();
+                      }}
+                      className="py-2 px-3 rounded-xl bg-[var(--surface)] hover:border-[var(--cyan)] border border-[var(--line)] font-heading text-xs sm:text-sm font-bold text-[var(--ink)] text-center"
+                    >
+                      {focusAssetTag}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuickCheckSelected(1);
+                        onConfirmBriefingCheck?.();
+                      }}
+                      className={`py-2 px-3 rounded-xl bg-[var(--surface)] hover:border-[var(--cyan)] border border-[var(--line)] font-heading text-xs sm:text-sm font-bold text-[var(--ink)] text-center ${
+                        quickCheckSelected === 1 ? 'opacity-75' : ''
+                      }`}
+                    >
+                      Unit Offsite Umum
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div
+                    style={{
+                      backgroundColor: 'var(--green-bg)',
+                      color: 'var(--green)',
+                      borderColor: 'var(--green-border)',
+                      borderLeftColor: 'var(--green)',
+                    }}
+                    className="px-3 py-2 rounded-[7px] border border-l-[3.5px] font-heading text-xs font-bold flex items-center justify-between gap-2"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>Briefing Shift Selesai (+7 Poin)</span>
+                    </span>
+                  </div>
+
+                  {unpracticedVerified && onOpenSimulation && (
+                    <button
+                      type="button"
+                      onClick={onOpenSimulation}
+                      className="group hit-area w-full flex items-center justify-between text-sm font-heading font-bold text-[var(--cyan-dark)] hover:underline pt-0.5"
+                    >
+                      <span className="truncate">
+                        Penyegaran Regu: {unpracticedVerified.asset_id} (+13 Poin)
+                      </span>
+                      <ChevronRight className="w-4 h-4 shrink-0 nudge-x" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </aside>
       </section>
     </div>

@@ -40,6 +40,7 @@ interface TanyaSynqraViewProps {
   reports: Report[];
   evidences: Evidence[];
   onOpenEvidence: (citation: CitationItem) => void;
+  onQueryCompleted?: (query: string) => void;
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -615,6 +616,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
   reports,
   evidences,
   onOpenEvidence,
+  onQueryCompleted,
 }) => {
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [question, setQuestion] = useState('');
@@ -753,6 +755,7 @@ export const TanyaSynqraView: React.FC<TanyaSynqraViewProps> = ({
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      onQueryCompleted?.(trimmed);
     } catch (err: unknown) {
       setErrorMsg(
         err instanceof Error

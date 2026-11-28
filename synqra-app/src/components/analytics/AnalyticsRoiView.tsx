@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
+  AnalyticsTabKey,
   Asset,
   CaseComment,
   EarlyWarningAlert,
@@ -15,8 +16,10 @@ import { calculateSla, COMPANY_UMBRELLA } from '@/lib/constants';
 import { EQUIPMENT_CATEGORIES } from '@/lib/cduBalonganKnowledge';
 import { EquipmentBreakoutCard } from '@/components/ui/EquipmentBreakoutCard';
 import { SynqraLoader } from '@/components/ui/SynqraLoader';
+import { CaseSimulationTab } from '@/components/learning/CaseSimulationTab';
 import {
   BarChart3,
+  BookOpenCheck,
   CheckCircle2,
   Clock,
   ExternalLink,
@@ -31,6 +34,13 @@ interface AnalyticsRoiViewProps {
   roleInfo: RoleInfo;
   isDarkMode?: boolean;
   onOpenReport: (report: Report) => void;
+  initialTab?: AnalyticsTabKey;
+  completedCaseIds?: string[];
+  onCompleteSimulation?: (
+    reportId: string,
+    earnedPoints: number,
+    correctCount: number
+  ) => void;
 }
 
 function getSeverityStyle(severity: EarlyWarningSeverity): React.CSSProperties {
@@ -50,8 +60,66 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
   comments,
   isDarkMode = false,
   onOpenReport,
+  initialTab = 'warnings',
+  completedCaseIds = [],
+  onCompleteSimulation,
 }) => {
-  const [activeTab, setActiveTab] = useState<'warnings' | 'summary'>('warnings');
+  const [activeTab, setActiveTab] = useState<AnalyticsTabKey>(initialTab);
+  const tabBaseId = useId();
+  const tabRefs = useRef<Partial<Record<AnalyticsTabKey, HTMLButtonElement | null>>>({});
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  const tabItems: Array<{
+    key: AnalyticsTabKey;
+    label: string;
+    icon: React.ReactNode;
+  }> = [
+    {
+      key: 'warnings',
+      label: 'Peringatan Dini AI',
+      icon: <Radar className="w-4 h-4 shrink-0" />,
+    },
+    {
+      key: 'summary',
+      label: 'Ringkasan Unit 11',
+      icon: <BarChart3 className="w-4 h-4 shrink-0" />,
+    },
+    {
+      key: 'simulation',
+      label: 'Simulasi Kasus (+13 Poin)',
+      icon: <BookOpenCheck className="w-4 h-4 shrink-0" />,
+    },
+  ];
+
+  const activateTab = (nextKey: AnalyticsTabKey, focusBtn = false) => {
+    setActiveTab(nextKey);
+    const btn = tabRefs.current[nextKey];
+    if (btn) {
+      btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (focusBtn) btn.focus();
+    }
+  };
+
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const order: AnalyticsTabKey[] = ['warnings', 'summary', 'simulation'];
+    const currentIdx = order.indexOf(activeTab);
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      activateTab(order[(currentIdx + 1) % order.length], true);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      activateTab(order[(currentIdx - 1 + order.length) % order.length], true);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      activateTab(order[0], true);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      activateTab(order[order.length - 1], true);
+    }
+  };
 
   // --- Tab 1: State Peringatan Dini AI ---
   const [isScanning, setIsScanning] = useState(false);
@@ -160,39 +228,49 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
         </div>
       </header>
 
-      {/* 2 Tab Internal */}
-      <div className="surface-card inline-flex flex-wrap p-1.5 rounded-full gap-1.5">
-        <button
-          type="button"
-          aria-pressed={activeTab === 'warnings'}
-          onClick={() => setActiveTab('warnings')}
-          className={`px-4 py-2 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 ${
-            activeTab === 'warnings'
-              ? 'pop-btn shadow-sm'
-              : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
-          }`}
-        >
-          <Radar className="w-4 h-4" />
-          <span>Peringatan Dini AI</span>
-        </button>
-        <button
-          type="button"
-          aria-pressed={activeTab === 'summary'}
-          onClick={() => setActiveTab('summary')}
-          className={`px-4 py-2 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 ${
-            activeTab === 'summary'
-              ? 'pop-btn shadow-sm'
-              : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span>Ringkasan Unit 11</span>
-        </button>
+      {/* 3 Single-Row Accessible Tabs (No Multi-Row Wrapping) */}
+      <div
+        role="tablist"
+        aria-label="Navigasi Peringatan Dini dan Simulasi"
+        onKeyDown={handleTabKeyDown}
+        className="surface-card flex max-w-full overflow-x-auto p-1.5 rounded-full gap-1.5"
+      >
+        {tabItems.map((tab) => {
+          const isSelected = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              id={`${tabBaseId}-tab-${tab.key}`}
+              ref={(el) => {
+                tabRefs.current[tab.key] = el;
+              }}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              tabIndex={isSelected ? 0 : -1}
+              onClick={() => activateTab(tab.key)}
+              className={`flex-none whitespace-nowrap px-4 py-2 rounded-full font-heading text-sm font-bold inline-flex items-center gap-2 ${
+                isSelected
+                  ? 'pop-btn shadow-sm'
+                  : 'text-[var(--ink-soft)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* TAB 1: PERINGATAN DINI AI */}
-      {activeTab === 'warnings' && (
-        <section className="space-y-5 animate-slide-prev">
+      <div
+        id={`${tabBaseId}-panel-warnings`}
+        role="tabpanel"
+        aria-labelledby={`${tabBaseId}-tab-warnings`}
+        hidden={activeTab !== 'warnings'}
+      >
+        {activeTab === 'warnings' && (
+          <section className="space-y-5 animate-slide-prev">
           <div className="surface-card p-5 sm:p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="font-heading text-base font-bold text-[var(--ink)]">
@@ -377,12 +455,19 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
               </div>
             </div>
           )}
-        </section>
-      )}
+          </section>
+        )}
+      </div>
 
       {/* TAB 2: RINGKASAN UNIT 11 CDU */}
-      {activeTab === 'summary' && (
-        <div className="space-y-6 animate-slide-next">
+      <div
+        id={`${tabBaseId}-panel-summary`}
+        role="tabpanel"
+        aria-labelledby={`${tabBaseId}-tab-summary`}
+        hidden={activeTab !== 'summary'}
+      >
+        {activeTab === 'summary' && (
+          <div className="space-y-6 animate-slide-next">
           {/* 3 Metrik Ringkas Kesiapan Pilot */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
             <div
@@ -488,8 +573,32 @@ export const AnalyticsRoiView: React.FC<AnalyticsRoiViewProps> = ({
               })}
             </div>
           </section>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
+
+      {/* TAB 3: SIMULASI DIAGNOSTIK KASUS TERVERIFIKASI */}
+      <div
+        id={`${tabBaseId}-panel-simulation`}
+        role="tabpanel"
+        aria-labelledby={`${tabBaseId}-tab-simulation`}
+        hidden={activeTab !== 'simulation'}
+      >
+        {activeTab === 'simulation' && (
+          <div className="animate-slide-next">
+            <CaseSimulationTab
+              assets={assets}
+              reports={reports}
+              evidences={evidences}
+              completedCaseIds={completedCaseIds}
+              onCompleteSimulation={(repId, pts, correct) =>
+                onCompleteSimulation?.(repId, pts, correct)
+              }
+              onOpenReport={onOpenReport}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

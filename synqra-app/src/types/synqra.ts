@@ -177,3 +177,75 @@ export interface EarlyWarningResponse {
   errorReason?: string;
   generatedAt: string;
 }
+
+export type AnalyticsTabKey = 'warnings' | 'summary' | 'simulation';
+
+export type PointTierKey = 'pemula' | 'aktif' | 'teladan' | 'safety_champion';
+
+export type ShiftGroupName =
+  | 'Regu Shift A'
+  | 'Regu Shift B'
+  | 'Regu Shift C'
+  | 'Regu Shift D';
+
+export type PointEventType =
+  | 'briefing_read'
+  | 'briefing_check'
+  | 'report_submitted'
+  | 'report_verified'
+  | 'tanya_query'
+  | 'case_simulation';
+
+export interface PointLedgerEntry {
+  id: string;
+  userRole: UserRole;
+  userName: string;
+  shiftGroup: ShiftGroupName;
+  eventType: PointEventType;
+  points: number;
+  label: string;
+  referenceId?: string;
+  createdAt: string;
+}
+
+export interface WorkerLearningState {
+  pointsByRole: Record<UserRole, number>;
+  ledger: PointLedgerEntry[];
+  briefingReadDateByRole: Partial<Record<UserRole, string>>;
+  briefingCheckDateByRole: Partial<Record<UserRole, string>>;
+  completedSimulationsByRole: Record<UserRole, string[]>;
+  dailyCounters: Record<string, number>;
+}
+
+export type SimulationDisciplineFilter = 'all' | 'rotating' | 'static' | 'instrument';
+
+export interface SimulationOption {
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface SimulationStepItem {
+  stepNumber: number;
+  entityLabel: string;
+  question: string;
+  options: SimulationOption[];
+  coachExplanation: string;
+}
+
+export interface CaseSimulationPayload {
+  reportId: string;
+  assetId: string;
+  assetName: string;
+  caseTitle: string;
+  disciplineLabel: string;
+  kondisiOperasi: string;
+  evidenceImageUrl?: string;
+  evidenceCaption?: string;
+  literatureRefs?: string[];
+  verifiedBy: string;
+  steps: SimulationStepItem[];
+  engine: 'gemini-live' | 'local-fallback';
+  usedModel?: string;
+  errorReason?: string;
+}
+

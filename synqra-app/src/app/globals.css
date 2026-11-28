@@ -613,3 +613,56 @@ button:not([data-no-press]):not(:disabled):active {
 .voice-wave-active .voice-wave-bar:nth-child(5n) {
   animation-delay: 0.3s;
 }
+
+/* Native <dialog> top-layer containment & backdrop (Modern Web Guidance) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(5, 16, 36, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Accessible single-row tablist indicator beyond color alone (WCAG 1.4.1) */
+[role="tab"] {
+  position: relative;
+}
+
+[role="tab"][aria-selected="true"]::after {
+  content: '';
+  position: absolute;
+  inset-inline: 16px;
+  inset-block-end: 3px;
+  border-block-end: 2.5px solid currentColor;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+
+/* Native <dialog> modal scroll containment & backdrop (modern-web-guidance: dialog) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(5, 16, 36, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Accessible Tab Indicator (WCAG 1.4.1 non-color shape indicator) */
+.synqra-tab[role='tab'] {
+  position: relative;
+}
+.synqra-tab[role='tab'][aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 16px 3px;
+  border-block-end: 2.5px solid currentColor;
+}
+

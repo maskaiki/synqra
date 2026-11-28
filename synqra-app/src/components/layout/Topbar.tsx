@@ -4,7 +4,8 @@ import React from 'react';
 import { Asset, MainPage, Report, UserRole } from '@/types/synqra';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 import { NotificationBell } from '@/components/layout/NotificationBell';
-import { Database, Moon, RefreshCw, RotateCcw, Sun } from 'lucide-react';
+import { getTierForPoints } from '@/lib/learningEngine';
+import { Award, Database, Moon, RefreshCw, RotateCcw, Sun } from 'lucide-react';
 
 interface TopbarProps {
   activePage: MainPage;
@@ -20,6 +21,8 @@ interface TopbarProps {
   assets: Asset[];
   onSelectReport: (report: Report) => void;
   onSendSlaReminder: (targets: Report[]) => void;
+  currentPoints?: number;
+  onOpenPassport?: () => void;
 }
 
 const PAGE_LABELS: Record<MainPage, string> = {
@@ -46,7 +49,11 @@ export const Topbar: React.FC<TopbarProps> = ({
   assets,
   onSelectReport,
   onSendSlaReminder,
+  currentPoints = 382,
+  onOpenPassport,
 }) => {
+  const tier = getTierForPoints(currentPoints);
+
   return (
     <header className="sticky top-0 z-20 h-[72px] floating-glass border-x-0 border-t-0 border-b border-[var(--line-soft)] px-4 sm:px-8 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -127,6 +134,21 @@ export const Topbar: React.FC<TopbarProps> = ({
             )}
           </span>
         </button>
+
+        {onOpenPassport && (
+          <button
+            type="button"
+            onClick={onOpenPassport}
+            title={`Buka Paspor Kompetensi & Poin Regu (${tier.label})`}
+            className="group press-soft h-9 sm:h-11 px-3 sm:px-3.5 rounded-full surface-card hover:border-[var(--cyan)] inline-flex items-center gap-1.5 text-[var(--ink)] font-heading text-xs sm:text-sm font-bold shrink-0"
+          >
+            <Award className="w-4 h-4 text-[var(--cyan-dark)] shrink-0" />
+            <span className="whitespace-nowrap">{currentPoints} Poin</span>
+            <span className="hidden md:inline text-[var(--cyan-dark)] font-extrabold">
+              · {tier.label}
+            </span>
+          </button>
+        )}
 
         <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
       </div>
