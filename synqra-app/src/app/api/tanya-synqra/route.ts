@@ -201,9 +201,9 @@ export async function POST(req: NextRequest) {
       const meta = ev.id ? EVIDENCE_MEDIA_META[ev.id] : undefined;
       return {
         ...ev,
-        ...(builtInUrl && !ev.public_url ? { public_url: builtInUrl } : {}),
-        ...(meta?.attribution && !ev.source_attribution ? { source_attribution: meta.attribution } : {}),
-        ...(meta?.license && !ev.license_label ? { license_label: meta.license } : {}),
+        ...(builtInUrl ? { public_url: builtInUrl } : {}),
+        ...(meta?.attribution ? { source_attribution: meta.attribution } : {}),
+        ...(meta?.license ? { license_label: meta.license } : {}),
       };
     });
 

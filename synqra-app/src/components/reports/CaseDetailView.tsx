@@ -14,6 +14,7 @@ import {
 } from '@/types/synqra';
 import { calculateSla, computeRiskLevel } from '@/lib/constants';
 import { LITERATURE_DATABASE } from '@/lib/cduBalonganKnowledge';
+import { JOURNAL_IMAGE_CATALOG } from '@/lib/mediaAssets';
 import { uploadEvidenceFile } from '@/lib/dataService';
 import { RiskBadge, SlaBadge, StatusBadge } from '@/components/ui/StatusBadge';
 import { TechnicalArt } from '@/components/ui/TechnicalArt';
@@ -500,6 +501,7 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
 
           {/* Rujukan Literatur Ilmiah & Konteks Data Unit 11 CDU */}
           {((report.literature_refs && report.literature_refs.length > 0) ||
+            (report.journal_image_ids && report.journal_image_ids.length > 0) ||
             report.fact_vs_scenario_note) && (
             <section className="surface-card p-6 rounded-3xl space-y-4">
               <div className="flex items-center gap-2 font-heading text-lg font-bold text-[var(--ink)]">
@@ -545,6 +547,99 @@ export const CaseDetailView: React.FC<CaseDetailViewProps> = ({
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {report.journal_image_ids && report.journal_image_ids.length > 0 && (
+                <div className="space-y-3 pt-2 border-t border-[var(--line-soft)]">
+                  <div className="font-heading text-sm font-bold text-[var(--ink)]">
+                    Gambar Rujukan Jurnal ({report.journal_image_ids.length} Figur)
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {report.journal_image_ids.map((gid, idx) => {
+                      const entry = JOURNAL_IMAGE_CATALOG[gid];
+                      if (!entry) return null;
+                      const openJournalPreview = () => {
+                        if (!entry.available || !entry.url) return;
+                        onPreviewEvidence({
+                          index: idx + 1,
+                          reportId: report.id,
+                          status: report.status,
+                          assetId: report.asset_id,
+                          title: report.title,
+                          evidenceName: `${entry.id} - ${entry.caption}`,
+                          evidenceUrl: entry.url,
+                          gejala: report.gejala,
+                          praduga_penyebab: report.praduga_penyebab,
+                          usulan_tindakan: report.usulan_tindakan,
+                          verifiedBy: report.verified_by,
+                          literatureRefs: report.literature_refs,
+                          sourceAttribution: `${entry.id} · ${entry.source} (${entry.license})`,
+                        });
+                      };
+
+                      return (
+                        <div
+                          key={gid}
+                          className="p-3.5 rounded-2xl bg-[var(--soft)] border border-[var(--line)] flex gap-3 items-start"
+                        >
+                          {entry.available && entry.url ? (
+                            <button
+                              type="button"
+                              onClick={openJournalPreview}
+                              title={`Perbesar gambar rujukan ${entry.id}`}
+                              className="w-24 h-20 rounded-xl overflow-hidden border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--cyan)] shrink-0"
+                            >
+                              <img
+                                src={entry.url}
+                                alt={`${entry.id} - ${entry.caption}`}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          ) : (
+                            <div className="w-24 h-20 rounded-xl border border-[var(--line)] bg-[var(--surface)] flex flex-col items-center justify-center text-center p-1.5 shrink-0">
+                              <span className="font-heading text-xs font-extrabold text-[var(--muted)]">
+                                {entry.id}
+                              </span>
+                              <span className="text-[11px] font-medium text-[var(--muted)] leading-tight">
+                                Belum tersedia
+                              </span>
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-[7px] border-l-[3.5px] border-[var(--cyan)] bg-[var(--surface)] font-heading text-xs font-extrabold text-[var(--ink)]">
+                                {entry.id} · {entry.source}
+                              </span>
+                              {entry.drivePaperFolderUrl && (
+                                <a
+                                  href={entry.drivePaperFolderUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs font-heading font-bold text-[var(--cyan-dark)] hover:underline shrink-0"
+                                >
+                                  <span>Paper (Drive)</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-sm font-semibold text-[var(--ink)] m-0 leading-snug">
+                              {entry.caption}
+                            </p>
+                            {entry.usageInSynqra && (
+                              <p className="text-sm text-[var(--ink-soft)] m-0 leading-snug">
+                                {entry.available
+                                  ? entry.usageInSynqra
+                                  : 'File gambar Bab III belum tersedia pada repositori PNJ; PDF lampiran tersedia di Drive.'}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 

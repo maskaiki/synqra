@@ -565,6 +565,22 @@ export const LITERATURE_DATABASE: Record<string, LiteratureReference> = {
     doiOrUrl: 'https://www.digitalrefining.com/',
     keyFindings: 'Kondensat hidrokarbon berat di fuel gas menyumbat gas tip burner, memicu flame impingement dan hot spot lokal pada radiant coil.',
   },
+  AB23: {
+    code: 'AB23',
+    citation: 'Abdulhussein, Z. A., Al-Sharify, Z. T., Alzuraiji, M., & Onyeaka, H. (2023). Environmental impact of fouling for crude oil flow in preheat pipes according to oil blends. Heliyon, 9(11), e21999.',
+    year: 2023,
+    category: 'Jurnal CC BY-NC-ND 4.0 · Fouling Crude Blend Preheat',
+    doiOrUrl: 'https://doi.org/10.1016/j.heliyon.2023.e21999',
+    keyFindings: 'Evaluasi lima campuran crude menunjukkan lumpur dan sedimen preheat didominasi besi hidroksida dan mangan oksida; pembersihan fouling menurunkan kebutuhan energi unit umpan crude hingga 2%.',
+  },
+  JA22: {
+    code: 'JA22',
+    citation: 'Jacobson, G. (2022). Process Heater Tube Temperature Monitoring Overview, Best Practices, and Examples. Inspectioneering Journal.',
+    year: 2022,
+    category: 'Jurnal Industri · Praktik Terbaik Monitoring TMT Furnace',
+    doiOrUrl: 'https://inspectioneering.com/',
+    keyFindings: 'Koreksi data termografi IR yang tidak tepat pada tube furnace dapat menimbulkan kesalahan pembacaan hingga +/-150 derajat F dari suhu dinding tengah tube aktual.',
+  },
 };
 
 export const CDU11_ENGINEERING_BRIEF = `KONTEKS REKAYASA UNIT 11 (CDU) PT PERTAMINA RU VI BALONGAN:

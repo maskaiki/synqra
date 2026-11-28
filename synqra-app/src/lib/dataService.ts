@@ -55,8 +55,8 @@ function hydrateBuiltInEvidences(list: Evidence[]): Evidence[] {
     return {
       ...ev,
       ...(builtInUrl ? { public_url: builtInUrl } : {}),
-      ...(meta?.attribution && !ev.source_attribution ? { source_attribution: meta.attribution } : {}),
-      ...(meta?.license && !ev.license_label ? { license_label: meta.license } : {}),
+      ...(meta?.attribution ? { source_attribution: meta.attribution } : {}),
+      ...(meta?.license ? { license_label: meta.license } : {}),
     };
   });
 }
